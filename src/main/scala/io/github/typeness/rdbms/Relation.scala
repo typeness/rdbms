@@ -6,7 +6,7 @@ case object NotNULL extends Property
 case object PrimaryKey extends Property
 case class Default(value: Value) extends Property
 
-case class Value(value: Literal) extends AnyVal
+case class Value(value: Literal)
 
 object Relation {
   type Row = List[BodyAttribute]

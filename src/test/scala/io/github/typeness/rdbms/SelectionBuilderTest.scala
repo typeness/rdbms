@@ -20,6 +20,34 @@ class SelectionBuilderTest extends FunSuite {
   )
 
   /*
+     INSERT INTO Pracownicy VALUES
+     (2, 'Nowak','Anna', 1600, '2012-01-01',2)
+    */
+  val row2 = List(
+    BodyAttribute("Nr", Value(IntegerLiteral(2))),
+    BodyAttribute("Nazwisko", Value(StringLiteral("Nowak"))),
+    BodyAttribute("Imie", Value(StringLiteral("Anna"))),
+    BodyAttribute("Stawka", Value(IntegerLiteral(1600))),
+    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2012-01-01"))),
+    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(2))),
+
+  )
+
+  /*
+     INSERT INTO Pracownicy VALUES
+     (3, 'Wrona','Adam', 1100, '2015-01-01',2)
+    */
+  val row3 = List(
+    BodyAttribute("Nr", Value(IntegerLiteral(3))),
+    BodyAttribute("Nazwisko", Value(StringLiteral("Wrona"))),
+    BodyAttribute("Imie", Value(StringLiteral("Adam"))),
+    BodyAttribute("Stawka", Value(IntegerLiteral(1100))),
+    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2015-01-01"))),
+    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(2))),
+
+  )
+
+  /*
   CREATE TABLE Pracownicy(
     Nr INT PRIMARY KEY,
     Nazwisko NVARCHAR(50) NOT NULL,
@@ -41,7 +69,9 @@ class SelectionBuilderTest extends FunSuite {
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
     ),
     List(
-      row1
+      row1,
+      row2,
+      row3
     )
   )
 
@@ -82,8 +112,38 @@ class SelectionBuilderTest extends FunSuite {
         BodyAttribute("Nr", Value(IntegerLiteral(1))),
         BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
         BodyAttribute("Imie", Value(StringLiteral("Jan")))
+      ),
+      List(
+        BodyAttribute("Nr", Value(IntegerLiteral(2))),
+        BodyAttribute("Nazwisko", Value(StringLiteral("Nowak"))),
+        BodyAttribute("Imie", Value(StringLiteral("Anna")))
+      ),
+      List(
+        BodyAttribute("Nr", Value(IntegerLiteral(3))),
+        BodyAttribute("Nazwisko", Value(StringLiteral("Wrona"))),
+        BodyAttribute("Imie", Value(StringLiteral("Adam")))
       )
     )
     assert(hasRow.contains(true))
+  }
+
+  test("SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' OR Nazwisko='Nowak'") {
+
+    /*
+      SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' OR Nazwisko='Nowak'
+     */
+    val query = Select(
+      Nil,
+      "Pracownicy",
+      Some(Or(
+        Equals("Nazwisko", Value(StringLiteral("Kowalski"))),
+        Equals("Nazwisko", Value(StringLiteral("Nowak")))
+      )),
+      None
+    )
+    val isEmpty = for {
+      rows <- SelectionBuilder.select(query, relation)
+    } yield rows == List(row1, row2)
+    assert(isEmpty.contains(true))
   }
 }
