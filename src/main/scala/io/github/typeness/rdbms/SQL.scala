@@ -14,7 +14,8 @@ case class Delete(name: String, condition: Option[Bool]) extends SQL
 
 // Data Definition Language
 sealed trait Definition extends SQL
-case class Create(name: String, attributes: Header, primaryKeys: List[String]) extends Definition
+case class Create(name: String, attributes: Header, primaryKeys: List[String], identity: Option[Identity])
+  extends Definition
 case class AlterAdd(name: String) extends Definition
 case class AlterDrop(name: String) extends Definition
 case class Drop(name: String) extends Definition

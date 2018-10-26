@@ -11,37 +11,53 @@ object ManipulationBuilder extends BuilderUtils {
       for {
         _ <- checkUndefinedNames(queryNames, relationNames)
         _ <- checkNonUniqueNames(queryNames)
-        missing <- getMissingAttributes(row, relation.heading)
+        checkedIdentity <- checkIdentity(row, relation.identity)
+        (rowWithCheckedIdentity, newIdentity) = checkedIdentity
+        missing <- getMissingAttributes(rowWithCheckedIdentity, relation.heading)
         //        _ <- checkTypes(row, relation)
         // _ <- checkUniqueViolation
-      } yield appendRow(missing ::: row, relation)
+      } yield appendRow(missing ::: rowWithCheckedIdentity, relation, newIdentity)
     case AnonymousInsert(_, row) =>
-      val rowSize = row.size
       val relationRowSize = relation.heading.size
-      if (rowSize != relationRowSize) Left(WrongNumberOfAttributes)
+      val expectedSize = if (relation.identity.isEmpty) relationRowSize else relationRowSize - 1
+      if (row.size != expectedSize) Left(WrongNumberOfAttributes)
       else {
-        val newRow = row.zip(relation.heading).map {
+        val header =
+          if (relation.identity.isEmpty) relation.heading
+          else relation.heading.filter(_.properties.collect{case PrimaryKey => true}.isEmpty)
+        val newRow = row.zip(header).map {
           case (value, HeadingAttribute(name, _, _)) => BodyAttribute(name, value)
         }
+        for {
+          checkedIdentity <- checkIdentity(newRow, relation.identity)
+          (rowWithCheckedIdentity, newIdentity) = checkedIdentity
+        } yield appendRow(rowWithCheckedIdentity, relation, newIdentity)
         //        for {
         // _ <- checkTypes(row, relation)
         // <- checkUniqueViolation
         // <- checkConstraints
         //        }
         //      } yield appendRow()
-        Right(appendRow(newRow, relation))
       }
   }
 
-  private def appendRow(values: Row, relation: Relation): Relation = {
-//    val sameAttributes =
-//      values.map(attribute => attribute.name -> attribute.value.value.typeOf) ==
-//      relation.heading.map(attribute => attribute.name -> attribute.domain)
-//    assert(sameAttributes)
-    val currentBody = relation.body
-    relation.copy(body = values :: currentBody)
+  def deleteRows(query: Delete, relation: Relation): Either[SQLError, Relation] = query.condition match {
+    case None => Right(relation.copy(body = Nil))
+    case Some(condition) =>
+      for {
+        matching <- BoolInterpreter.eval(condition, relation.body)
+        rows = relation.body
+      } yield relation.copy(body = rows.diff(matching))
   }
 
+  private def appendRow(values: Row, relation: Relation, newIdentity: Option[Identity]): Relation = {
+    //    val sameAttributes =
+    //      values.map(attribute => attribute.name -> attribute.value.value.typeOf) ==
+    //      relation.heading.map(attribute => attribute.name -> attribute.domain)
+    //    assert(sameAttributes)
+    val currentBody = relation.body
+    relation.copy(body = values :: currentBody, identity = newIdentity)
+  }
 
 
   private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
@@ -74,4 +90,20 @@ object ManipulationBuilder extends BuilderUtils {
       BodyAttribute(attribute.name, getDefaultValue(attribute.properties))
     )
   }
+
+  private def checkIdentity(attributes: Row, identity: Option[Identity]):
+  Either[SQLError, (Row, Option[Identity])] =
+    identity match {
+      case None => Right((attributes, None))
+      case Some(ident) =>
+        if (attributes.exists(_.name == ident.name)) {
+          Left(IdentityViolation(ident.name))
+        } else {
+          val primaryKey = BodyAttribute(ident.name, Value(IntegerLiteral(ident.current)))
+          val newValue = ident.current + ident.step
+          Right(
+            (primaryKey :: attributes, Some(ident.copy(current = newValue)))
+          )
+        }
+    }
 }

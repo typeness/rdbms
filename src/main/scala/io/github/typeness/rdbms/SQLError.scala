@@ -6,3 +6,4 @@ case class MultipleColumnNames(name: String) extends SQLError
 case class ColumnDoesNotExists(name: String) extends SQLError
 case class MissingColumnName(name: String) extends SQLError
 case object WrongNumberOfAttributes extends SQLError
+case class IdentityViolation(name: String) extends SQLError

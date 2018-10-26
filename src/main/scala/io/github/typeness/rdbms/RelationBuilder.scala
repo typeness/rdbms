@@ -7,7 +7,7 @@ object RelationBuilder extends BuilderUtils {
     primaryKey <- getPrimaryKey(query)
     names = query.attributes.map(_.name)
     _ <- checkNonUniqueNames(names)
-  } yield Relation(query.name, primaryKey, query.attributes, Nil)
+  } yield Relation(query.name, primaryKey, query.identity, query.attributes, Nil)
 
 
   private def getPrimaryKey(query: Create): Either[SQLError, List[String]] = query.primaryKeys match {

@@ -18,7 +18,8 @@ class RelationBuilderTest extends FunSuite {
         HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
         HeadingAttribute("DoKiedy", DateType, Nil)
       ),
-      Nil
+      Nil,
+      None
     )
     assert(RelationBuilder.build(query) == Left(MultiplePrimaryKeys))
   }
@@ -35,7 +36,8 @@ class RelationBuilderTest extends FunSuite {
         HeadingAttribute("name", IntegerType, List(PrimaryKey)),
         HeadingAttribute("name", DateType, Nil)
       ),
-      Nil
+      Nil,
+      None
     )
     assert(RelationBuilder.build(query) == Left(MultipleColumnNames("name")))
   }
@@ -51,7 +53,8 @@ class RelationBuilderTest extends FunSuite {
       List(
         HeadingAttribute("name", StringType, Nil)
       ),
-      List("id")
+      List("id"),
+      None
     )
     assert(RelationBuilder.build(query) == Left(ColumnDoesNotExists("id")))
   }

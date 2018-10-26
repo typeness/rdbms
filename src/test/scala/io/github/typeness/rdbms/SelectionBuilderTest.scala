@@ -74,6 +74,7 @@ class SelectionBuilderTest extends FunSuite {
   val relation = Relation(
     "Pracownicy",
     Nil,
+    None,
     List(
       HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
       HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
