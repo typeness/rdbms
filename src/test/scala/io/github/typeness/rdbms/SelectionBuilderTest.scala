@@ -48,6 +48,20 @@ class SelectionBuilderTest extends FunSuite {
   )
 
   /*
+     INSERT INTO Pracownicy VALUES
+     (4, 'Kowalski','Jacek', 0, '2015-03-07', 1)
+    */
+  val row4 = List(
+    BodyAttribute("Nr", Value(IntegerLiteral(4))),
+    BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
+    BodyAttribute("Imie", Value(StringLiteral("Jacek"))),
+    BodyAttribute("Stawka", Value(IntegerLiteral(0))),
+    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2015-03-07"))),
+    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(1))),
+
+  )
+
+  /*
   CREATE TABLE Pracownicy(
     Nr INT PRIMARY KEY,
     Nazwisko NVARCHAR(50) NOT NULL,
@@ -71,7 +85,8 @@ class SelectionBuilderTest extends FunSuite {
     List(
       row1,
       row2,
-      row3
+      row3,
+      row4
     )
   )
 
@@ -122,6 +137,11 @@ class SelectionBuilderTest extends FunSuite {
         BodyAttribute("Nr", Value(IntegerLiteral(3))),
         BodyAttribute("Nazwisko", Value(StringLiteral("Wrona"))),
         BodyAttribute("Imie", Value(StringLiteral("Adam")))
+      ),
+      List(
+        BodyAttribute("Nr", Value(IntegerLiteral(4))),
+        BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
+        BodyAttribute("Imie", Value(StringLiteral("Jacek")))
       )
     )
     assert(hasRow.contains(true))
@@ -141,9 +161,29 @@ class SelectionBuilderTest extends FunSuite {
       )),
       None
     )
-    val isEmpty = for {
+    val haveRows = for {
       rows <- SelectionBuilder.select(query, relation)
-    } yield rows == List(row1, row2)
-    assert(isEmpty.contains(true))
+    } yield rows == List(row1, row4, row2)
+    assert(haveRows.contains(true))
+  }
+
+  test("SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' AND Imie='Jacek'") {
+
+    /*
+      SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' AND Nazwisko='Nowak'
+     */
+    val query = Select(
+      Nil,
+      "Pracownicy",
+      Some(And(
+        Equals("Nazwisko", Value(StringLiteral("Kowalski"))),
+        Equals("Imie", Value(StringLiteral("Jacek")))
+      )),
+      None
+    )
+    val haveRows = for {
+      rows <- SelectionBuilder.select(query, relation)
+    } yield rows == List(row4)
+    assert(haveRows.contains(true))
   }
 }

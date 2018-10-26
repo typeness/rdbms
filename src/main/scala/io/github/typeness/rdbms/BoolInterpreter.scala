@@ -26,8 +26,8 @@ object BoolInterpreter {
     case And(lhs, rhs) =>
       for {
         left <- eval(lhs, rows)
-        right <- eval(rhs, rows)
-      } yield left.toSet.intersect(right.toSet).toList
+        intersection <- eval(rhs, left)
+      } yield intersection
     case Or(lhs, rhs) =>
       for {
         left <- eval(lhs, rows)
