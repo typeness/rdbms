@@ -15,8 +15,22 @@ object ManipulationBuilder extends BuilderUtils {
         //        _ <- checkTypes(row, relation)
         // _ <- checkUniqueViolation
       } yield appendRow(missing ::: row, relation)
-    case AnonymousInsert(_, row) => ???
-
+    case AnonymousInsert(_, row) =>
+      val rowSize = row.size
+      val relationRowSize = relation.heading.size
+      if (rowSize != relationRowSize) Left(WrongNumberOfAttributes)
+      else {
+        val newRow = row.zip(relation.heading).map {
+          case (value, HeadingAttribute(name, _, _)) => BodyAttribute(name, value)
+        }
+        //        for {
+        // _ <- checkTypes(row, relation)
+        // <- checkUniqueViolation
+        // <- checkConstraints
+        //        }
+        //      } yield appendRow()
+        Right(appendRow(newRow, relation))
+      }
   }
 
   private def appendRow(values: Row, relation: Relation): Relation = {
