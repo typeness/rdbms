@@ -9,6 +9,8 @@ case class Identity(name: String, current: Int, step: Int)
 
 case class Value(value: Literal)
 
+case class Schema(relations: List[Relation])
+
 object Relation {
   type Row = List[BodyAttribute]
   type Header = List[HeadingAttribute]

@@ -10,6 +10,11 @@ object RelationBuilder extends BuilderUtils {
   } yield Relation(query.name, primaryKey, query.identity, query.attributes, Nil)
 
 
+  def drop(query: Drop, schema: Schema): Either[SQLError, Schema] =
+    Right(
+      Schema(schema.relations.filter(_.name != query.name))
+    )
+
   private def getPrimaryKey(query: Create): Either[SQLError, List[String]] = query.primaryKeys match {
     case Nil => getPrimaryKeyFromAttributes(query.attributes).map(_.toList)
     case declaredPrimaryKeys =>

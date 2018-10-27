@@ -58,4 +58,38 @@ class RelationBuilderTest extends FunSuite {
     )
     assert(RelationBuilder.build(query) == Left(ColumnDoesNotExists("id")))
   }
+
+  test("DROP TABLE Pracownicy1") {
+    val relation1 = Relation(
+      "Pracownicy1",
+      Nil,
+      None,
+      List(
+        HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
+        HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
+      ),
+      Nil
+    )
+    val relation2 = Relation(
+      "Pracownicy2",
+      Nil,
+      None,
+      List(
+        HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
+        HeadingAttribute("Imie", StringType, List(NotNULL)),
+      ),
+      Nil
+    )
+    val schema = Schema(
+      List(
+        relation1,
+        relation2
+      )
+    )
+    val query = Drop("Pracownicy1")
+    val isDeleted = for {
+      newSchema <- RelationBuilder.drop(query, schema)
+    } yield !newSchema.relations.contains(relation1) && newSchema.relations.contains(relation2)
+    assert(isDeleted == Right(true))
+  }
 }
