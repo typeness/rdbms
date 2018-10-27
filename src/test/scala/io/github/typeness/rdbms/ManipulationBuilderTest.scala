@@ -253,5 +253,42 @@ class ManipulationBuilderTest extends FunSuite {
     assert(hasRow == Right(true))
   }
 
+  test("UPDATE Pracownicy SET Stawka = 1234, LiczbaDzieci=3 WHERE Nr=1") {
+    val query = Update(
+      "Pracownicy",
+      List(
+        BodyAttribute("Stawka", Value(IntegerLiteral(1234))),
+        BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(3)))
+      ),
+      Some(Equals("Nr", Value(IntegerLiteral(1))))
+    )
+    val expectedRow = List(
+      BodyAttribute("Nr", Value(IntegerLiteral(1))),
+      BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
+      BodyAttribute("Imie", Value(StringLiteral("Jan"))),
+      BodyAttribute("Stawka", Value(IntegerLiteral(1234))),
+      BodyAttribute("DataZatrudnienia", Value(StringLiteral("2010-01-01"))),
+      BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(3)))
+    )
+    val isUpdated = for {
+      newRelation <- ManipulationBuilder.updateRows(query, relation)
+      rows = newRelation.body
+    } yield rows.contains(expectedRow) && !rows.contains(row1)
+    assert(isUpdated == Right(true))
+  }
+
+  test("UPDATE when WHERE is not matching any rows") {
+    val query = Update(
+      "Pracownicy",
+      List(
+        BodyAttribute("Stawka", Value(IntegerLiteral(1234))),
+      ),
+      Some(Equals("Nr", Value(IntegerLiteral(999))))
+    )
+    val noEffect = for {
+      newRelation <- ManipulationBuilder.updateRows(query, relation)
+    } yield newRelation.body == relation.body
+    assert(noEffect == Right(true))
+  }
 
 }

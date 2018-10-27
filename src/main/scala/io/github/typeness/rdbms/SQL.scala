@@ -11,6 +11,7 @@ sealed trait Insert extends SQL
 case class NamedInsert(name: String, row: Row) extends Insert
 case class AnonymousInsert(to: String, values: List[Value]) extends Insert
 case class Delete(name: String, condition: Option[Bool]) extends SQL
+case class Update(name: String, updated: Row, condition: Option[Bool]) extends SQL
 
 // Data Definition Language
 sealed trait Definition extends SQL

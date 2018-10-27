@@ -50,6 +50,17 @@ object ManipulationBuilder extends BuilderUtils {
       } yield relation.copy(body = rows.diff(matching))
   }
 
+  def updateRows(query: Update, relation: Relation): Either[SQLError, Relation] = query.condition match {
+    case None => Right(relation)
+    case Some(condition) =>
+      for {
+        matching <- BoolInterpreter.eval(condition, relation.body)
+        updatedRows = matching.map{ row =>
+          row.map(attribute => query.updated.find(_.name==attribute.name).getOrElse(attribute))
+        }
+      } yield relation.copy(body = updatedRows ::: relation.body.diff(matching))
+  }
+
   private def appendRow(values: Row, relation: Relation, newIdentity: Option[Identity]): Relation = {
     //    val sameAttributes =
     //      values.map(attribute => attribute.name -> attribute.value.value.typeOf) ==
