@@ -86,14 +86,14 @@ object ManipulationBuilder extends BuilderUtils {
 
 
   private def fillMissingAttributes(attributes: List[HeadingAttribute]): Row = {
-    def getDefaultValue(properties: List[Property]): Value = {
+    def getDefaultValue(properties: List[Property]): Literal = {
       val haveDefault = properties.filter {
         case _: Default => true
         case _ => false
       }
       haveDefault match {
         case Default(value) :: _ => value
-        case _ => Value(NULLLiteral)
+        case _ => NULLLiteral
       }
     }
 
@@ -103,14 +103,14 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def checkIdentity(attributes: Row, identity: Option[Identity]):
-  Either[SQLError, (Row, Option[Identity])] =
+  Either[IdentityViolation, (Row, Option[Identity])] =
     identity match {
       case None => Right((attributes, None))
       case Some(ident) =>
         if (attributes.exists(_.name == ident.name)) {
           Left(IdentityViolation(ident.name))
         } else {
-          val primaryKey = BodyAttribute(ident.name, Value(IntegerLiteral(ident.current)))
+          val primaryKey = BodyAttribute(ident.name, IntegerLiteral(ident.current))
           val newValue = ident.current + ident.step
           Right(
             (primaryKey :: attributes, Some(ident.copy(current = newValue)))

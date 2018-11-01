@@ -9,7 +9,7 @@ sealed trait Manipulation extends SQL
 // Data Manipulation Language
 sealed trait Insert extends SQL
 case class NamedInsert(name: String, row: Row) extends Insert
-case class AnonymousInsert(to: String, values: List[Value]) extends Insert
+case class AnonymousInsert(to: String, values: List[Literal]) extends Insert
 case class Delete(name: String, condition: Option[Bool]) extends SQL
 case class Update(name: String, updated: Row, condition: Option[Bool]) extends SQL
 
@@ -26,7 +26,13 @@ sealed trait Control extends SQL
 case object Grant extends Control
 
 // Data Query Language
-case class Select(names: List[String], from: String, condition: Option[Bool], order: Option[Order]) extends SQL
+case class Select(
+                   projection: List[String],
+                   from: String,
+                   joins: List[Join],
+                   condition: Option[Bool],
+                   order: Option[Order]
+                 ) extends SQL
 
 
 sealed trait Order
@@ -34,11 +40,22 @@ case object Ascending extends Order
 case object Descending extends Order
 
 sealed trait Bool
-case class Equals(name: String, value: Value) extends Bool
-case class GreaterOrEquals(name: String, value: Value) extends Bool
-case class LessOrEquals(name: String, value: Value) extends Bool
+case class Equals(name: String, value: Expression) extends Bool
+case class GreaterOrEquals(name: String, value: Expression) extends Bool
+case class LessOrEquals(name: String, value: Expression) extends Bool
 case class IsNULL(name: String) extends Bool
-case class Between(name: String, lhs: Value, rhs: Value) extends Bool
+case class Between(name: String, lhs: Expression, rhs: Expression) extends Bool
 case class And(lhs: Bool, rhs: Bool) extends Bool
 case class Or(lhs: Bool, rhs: Bool) extends Bool
+
+
 case class Where(condition: Bool)
+
+sealed trait Join {
+  def name: String
+}
+case class CrossJoin(name: String) extends Join
+case class InnerJoin(name: String, on: Bool) extends Join
+case class LeftOuterJoin(name: String, on: Bool) extends Join
+case class RightOuterJoin(name: String, on: Bool) extends Join
+case class FullOuterJoin(name: String, on: Bool) extends Join

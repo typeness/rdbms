@@ -1,6 +1,10 @@
 package io.github.typeness.rdbms
 
-sealed trait Literal {
+sealed trait Expression
+
+case class Var(name: String) extends Expression
+
+sealed trait Literal extends Expression {
   def typeOf: AnyType
 }
 

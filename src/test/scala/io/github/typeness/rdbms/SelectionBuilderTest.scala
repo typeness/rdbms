@@ -10,12 +10,12 @@ class SelectionBuilderTest extends FunSuite {
       (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
      */
   val row1 = List(
-    BodyAttribute("Nr", Value(IntegerLiteral(1))),
-    BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
-    BodyAttribute("Imie", Value(StringLiteral("Jan"))),
-    BodyAttribute("Stawka", Value(IntegerLiteral(1500))),
-    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2010-01-01"))),
-    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(2))),
+    BodyAttribute("Nr", IntegerLiteral(1)),
+    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
+    BodyAttribute("Imie", StringLiteral("Jan")),
+    BodyAttribute("Stawka", IntegerLiteral(1500)),
+    BodyAttribute("DataZatrudnienia", StringLiteral("2010-01-01")),
+    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
 
   )
 
@@ -24,12 +24,12 @@ class SelectionBuilderTest extends FunSuite {
      (2, 'Nowak','Anna', 1600, '2012-01-01',2)
     */
   val row2 = List(
-    BodyAttribute("Nr", Value(IntegerLiteral(2))),
-    BodyAttribute("Nazwisko", Value(StringLiteral("Nowak"))),
-    BodyAttribute("Imie", Value(StringLiteral("Anna"))),
-    BodyAttribute("Stawka", Value(IntegerLiteral(1600))),
-    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2012-01-01"))),
-    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(2))),
+    BodyAttribute("Nr", IntegerLiteral(2)),
+    BodyAttribute("Nazwisko", StringLiteral("Nowak")),
+    BodyAttribute("Imie", StringLiteral("Anna")),
+    BodyAttribute("Stawka", IntegerLiteral(1600)),
+    BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
+    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
 
   )
 
@@ -38,12 +38,12 @@ class SelectionBuilderTest extends FunSuite {
      (3, 'Wrona','Adam', 1100, '2015-01-01',2)
     */
   val row3 = List(
-    BodyAttribute("Nr", Value(IntegerLiteral(3))),
-    BodyAttribute("Nazwisko", Value(StringLiteral("Wrona"))),
-    BodyAttribute("Imie", Value(StringLiteral("Adam"))),
-    BodyAttribute("Stawka", Value(IntegerLiteral(1100))),
-    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2015-01-01"))),
-    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(2))),
+    BodyAttribute("Nr", IntegerLiteral(3)),
+    BodyAttribute("Nazwisko", StringLiteral("Wrona")),
+    BodyAttribute("Imie", StringLiteral("Adam")),
+    BodyAttribute("Stawka", IntegerLiteral(1100)),
+    BodyAttribute("DataZatrudnienia", StringLiteral("2015-01-01")),
+    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
 
   )
 
@@ -52,12 +52,12 @@ class SelectionBuilderTest extends FunSuite {
      (4, 'Kowalski','Jacek', 0, '2015-03-07', 1)
     */
   val row4 = List(
-    BodyAttribute("Nr", Value(IntegerLiteral(4))),
-    BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
-    BodyAttribute("Imie", Value(StringLiteral("Jacek"))),
-    BodyAttribute("Stawka", Value(IntegerLiteral(0))),
-    BodyAttribute("DataZatrudnienia", Value(StringLiteral("2015-03-07"))),
-    BodyAttribute("LiczbaDzieci", Value(IntegerLiteral(1))),
+    BodyAttribute("Nr", IntegerLiteral(4)),
+    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
+    BodyAttribute("Imie", StringLiteral("Jacek")),
+    BodyAttribute("Stawka", IntegerLiteral(0)),
+    BodyAttribute("DataZatrudnienia", StringLiteral("2015-03-07")),
+    BodyAttribute("LiczbaDzieci", IntegerLiteral(1)),
 
   )
 
@@ -90,15 +90,16 @@ class SelectionBuilderTest extends FunSuite {
       row4
     )
   )
+  val schema = Schema(List(relation))
 
   test("SELECT * FROM Pracownicy WHERE Nr=1") {
 
     /*
       SELECT * FROM Pracownicy WHERE Nr=1
      */
-    val query = Select(Nil, "Pracownicy", Some(Equals("Nr", Value(IntegerLiteral(1)))), None)
+    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), None)
     val hasRow1 = for {
-      rows <- SelectionBuilder.select(query, relation)
+      rows <- SelectionBuilder.select(query, schema)
     } yield rows == List(row1)
     assert(hasRow1.contains(true))
   }
@@ -108,9 +109,9 @@ class SelectionBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=9999
      */
-    val query = Select(Nil, "Pracownicy", Some(Equals("Nr", Value(IntegerLiteral(9999)))), None)
+    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), None)
     val isEmpty = for {
-      rows <- SelectionBuilder.select(query, relation)
+      rows <- SelectionBuilder.select(query, schema)
     } yield rows == Nil
     assert(isEmpty.contains(true))
   }
@@ -120,29 +121,29 @@ class SelectionBuilderTest extends FunSuite {
     /*
       SELECT Nr, Nazwisko, Imie FROM Pracownicy
      */
-    val query = Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", None, None)
+    val query = Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", Nil, None, None)
     val hasRow = for {
-      rows <- SelectionBuilder.select(query, relation)
+      rows <- SelectionBuilder.select(query, schema)
     } yield rows == List(
       List(
-        BodyAttribute("Nr", Value(IntegerLiteral(1))),
-        BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
-        BodyAttribute("Imie", Value(StringLiteral("Jan")))
+        BodyAttribute("Nr", IntegerLiteral(1)),
+        BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
+        BodyAttribute("Imie", StringLiteral("Jan"))
       ),
       List(
-        BodyAttribute("Nr", Value(IntegerLiteral(2))),
-        BodyAttribute("Nazwisko", Value(StringLiteral("Nowak"))),
-        BodyAttribute("Imie", Value(StringLiteral("Anna")))
+        BodyAttribute("Nr", IntegerLiteral(2)),
+        BodyAttribute("Nazwisko", StringLiteral("Nowak")),
+        BodyAttribute("Imie", StringLiteral("Anna"))
       ),
       List(
-        BodyAttribute("Nr", Value(IntegerLiteral(3))),
-        BodyAttribute("Nazwisko", Value(StringLiteral("Wrona"))),
-        BodyAttribute("Imie", Value(StringLiteral("Adam")))
+        BodyAttribute("Nr", IntegerLiteral(3)),
+        BodyAttribute("Nazwisko", StringLiteral("Wrona")),
+        BodyAttribute("Imie", StringLiteral("Adam"))
       ),
       List(
-        BodyAttribute("Nr", Value(IntegerLiteral(4))),
-        BodyAttribute("Nazwisko", Value(StringLiteral("Kowalski"))),
-        BodyAttribute("Imie", Value(StringLiteral("Jacek")))
+        BodyAttribute("Nr", IntegerLiteral(4)),
+        BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
+        BodyAttribute("Imie", StringLiteral("Jacek"))
       )
     )
     assert(hasRow.contains(true))
@@ -156,14 +157,15 @@ class SelectionBuilderTest extends FunSuite {
     val query = Select(
       Nil,
       "Pracownicy",
+      Nil,
       Some(Or(
-        Equals("Nazwisko", Value(StringLiteral("Kowalski"))),
-        Equals("Nazwisko", Value(StringLiteral("Nowak")))
+        Equals("Nazwisko", StringLiteral("Kowalski")),
+        Equals("Nazwisko", StringLiteral("Nowak"))
       )),
-      None
+      None,
     )
     val haveRows = for {
-      rows <- SelectionBuilder.select(query, relation)
+      rows <- SelectionBuilder.select(query, schema)
     } yield rows == List(row1, row4, row2)
     assert(haveRows.contains(true))
   }
@@ -176,14 +178,15 @@ class SelectionBuilderTest extends FunSuite {
     val query = Select(
       Nil,
       "Pracownicy",
+      Nil,
       Some(And(
-        Equals("Nazwisko", Value(StringLiteral("Kowalski"))),
-        Equals("Imie", Value(StringLiteral("Jacek")))
+        Equals("Nazwisko", StringLiteral("Kowalski")),
+        Equals("Imie", StringLiteral("Jacek"))
       )),
       None
     )
     val haveRows = for {
-      rows <- SelectionBuilder.select(query, relation)
+      rows <- SelectionBuilder.select(query, schema)
     } yield rows == List(row4)
     assert(haveRows.contains(true))
   }

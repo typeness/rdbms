@@ -4,21 +4,26 @@ import Relation._
 
 object BoolInterpreter {
   def eval(expression: Bool, rows: List[Row]): Either[SQLError, List[Row]] = expression match {
-    case Equals(name, value) => Right(
+    case Equals(name, rhs) => Right(
       rows.filter { row =>
-        val attribute = row.find(_.name == name)
-        attribute match {
-          case Some(BodyAttribute(_, `value`)) => true
-          case _ => false
+        Row.select(name, row).exists {
+          attribute =>
+            rhs match {
+              case literal: Literal =>
+                attribute.literal == literal
+              case Var(name2) =>
+                val attribute2 = Row.select(name2, row)
+                attribute2.exists(_.literal == attribute.literal)
+            }
         }
       }
     )
     case GreaterOrEquals(name, value) => ???
     case LessOrEquals(name, value) => ???
     case IsNULL(name) => Right(rows.filter { row =>
-      val attribute = row.find(_.name == name)
+      val attribute = Row.select(name, row)
       attribute match {
-        case Some(BodyAttribute(_, Value(NULLLiteral))) => true
+        case Some(BodyAttribute(_, NULLLiteral)) => true
         case _ => false
       }
     })
