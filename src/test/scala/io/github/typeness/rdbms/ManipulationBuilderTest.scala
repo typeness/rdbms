@@ -51,7 +51,7 @@ class ManipulationBuilderTest extends FunSuite {
     val containsRow = for {
       relation <- pracownicy
       newRelation <- ManipulationBuilder.insertRow(query, relation)
-      rows = newRelation.body.map(_.map(_.literal))
+      rows = newRelation.body.map(_.getValues)
     } yield rows.contains(row)
     assert(containsRow == Right(true))
   }
@@ -61,7 +61,7 @@ class ManipulationBuilderTest extends FunSuite {
       INSERT INTO Pracownicy(Nr,Nazwisko,Imie) VALUES
       (1,'Kowal','Piotr')
      */
-    val row = List(
+    val row = Row(
       BodyAttribute("Nr", IntegerLiteral(1)),
       BodyAttribute("Nazwisko", StringLiteral("Kowal")),
       BodyAttribute("Imie", StringLiteral("Piotr")),
@@ -76,12 +76,11 @@ class ManipulationBuilderTest extends FunSuite {
       rows = newRelation.body
     } yield rows
     assert(
-      rows.map(_.contains(
-        List(
-          BodyAttribute("Stawka", NULLLiteral),
-          BodyAttribute("DataZatrudnienia", NULLLiteral),
-          BodyAttribute("LiczbaDzieci", NULLLiteral),
-        ) ::: row
+      rows.map(_.contains(Row(List(
+        BodyAttribute("Stawka", NULLLiteral),
+        BodyAttribute("DataZatrudnienia", NULLLiteral),
+        BodyAttribute("LiczbaDzieci", NULLLiteral),
+      ) ::: row.attributes)
       )) == Right(true)
     )
   }
@@ -94,7 +93,7 @@ class ManipulationBuilderTest extends FunSuite {
      INSERT INTO Pracownicy VALUES
      (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
     */
-  val row1 = List(
+  val row1 = Row(
     BodyAttribute("Nr", IntegerLiteral(1)),
     BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
     BodyAttribute("Imie", StringLiteral("Jan")),
@@ -107,7 +106,7 @@ class ManipulationBuilderTest extends FunSuite {
    INSERT INTO Pracownicy VALUES
    (2, 'Nowak','Anna', 1600, '2012-01-01',2)
   */
-  val row2 = List(
+  val row2 = Row(
     BodyAttribute("Nr", IntegerLiteral(2)),
     BodyAttribute("Nazwisko", StringLiteral("Nowak")),
     BodyAttribute("Imie", StringLiteral("Anna")),
@@ -191,7 +190,7 @@ class ManipulationBuilderTest extends FunSuite {
     val containsRow = for {
       relation <- pracownicy2
       newRelation <- ManipulationBuilder.insertRow(query, relation)
-      rows = newRelation.body.map(_.map(_.literal))
+      rows = newRelation.body.map(_.getValues)
     } yield rows.contains(rowWithID)
     assert(containsRow == Right(true))
   }
@@ -203,7 +202,7 @@ class ManipulationBuilderTest extends FunSuite {
      */
     val query = NamedInsert(
       "Pracownicy2",
-      List(
+      Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
         BodyAttribute("Nazwisko", StringLiteral("Anna")),
         BodyAttribute("Imie", StringLiteral("Nowak")),
@@ -226,15 +225,15 @@ class ManipulationBuilderTest extends FunSuite {
       INSERT INTO Pracownicy2 (Nr,Nazwisko,Imie,Stawka,DataZatrudnienia, LiczbaDzieci) VALUES
       (1,'Nowak','Anna', 1600, '2012-01-01',2)
      */
-    val row = List(
+    val row = Row(
       BodyAttribute("Nazwisko", StringLiteral("Anna")),
       BodyAttribute("Imie", StringLiteral("Nowak")),
       BodyAttribute("Stawka", IntegerLiteral(1600)),
       BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
       BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
     )
-    val rowWithId1 = BodyAttribute("Nr", IntegerLiteral(1)) :: row
-    val rowWithId2 = BodyAttribute("Nr", IntegerLiteral(2)) :: row
+    val rowWithId1 = Row(BodyAttribute("Nr", IntegerLiteral(1)) :: row.attributes)
+    val rowWithId2 = Row(BodyAttribute("Nr", IntegerLiteral(2)) :: row.attributes)
     val query1 = NamedInsert(
       "Pracownicy2",
       row
@@ -256,13 +255,13 @@ class ManipulationBuilderTest extends FunSuite {
   test("UPDATE Pracownicy SET Stawka = 1234, LiczbaDzieci=3 WHERE Nr=1") {
     val query = Update(
       "Pracownicy",
-      List(
+      Row(
         BodyAttribute("Stawka", IntegerLiteral(1234)),
         BodyAttribute("LiczbaDzieci", IntegerLiteral(3))
       ),
       Some(Equals("Nr", IntegerLiteral(1)))
     )
-    val expectedRow = List(
+    val expectedRow = Row(
       BodyAttribute("Nr", IntegerLiteral(1)),
       BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
       BodyAttribute("Imie", StringLiteral("Jan")),
@@ -280,7 +279,7 @@ class ManipulationBuilderTest extends FunSuite {
   test("UPDATE when WHERE is not matching any rows") {
     val query = Update(
       "Pracownicy",
-      List(
+      Row(
         BodyAttribute("Stawka", IntegerLiteral(1234)),
       ),
       Some(Equals("Nr", IntegerLiteral(999)))

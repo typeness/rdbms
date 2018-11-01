@@ -6,13 +6,13 @@ object BoolInterpreter {
   def eval(expression: Bool, rows: List[Row]): Either[SQLError, List[Row]] = expression match {
     case Equals(name, rhs) => Right(
       rows.filter { row =>
-        Row.select(name, row).exists {
+        row.select(name).exists {
           attribute =>
             rhs match {
               case literal: Literal =>
                 attribute.literal == literal
               case Var(name2) =>
-                val attribute2 = Row.select(name2, row)
+                val attribute2 = row.select(name2)
                 attribute2.exists(_.literal == attribute.literal)
             }
         }
@@ -21,7 +21,7 @@ object BoolInterpreter {
     case GreaterOrEquals(name, value) => ???
     case LessOrEquals(name, value) => ???
     case IsNULL(name) => Right(rows.filter { row =>
-      val attribute = Row.select(name, row)
+      val attribute = row.select(name)
       attribute match {
         case Some(BodyAttribute(_, NULLLiteral)) => true
         case _ => false

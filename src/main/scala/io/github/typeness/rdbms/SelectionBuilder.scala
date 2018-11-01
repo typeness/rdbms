@@ -18,7 +18,7 @@ object SelectionBuilder extends BuilderUtils {
 
   private def project(names: List[String], rows: List[Row]): List[Row] = names match {
     case Nil => rows
-    case _ => rows.map(_.filter(attribute => names.contains(attribute.name)))
+    case _ => rows.map(row => row.filter(attribute => names.contains(attribute.name)))
   }
 
   private def filterRows(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] = condition match {
@@ -60,7 +60,7 @@ object SelectionBuilder extends BuilderUtils {
       first <- left.body
       second <- right.body
     } yield (first, second)
-    val crossProduct = pairs.map{ case (first, second) => first ::: second}
+    val crossProduct = pairs.map{ case (first, second) => Row(first.attributes ::: second.attributes)}
     join match {
       case CrossJoin(_) =>
         Right(crossProduct)
@@ -85,7 +85,7 @@ object SelectionBuilder extends BuilderUtils {
                             rightBody: List[Row]): Either[SQLError, List[Row]] = {
 
     def makeNULLRow(heading: List[HeadingAttribute]) =
-      heading.map(attribute => BodyAttribute(attribute.name, NULLLiteral))
+      Row(heading.map(attribute => BodyAttribute(attribute.name, NULLLiteral)))
 
     sealed trait Side
     case object Left extends Side
@@ -96,10 +96,10 @@ object SelectionBuilder extends BuilderUtils {
                       inner: List[Row],
                       nullRow: List[BodyAttribute],
                       side: Side) = {
-      val innerOfOuter = inner.map(_.filterNot(a => nullRow.exists(_.name == a.name)))
-      outer.filterNot(innerOfOuter.contains(_)).map { row => side match {
-        case Left => row ::: nullRow
-        case Right => nullRow ::: row
+      val innerOfOuter = inner.map(_.attributes.filterNot(a => nullRow.exists(_.name == a.name)))
+      outer.map(_.attributes).filterNot(innerOfOuter.contains(_)).map { row => side match {
+        case Left => Row(row ::: nullRow)
+        case Right => Row(nullRow ::: row)
       }}
     }
 
@@ -107,8 +107,8 @@ object SelectionBuilder extends BuilderUtils {
     val rightNullRow = makeNULLRow(rightHeading)
     for {
       inner <- innerJoin
-      leftJoin = joinWithNULL(leftBody, inner, rightNullRow, Left)
-      rightJoin = joinWithNULL(rightBody, inner, leftNullRow, Right)
+      leftJoin = joinWithNULL(leftBody, inner, rightNullRow.attributes, Left)
+      rightJoin = joinWithNULL(rightBody, inner, leftNullRow.attributes, Right)
     } yield leftJoin ::: inner ::: rightJoin
   }
 

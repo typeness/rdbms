@@ -10,9 +10,9 @@ class JoinsTest extends FunSuite {
     None,
     List(HeadingAttribute("a", IntegerType, List(PrimaryKey))),
     List(
-      List(BodyAttribute("a", IntegerLiteral(1))),
-      List(BodyAttribute("a", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(3)))
+      Row(BodyAttribute("a", IntegerLiteral(1))),
+      Row(BodyAttribute("a", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(3)))
     )
   )
 
@@ -22,9 +22,9 @@ class JoinsTest extends FunSuite {
     None,
     List(HeadingAttribute("b", IntegerType, List(PrimaryKey))),
     List(
-      List(BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("b", IntegerLiteral(3))),
-      List(BodyAttribute("b", IntegerLiteral(4)))
+      Row(BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("b", IntegerLiteral(4)))
     )
   )
 
@@ -34,9 +34,9 @@ class JoinsTest extends FunSuite {
     None,
     List(HeadingAttribute("c", IntegerType, List(PrimaryKey))),
     List(
-      List(BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("c", IntegerLiteral(5)))
+      Row(BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("c", IntegerLiteral(5)))
     )
   )
 
@@ -51,15 +51,15 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)))
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)))
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -74,33 +74,33 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(5))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", IntegerLiteral(5))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -115,8 +115,8 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -134,7 +134,7 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -149,9 +149,9 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -169,9 +169,9 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral), BodyAttribute("c", NULLLiteral)),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", NULLLiteral)),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral), BodyAttribute("c", NULLLiteral)),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", NULLLiteral)),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -186,9 +186,9 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -206,9 +206,9 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(5))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -223,10 +223,10 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))
@@ -244,12 +244,12 @@ class JoinsTest extends FunSuite {
       None
     )
     val expected = List(
-      List(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral), BodyAttribute("c", NULLLiteral)),
-      List(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", NULLLiteral)),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", NULLLiteral)),
-      List(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(4))),
-      List(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral), BodyAttribute("c", NULLLiteral)),
+      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2)), BodyAttribute("c", NULLLiteral)),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4)), BodyAttribute("c", NULLLiteral)),
+      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3)), BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(4))),
+      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", NULLLiteral), BodyAttribute("c", IntegerLiteral(5))),
     )
     val result = SelectionBuilder.select(join, schema)
     assert(result == Right(expected))

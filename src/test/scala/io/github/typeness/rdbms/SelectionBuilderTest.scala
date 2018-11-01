@@ -9,7 +9,7 @@ class SelectionBuilderTest extends FunSuite {
       INSERT INTO Pracownicy VALUES
       (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
      */
-  val row1 = List(
+  val row1 = Row(
     BodyAttribute("Nr", IntegerLiteral(1)),
     BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
     BodyAttribute("Imie", StringLiteral("Jan")),
@@ -23,7 +23,7 @@ class SelectionBuilderTest extends FunSuite {
      INSERT INTO Pracownicy VALUES
      (2, 'Nowak','Anna', 1600, '2012-01-01',2)
     */
-  val row2 = List(
+  val row2 = Row(
     BodyAttribute("Nr", IntegerLiteral(2)),
     BodyAttribute("Nazwisko", StringLiteral("Nowak")),
     BodyAttribute("Imie", StringLiteral("Anna")),
@@ -37,7 +37,7 @@ class SelectionBuilderTest extends FunSuite {
      INSERT INTO Pracownicy VALUES
      (3, 'Wrona','Adam', 1100, '2015-01-01',2)
     */
-  val row3 = List(
+  val row3 = Row(
     BodyAttribute("Nr", IntegerLiteral(3)),
     BodyAttribute("Nazwisko", StringLiteral("Wrona")),
     BodyAttribute("Imie", StringLiteral("Adam")),
@@ -51,7 +51,7 @@ class SelectionBuilderTest extends FunSuite {
      INSERT INTO Pracownicy VALUES
      (4, 'Kowalski','Jacek', 0, '2015-03-07', 1)
     */
-  val row4 = List(
+  val row4 = Row(
     BodyAttribute("Nr", IntegerLiteral(4)),
     BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
     BodyAttribute("Imie", StringLiteral("Jacek")),
@@ -125,22 +125,22 @@ class SelectionBuilderTest extends FunSuite {
     val hasRow = for {
       rows <- SelectionBuilder.select(query, schema)
     } yield rows == List(
-      List(
+      Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
         BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
         BodyAttribute("Imie", StringLiteral("Jan"))
       ),
-      List(
+      Row(
         BodyAttribute("Nr", IntegerLiteral(2)),
         BodyAttribute("Nazwisko", StringLiteral("Nowak")),
         BodyAttribute("Imie", StringLiteral("Anna"))
       ),
-      List(
+      Row(
         BodyAttribute("Nr", IntegerLiteral(3)),
         BodyAttribute("Nazwisko", StringLiteral("Wrona")),
         BodyAttribute("Imie", StringLiteral("Adam"))
       ),
-      List(
+      Row(
         BodyAttribute("Nr", IntegerLiteral(4)),
         BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
         BodyAttribute("Imie", StringLiteral("Jacek"))

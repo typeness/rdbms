@@ -19,18 +19,21 @@ case class Schema(relations: List[Relation]) {
 
 
 object Relation {
-  type Row = List[BodyAttribute]
   type Header = List[HeadingAttribute]
 }
 
+case class Row(attributes: List[BodyAttribute]) {
+  def select(name: String): Option[BodyAttribute] = attributes.find(_.name == name)
+  def getNames: List[String] = attributes.map(_.name)
+  def getValues: List[Literal] = attributes.map(_.literal)
+  def map(f: BodyAttribute => BodyAttribute): Row = Row(attributes.map(f))
+  def filter(f: BodyAttribute => Boolean): Row = Row(attributes.filter(f))
 
-
-object Row {
-  import Relation._
-  def select(name: String, row: Row): Option[BodyAttribute] = row.find(_.name == name)
 }
 
-import Relation._
+object Row {
+  def apply(attributes: BodyAttribute*): Row = this(attributes.toList)
+}
 
 case class Relation(name: String, primaryKey: List[String], identity: Option[Identity],
                     heading: List[HeadingAttribute], body: List[Row])
