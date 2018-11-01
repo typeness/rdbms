@@ -1,6 +1,5 @@
 package io.github.typeness.rdbms
 
-
 sealed trait AnyType
 
 case object IntegerType extends AnyType

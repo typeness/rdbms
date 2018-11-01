@@ -11,12 +11,16 @@ sealed trait Insert extends SQL
 case class NamedInsert(name: String, row: Row) extends Insert
 case class AnonymousInsert(to: String, values: List[Literal]) extends Insert
 case class Delete(name: String, condition: Option[Bool]) extends SQL
-case class Update(name: String, updated: Row, condition: Option[Bool]) extends SQL
+case class Update(name: String, updated: Row, condition: Option[Bool])
+    extends SQL
 
 // Data Definition Language
 sealed trait Definition extends SQL
-case class Create(name: String, attributes: Header, primaryKeys: List[String], identity: Option[Identity])
-  extends Definition
+case class Create(name: String,
+                  attributes: Header,
+                  primaryKeys: List[String],
+                  identity: Option[Identity])
+    extends Definition
 case class AlterAdd(name: String) extends Definition
 case class AlterDrop(name: String) extends Definition
 case class Drop(name: String) extends Definition
@@ -27,13 +31,12 @@ case object Grant extends Control
 
 // Data Query Language
 case class Select(
-                   projection: List[String],
-                   from: String,
-                   joins: List[Join],
-                   condition: Option[Bool],
-                   order: Option[Order]
-                 ) extends SQL
-
+    projection: List[String],
+    from: String,
+    joins: List[Join],
+    condition: Option[Bool],
+    order: Option[Order]
+) extends SQL
 
 sealed trait Order
 case object Ascending extends Order
@@ -47,7 +50,6 @@ case class IsNULL(name: String) extends Bool
 case class Between(name: String, lhs: Expression, rhs: Expression) extends Bool
 case class And(lhs: Bool, rhs: Bool) extends Bool
 case class Or(lhs: Bool, rhs: Bool) extends Bool
-
 
 case class Where(condition: Bool)
 

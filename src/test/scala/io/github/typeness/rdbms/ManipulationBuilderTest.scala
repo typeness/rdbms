@@ -24,7 +24,6 @@ class ManipulationBuilderTest extends FunSuite {
         HeadingAttribute("Stawka", MoneyType, Nil),
         HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
         HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
-
       ),
       Nil,
       None
@@ -76,23 +75,23 @@ class ManipulationBuilderTest extends FunSuite {
       rows = newRelation.body
     } yield rows
     assert(
-      rows.map(_.contains(Row(List(
-        BodyAttribute("Stawka", NULLLiteral),
-        BodyAttribute("DataZatrudnienia", NULLLiteral),
-        BodyAttribute("LiczbaDzieci", NULLLiteral),
-      ) ::: row.attributes)
-      )) == Right(true)
+      rows.map(
+        _.contains(
+          Row(
+            List(
+              BodyAttribute("Stawka", NULLLiteral),
+              BodyAttribute("DataZatrudnienia", NULLLiteral),
+              BodyAttribute("LiczbaDzieci", NULLLiteral),
+            ) ::: row.attributes))) == Right(true)
     )
   }
 
-  test("Insert row with missing primary key 'Nr' from Pracownicy") {
-
-  }
+  test("Insert row with missing primary key 'Nr' from Pracownicy") {}
 
   /*
      INSERT INTO Pracownicy VALUES
      (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
-    */
+   */
   val row1 = Row(
     BodyAttribute("Nr", IntegerLiteral(1)),
     BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
@@ -100,12 +99,11 @@ class ManipulationBuilderTest extends FunSuite {
     BodyAttribute("Stawka", IntegerLiteral(1500)),
     BodyAttribute("DataZatrudnienia", StringLiteral("2010-01-01")),
     BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-
   )
   /*
    INSERT INTO Pracownicy VALUES
    (2, 'Nowak','Anna', 1600, '2012-01-01',2)
-  */
+   */
   val row2 = Row(
     BodyAttribute("Nr", IntegerLiteral(2)),
     BodyAttribute("Nazwisko", StringLiteral("Nowak")),
@@ -113,7 +111,6 @@ class ManipulationBuilderTest extends FunSuite {
     BodyAttribute("Stawka", IntegerLiteral(1600)),
     BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
     BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-
   )
   /*
   CREATE TABLE Pracownicy(
@@ -143,7 +140,6 @@ class ManipulationBuilderTest extends FunSuite {
     )
   )
 
-
   test("DELETE FROM Pracownicy WHERE Nr=1") {
     val query = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(1))))
     val isDeleted = for {
@@ -163,7 +159,6 @@ class ManipulationBuilderTest extends FunSuite {
         HeadingAttribute("Stawka", MoneyType, Nil),
         HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
         HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
-
       ),
       Nil,
       Some(Identity("Nr", 1, 1))
@@ -219,7 +214,6 @@ class ManipulationBuilderTest extends FunSuite {
     assert(violation == Left(IdentityViolation("Nr")))
   }
 
-
   test("Named insert into table with defined Identity") {
     /*
       INSERT INTO Pracownicy2 (Nr,Nazwisko,Imie,Stawka,DataZatrudnienia, LiczbaDzieci) VALUES
@@ -232,8 +226,10 @@ class ManipulationBuilderTest extends FunSuite {
       BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
       BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
     )
-    val rowWithId1 = Row(BodyAttribute("Nr", IntegerLiteral(1)) :: row.attributes)
-    val rowWithId2 = Row(BodyAttribute("Nr", IntegerLiteral(2)) :: row.attributes)
+    val rowWithId1 =
+      Row(BodyAttribute("Nr", IntegerLiteral(1)) :: row.attributes)
+    val rowWithId2 =
+      Row(BodyAttribute("Nr", IntegerLiteral(2)) :: row.attributes)
     val query1 = NamedInsert(
       "Pracownicy2",
       row
@@ -247,8 +243,10 @@ class ManipulationBuilderTest extends FunSuite {
       newRelation1 <- ManipulationBuilder.insertRow(query1, relation)
       newRelation2 <- ManipulationBuilder.insertRow(query2, newRelation1)
       rows = newRelation2.body
-    } yield rows.contains(rowWithId1) &&
-      rows.contains(rowWithId2) && newRelation2.identity.contains(Identity("Nr", 3, 1))
+    } yield
+      rows.contains(rowWithId1) &&
+        rows.contains(rowWithId2) && newRelation2.identity.contains(
+        Identity("Nr", 3, 1))
     assert(hasRow == Right(true))
   }
 
