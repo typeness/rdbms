@@ -1,10 +1,17 @@
 package io.github.typeness.rdbms
 
-import Relation._
+import cats.instances.list._
+import cats.instances.either._
+import cats.syntax.traverse._
+
+import SQLError.EitherSQLError
 
 object SelectionBuilder extends BuilderUtils {
 
   private case class JoinWithRelation(join: Join, relation: Relation)
+
+  def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] =
+    union.selects.flatTraverse[EitherSQLError, Row](select1 => select(select1, schema))
 
   def select(query: Select, schema: Schema): Either[SQLError, List[Row]] =
     for {
@@ -14,7 +21,7 @@ object SelectionBuilder extends BuilderUtils {
       selectedColumns = project(query.projection, joined)
       filteredRows <- filterRows(selectedColumns, query.condition)
       sortedRows = sortRows(filteredRows, query.order)
-    } yield sortedRows
+    } yield if (query.distinct) sortedRows.distinct else sortedRows
 
   private def project(names: List[String], rows: List[Row]): List[Row] =
     names match {
@@ -39,15 +46,7 @@ object SelectionBuilder extends BuilderUtils {
                         schema: Schema): Either[SQLError, List[Row]] = {
     val joinsWithRelation =
       joins.map(join => schema.getRelation(join.name).map(JoinWithRelation(join, _)))
-    val joinsSequenced: Either[SchemaDoesNotExists, List[JoinWithRelation]] =
-      joinsWithRelation.partition(_.isLeft) match {
-        case (Nil, joinsRight) =>
-          Right(for (Right(join) <- joinsRight) yield join)
-        case (error :: _, _) =>
-          val Left(e) = error
-          Left(e)
-      }
-    joinsSequenced.flatMap(foldJoins(relation, _))
+    joinsWithRelation.sequence[EitherSQLError, JoinWithRelation].flatMap(foldJoins(relation, _))
   }
 
   private def foldJoins(left: Relation,

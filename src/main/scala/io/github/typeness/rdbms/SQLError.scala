@@ -1,5 +1,9 @@
 package io.github.typeness.rdbms
 
+object SQLError {
+  type EitherSQLError[A] = Either[SQLError, A]
+}
+
 sealed trait SQLError
 case object MultiplePrimaryKeys extends SQLError
 case class MultipleColumnNames(name: String) extends SQLError

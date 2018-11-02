@@ -34,8 +34,11 @@ case class Select(
     from: String,
     joins: List[Join],
     condition: Option[Bool],
-    order: Option[Order]
+    order: Option[Order],
+    distinct: Boolean = false
 ) extends SQL
+
+case class Union(selects: List[Select]) extends SQL
 
 sealed trait Order
 case object Ascending extends Order

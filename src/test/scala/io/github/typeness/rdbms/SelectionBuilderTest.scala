@@ -190,4 +190,50 @@ class SelectionBuilderTest extends FunSuite {
     } yield rows == List(row4)
     assert(haveRows.contains(true))
   }
+
+  test("SELECT Nr FROM Pracownicy WHERE Nr = 1 UNION SELECT Nr FROM Pracownicy WHERE Nr = 2") {
+    val query1 = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(Equals("Nr", IntegerLiteral(1))),
+      None
+    )
+    val query2 = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(Equals("Nr", IntegerLiteral(2))),
+      None
+    )
+    val union = Union(List(query1, query2))
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(1))),
+      Row(BodyAttribute("Nr", IntegerLiteral(2)))
+    )
+    val hasRows = for {
+      result <- SelectionBuilder.unionSelect(union, schema)
+    } yield result == expected
+    assert(hasRows == Right(true))
+  }
+
+  test("SELECT DISTINCT Nazwisko FROM Pracownicy") {
+    val query = Select(
+      List("Nazwisko"),
+      "Pracownicy",
+      Nil,
+      None,
+      None,
+      distinct = true
+    )
+    val expected = List(
+      Row(BodyAttribute("Nazwisko", StringLiteral("Kowalski"))),
+      Row(BodyAttribute("Nazwisko", StringLiteral("Nowak"))),
+      Row(BodyAttribute("Nazwisko", StringLiteral("Wrona"))),
+    )
+    val isDistinct = for {
+      result <- SelectionBuilder.select(query, schema)
+    } yield result == expected
+    assert(isDistinct == Right(true))
+  }
 }
