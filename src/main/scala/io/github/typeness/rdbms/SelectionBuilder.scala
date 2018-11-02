@@ -23,15 +23,13 @@ object SelectionBuilder extends BuilderUtils {
         rows.map(row => row.filter(attribute => names.contains(attribute.name)))
     }
 
-  private def filterRows(rows: List[Row],
-                         condition: Option[Bool]): Either[SQLError, List[Row]] =
+  private def filterRows(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] =
     condition match {
       case None       => Right(rows)
       case Some(cond) => BoolInterpreter.eval(cond, rows)
     }
 
-  private def sortRows(filteredRows: List[Row],
-                       order: Option[Order]): List[Row] = order match {
+  private def sortRows(filteredRows: List[Row], order: Option[Order]): List[Row] = order match {
     case None => filteredRows
     case _    => ???
   }
@@ -40,8 +38,7 @@ object SelectionBuilder extends BuilderUtils {
                         joins: List[Join],
                         schema: Schema): Either[SQLError, List[Row]] = {
     val joinsWithRelation =
-      joins.map(join =>
-        schema.getRelation(join.name).map(JoinWithRelation(join, _)))
+      joins.map(join => schema.getRelation(join.name).map(JoinWithRelation(join, _)))
     val joinsSequenced: Either[SchemaDoesNotExists, List[JoinWithRelation]] =
       joinsWithRelation.partition(_.isLeft) match {
         case (Nil, joinsRight) =>
@@ -53,23 +50,18 @@ object SelectionBuilder extends BuilderUtils {
     joinsSequenced.flatMap(foldJoins(relation, _))
   }
 
-  private def foldJoins(
-      left: Relation,
-      joins: List[JoinWithRelation]): Either[SQLError, List[Row]] =
+  private def foldJoins(left: Relation,
+                        joins: List[JoinWithRelation]): Either[SQLError, List[Row]] =
     joins match {
       case Nil => Right(left.body)
       case JoinWithRelation(join, relation) :: Nil =>
         makeJoin(left, relation, join)
       case JoinWithRelation(join, relation) :: tail =>
         makeJoin(left, relation, join).flatMap(result =>
-          foldJoins(
-            Relation("", Nil, None, left.heading ::: relation.heading, result),
-            tail))
+          foldJoins(Relation("", Nil, None, left.heading ::: relation.heading, result), tail))
     }
 
-  private def makeJoin(left: Relation,
-                       right: Relation,
-                       join: Join): Either[SQLError, List[Row]] = {
+  private def makeJoin(left: Relation, right: Relation, join: Join): Either[SQLError, List[Row]] = {
     val pairs = for {
       first <- left.body
       second <- right.body
@@ -94,12 +86,11 @@ object SelectionBuilder extends BuilderUtils {
     }
   }
 
-  private def makeOuterJoin(
-      leftHeading: List[HeadingAttribute],
-      leftBody: List[Row],
-      innerJoin: Either[SQLError, List[Row]],
-      rightHeading: List[HeadingAttribute],
-      rightBody: List[Row]): Either[SQLError, List[Row]] = {
+  private def makeOuterJoin(leftHeading: List[HeadingAttribute],
+                            leftBody: List[Row],
+                            innerJoin: Either[SQLError, List[Row]],
+                            rightHeading: List[HeadingAttribute],
+                            rightBody: List[Row]): Either[SQLError, List[Row]] = {
 
     def makeNULLRow(heading: List[HeadingAttribute]) =
       Row(heading.map(attribute => BodyAttribute(attribute.name, NULLLiteral)))

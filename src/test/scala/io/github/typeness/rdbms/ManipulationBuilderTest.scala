@@ -245,8 +245,7 @@ class ManipulationBuilderTest extends FunSuite {
       rows = newRelation2.body
     } yield
       rows.contains(rowWithId1) &&
-        rows.contains(rowWithId2) && newRelation2.identity.contains(
-        Identity("Nr", 3, 1))
+        rows.contains(rowWithId2) && newRelation2.identity.contains(Identity("Nr", 3, 1))
     assert(hasRow == Right(true))
   }
 

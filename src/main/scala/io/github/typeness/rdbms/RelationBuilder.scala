@@ -7,8 +7,7 @@ object RelationBuilder extends BuilderUtils {
       primaryKey <- getPrimaryKey(query)
       names = query.attributes.map(_.name)
       _ <- checkNonUniqueNames(names)
-    } yield
-      Relation(query.name, primaryKey, query.identity, query.attributes, Nil)
+    } yield Relation(query.name, primaryKey, query.identity, query.attributes, Nil)
 
   def drop(query: Drop, schema: Schema): Either[SQLError, Schema] =
     Right(
@@ -34,8 +33,7 @@ object RelationBuilder extends BuilderUtils {
     }
 
     val primaryKeys = attributes.collect {
-      case attribute: HeadingAttribute
-          if attribute.properties.exists(isPrimaryKey) =>
+      case attribute: HeadingAttribute if attribute.properties.exists(isPrimaryKey) =>
         attribute.name
     }
     primaryKeys match {

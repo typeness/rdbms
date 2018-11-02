@@ -93,11 +93,7 @@ class SelectionBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=1
      */
-    val query = Select(Nil,
-                       "Pracownicy",
-                       Nil,
-                       Some(Equals("Nr", IntegerLiteral(1))),
-                       None)
+    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), None)
     val hasRow1 = for {
       rows <- SelectionBuilder.select(query, schema)
     } yield rows == List(row1)
@@ -109,11 +105,7 @@ class SelectionBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=9999
      */
-    val query = Select(Nil,
-                       "Pracownicy",
-                       Nil,
-                       Some(Equals("Nr", IntegerLiteral(9999))),
-                       None)
+    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), None)
     val isEmpty = for {
       rows <- SelectionBuilder.select(query, schema)
     } yield rows == Nil

@@ -14,15 +14,13 @@ object ManipulationBuilder extends BuilderUtils {
           _ <- checkNonUniqueNames(queryNames)
           checkedIdentity <- checkIdentity(row, relation.identity)
           (rowWithCheckedIdentity, newIdentity) = checkedIdentity
-          missing <- getMissingAttributes(rowWithCheckedIdentity,
-                                          relation.heading)
+          missing <- getMissingAttributes(rowWithCheckedIdentity, relation.heading)
           //        _ <- checkTypes(row, relation)
           // _ <- checkUniqueViolation
         } yield
-          appendRow(
-            Row(missing.attributes ::: rowWithCheckedIdentity.attributes),
-            relation,
-            newIdentity)
+          appendRow(Row(missing.attributes ::: rowWithCheckedIdentity.attributes),
+                    relation,
+                    newIdentity)
       case AnonymousInsert(_, row) =>
         val relationRowSize = relation.heading.size
         val expectedSize =
@@ -55,8 +53,7 @@ object ManipulationBuilder extends BuilderUtils {
         }
     }
 
-  def deleteRows(query: Delete,
-                 relation: Relation): Either[SQLError, Relation] =
+  def deleteRows(query: Delete, relation: Relation): Either[SQLError, Relation] =
     query.condition match {
       case None => Right(relation.copy(body = Nil))
       case Some(condition) =>
@@ -66,19 +63,16 @@ object ManipulationBuilder extends BuilderUtils {
         } yield relation.copy(body = rows.diff(matching))
     }
 
-  def updateRows(query: Update,
-                 relation: Relation): Either[SQLError, Relation] =
+  def updateRows(query: Update, relation: Relation): Either[SQLError, Relation] =
     query.condition match {
       case None => Right(relation)
       case Some(condition) =>
         for {
           matchingRows <- BoolInterpreter.eval(condition, relation.body)
           updatedRows = matchingRows.map { row =>
-            row.map(attribute =>
-              query.updated.select(attribute.name).getOrElse(attribute))
+            row.map(attribute => query.updated.select(attribute.name).getOrElse(attribute))
           }
-        } yield
-          relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
+        } yield relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
     }
 
   private def appendRow(values: Row,
@@ -92,9 +86,7 @@ object ManipulationBuilder extends BuilderUtils {
     relation.copy(body = values :: currentBody, identity = newIdentity)
   }
 
-  private def getMissingAttributes(
-      row: Row,
-      header: Header): Either[MissingColumnName, Row] = {
+  private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
     val missing = header.filter(attribute => row.select(attribute.name).isEmpty)
     val mandatory = missing.filter(_.properties.exists {
       case _: PrimaryKey.type => true
@@ -125,8 +117,9 @@ object ManipulationBuilder extends BuilderUtils {
     )
   }
 
-  private def checkIdentity(row: Row, identityOption: Option[Identity])
-    : Either[IdentityViolation, (Row, Option[Identity])] =
+  private def checkIdentity(
+      row: Row,
+      identityOption: Option[Identity]): Either[IdentityViolation, (Row, Option[Identity])] =
     identityOption match {
       case None => Right((row, None))
       case Some(identity) =>
@@ -137,8 +130,7 @@ object ManipulationBuilder extends BuilderUtils {
             BodyAttribute(identity.name, IntegerLiteral(identity.current))
           val newValue = identity.current + identity.step
           Right(
-            (Row(primaryKey :: row.attributes),
-             Some(identity.copy(current = newValue)))
+            (Row(primaryKey :: row.attributes), Some(identity.copy(current = newValue)))
           )
         }
     }
