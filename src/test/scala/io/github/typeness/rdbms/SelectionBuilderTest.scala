@@ -1,92 +1,10 @@
 package io.github.typeness.rdbms
 
-import io.github.typeness.rdbms
 import org.scalatest.FunSuite
 
 class SelectionBuilderTest extends FunSuite {
 
-  /*
-      INSERT INTO Pracownicy VALUES
-      (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
-   */
-  val row1 = Row(
-    BodyAttribute("Nr", IntegerLiteral(1)),
-    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-    BodyAttribute("Imie", StringLiteral("Jan")),
-    BodyAttribute("Stawka", IntegerLiteral(1500)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2010-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-  )
-
-  /*
-     INSERT INTO Pracownicy VALUES
-     (2, 'Nowak','Anna', 1600, '2012-01-01',2)
-   */
-  val row2 = Row(
-    BodyAttribute("Nr", IntegerLiteral(2)),
-    BodyAttribute("Nazwisko", StringLiteral("Nowak")),
-    BodyAttribute("Imie", StringLiteral("Anna")),
-    BodyAttribute("Stawka", IntegerLiteral(1600)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-  )
-
-  /*
-     INSERT INTO Pracownicy VALUES
-     (3, 'Wrona','Adam', 1100, '2015-01-01',2)
-   */
-  val row3 = Row(
-    BodyAttribute("Nr", IntegerLiteral(3)),
-    BodyAttribute("Nazwisko", StringLiteral("Wrona")),
-    BodyAttribute("Imie", StringLiteral("Adam")),
-    BodyAttribute("Stawka", IntegerLiteral(1100)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2015-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-  )
-
-  /*
-     INSERT INTO Pracownicy VALUES
-     (4, 'Kowalski','Jacek', 0, '2015-03-07', 1)
-   */
-  val row4 = Row(
-    BodyAttribute("Nr", IntegerLiteral(4)),
-    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-    BodyAttribute("Imie", StringLiteral("Jacek")),
-    BodyAttribute("Stawka", IntegerLiteral(0)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2015-03-07")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(1)),
-  )
-
-  /*
-  CREATE TABLE Pracownicy(
-    Nr INT PRIMARY KEY,
-    Nazwisko NVARCHAR(50) NOT NULL,
-    Imie NVARCHAR(50) NOT NULL,
-    Stawka MONEY,
-    DataZatrudnienia DATE,
-    LiczbaDzieci TINYINT
-  )
-   */
-  val relation = Relation(
-    "Pracownicy",
-    Nil,
-    None,
-    List(
-      HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-      HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
-      HeadingAttribute("Imie", StringType, List(NotNULL)),
-      HeadingAttribute("Stawka", MoneyType, Nil),
-      HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
-      HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
-    ),
-    List(
-      row1,
-      row2,
-      row3,
-      row4
-    )
-  )
-  val schema = Schema(List(relation))
+  import Relations._
 
   test("SELECT * FROM Pracownicy WHERE Nr=1") {
 
@@ -95,8 +13,8 @@ class SelectionBuilderTest extends FunSuite {
      */
     val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), None)
     val hasRow1 = for {
-      rows <- SelectionBuilder.select(query, schema)
-    } yield rows == List(row1)
+      rows <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield rows == List(pracownicyRow1)
     assert(hasRow1.contains(true))
   }
 
@@ -107,7 +25,7 @@ class SelectionBuilderTest extends FunSuite {
      */
     val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), None)
     val isEmpty = for {
-      rows <- SelectionBuilder.select(query, schema)
+      rows <- SelectionBuilder.select(query, schemaPracownicy)
     } yield rows == Nil
     assert(isEmpty.contains(true))
   }
@@ -120,7 +38,7 @@ class SelectionBuilderTest extends FunSuite {
     val query =
       Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", Nil, None, None)
     val hasRow = for {
-      rows <- SelectionBuilder.select(query, schema)
+      rows <- SelectionBuilder.select(query, schemaPracownicy)
     } yield
       rows == List(
         Row(
@@ -142,6 +60,11 @@ class SelectionBuilderTest extends FunSuite {
           BodyAttribute("Nr", IntegerLiteral(4)),
           BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
           BodyAttribute("Imie", StringLiteral("Jacek"))
+        ),
+        Row(
+          BodyAttribute("Nr", IntegerLiteral(5)),
+          BodyAttribute("Nazwisko", StringLiteral("Grzyb")),
+          BodyAttribute("Imie", StringLiteral("Tomasz"))
         )
       )
     assert(hasRow.contains(true))
@@ -164,8 +87,8 @@ class SelectionBuilderTest extends FunSuite {
       None,
     )
     val haveRows = for {
-      rows <- SelectionBuilder.select(query, schema)
-    } yield rows == List(row1, row4, row2)
+      rows <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield rows == List(pracownicyRow1, pracownicyRow4, pracownicyRow2)
     assert(haveRows.contains(true))
   }
 
@@ -186,8 +109,8 @@ class SelectionBuilderTest extends FunSuite {
       None
     )
     val haveRows = for {
-      rows <- SelectionBuilder.select(query, schema)
-    } yield rows == List(row4)
+      rows <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield rows == List(pracownicyRow4)
     assert(haveRows.contains(true))
   }
 
@@ -212,7 +135,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(2)))
     )
     val hasRows = for {
-      result <- SelectionBuilder.unionSelect(union, schema)
+      result <- SelectionBuilder.unionSelect(union, schemaPracownicy)
     } yield result == expected
     assert(hasRows == Right(true))
   }
@@ -230,10 +153,84 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nazwisko", StringLiteral("Kowalski"))),
       Row(BodyAttribute("Nazwisko", StringLiteral("Nowak"))),
       Row(BodyAttribute("Nazwisko", StringLiteral("Wrona"))),
+      Row(BodyAttribute("Nazwisko", StringLiteral("Grzyb"))),
     )
     val isDistinct = for {
-      result <- SelectionBuilder.select(query, schema)
+      result <- SelectionBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isDistinct == Right(true))
+  }
+
+  test("SELECT Nr FROM Pracownicy WHERE Nr > 1") {
+    val query = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(Greater("Nr", IntegerLiteral(1))),
+      None
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(3))),
+      Row(BodyAttribute("Nr", IntegerLiteral(4))),
+      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+    )
+    val isFiltered = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield result == expected
+    assert(isFiltered == Right(true))
+  }
+
+  test("SELECT Nr FROM Pracownicy WHERE Nr <= 2") {
+    val query = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(LessOrEquals("Nr", IntegerLiteral(2))),
+      None
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(1))),
+      Row(BodyAttribute("Nr", IntegerLiteral(2))),
+    )
+    val isFiltered = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield result == expected
+    assert(isFiltered == Right(true))
+  }
+
+  test("SELECT Nr FROM Pracownicy WHERE Nr BETWEEN 2 AND 3") {
+    val query = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(Between("Nr", IntegerLiteral(2), IntegerLiteral(3))),
+      None
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(3))),
+    )
+    val isFiltered = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield result == expected
+    assert(isFiltered == Right(true))
+  }
+
+  test("SELECT Nr FROM Pracownicy WHERE LiczbaDzieci IS NULL") {
+    val query = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(IsNULL("LiczbaDzieci")),
+      None
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+    )
+    val isFiltered = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield result == expected
+    assert(isFiltered == Right(true))
   }
 }

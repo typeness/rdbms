@@ -47,7 +47,9 @@ case object Descending extends Order
 sealed trait Bool
 case class Equals(name: String, value: Expression) extends Bool
 case class GreaterOrEquals(name: String, value: Expression) extends Bool
+case class Greater(name: String, value: Expression) extends Bool
 case class LessOrEquals(name: String, value: Expression) extends Bool
+case class Less(name: String, value: Expression) extends Bool
 case class IsNULL(name: String) extends Bool
 case class Between(name: String, lhs: Expression, rhs: Expression) extends Bool
 case class And(lhs: Bool, rhs: Bool) extends Bool

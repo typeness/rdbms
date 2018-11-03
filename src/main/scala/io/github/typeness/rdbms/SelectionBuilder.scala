@@ -18,9 +18,9 @@ object SelectionBuilder extends BuilderUtils {
       relation <- schema.getRelation(query.from)
       //    _ <- checkUndefinedNames(query.projection, relation.heading.map(_.name))
       joined <- makeJoins(relation, query.joins, schema)
-      selectedColumns = project(query.projection, joined)
-      filteredRows <- filterRows(selectedColumns, query.condition)
-      sortedRows = sortRows(filteredRows, query.order)
+      filteredRows <- filterRows(joined, query.condition)
+      selectedColumns = project(query.projection, filteredRows)
+      sortedRows = sortRows(selectedColumns, query.order)
     } yield if (query.distinct) sortedRows.distinct else sortedRows
 
   private def project(names: List[String], rows: List[Row]): List[Row] =

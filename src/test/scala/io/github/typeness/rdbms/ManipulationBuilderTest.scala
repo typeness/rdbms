@@ -4,31 +4,7 @@ import org.scalatest.FunSuite
 
 class ManipulationBuilderTest extends FunSuite {
 
-  /*
-  CREATE TABLE Pracownicy(
-    Nr INT PRIMARY KEY,
-    Nazwisko NVARCHAR(50) NOT NULL,
-    Imie NVARCHAR(50) NOT NULL,
-    Stawka MONEY,
-    DataZatrudnienia DATE,
-    LiczbaDzieci TINYINT
-  )
-   */
-  val pracownicy: Either[SQLError, Relation] = RelationBuilder.build(
-    Create(
-      "Pracownicy",
-      List(
-        HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
-        HeadingAttribute("Imie", StringType, List(NotNULL)),
-        HeadingAttribute("Stawka", MoneyType, Nil),
-        HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
-        HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
-      ),
-      Nil,
-      None
-    )
-  )
+  import Relations._
 
   test("Successful anonymous row insert into table Pracownicy") {
     /*
@@ -48,8 +24,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val containsRow = for {
-      relation <- pracownicy
-      newRelation <- ManipulationBuilder.insertRow(query, relation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation)
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(row)
     assert(containsRow == Right(true))
@@ -70,8 +45,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val rows = for {
-      relation <- pracownicy
-      newRelation <- ManipulationBuilder.insertRow(query, relation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation)
       rows = newRelation.body
     } yield rows
     assert(
@@ -88,44 +62,19 @@ class ManipulationBuilderTest extends FunSuite {
 
   test("Insert row with missing primary key 'Nr' from Pracownicy") {}
 
-  /*
-     INSERT INTO Pracownicy VALUES
-     (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
-   */
-  val row1 = Row(
-    BodyAttribute("Nr", IntegerLiteral(1)),
-    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-    BodyAttribute("Imie", StringLiteral("Jan")),
-    BodyAttribute("Stawka", IntegerLiteral(1500)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2010-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-  )
-  /*
-   INSERT INTO Pracownicy VALUES
-   (2, 'Nowak','Anna', 1600, '2012-01-01',2)
-   */
-  val row2 = Row(
-    BodyAttribute("Nr", IntegerLiteral(2)),
-    BodyAttribute("Nazwisko", StringLiteral("Nowak")),
-    BodyAttribute("Imie", StringLiteral("Anna")),
-    BodyAttribute("Stawka", IntegerLiteral(1600)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-  )
-  /*
-  CREATE TABLE Pracownicy(
-    Nr INT PRIMARY KEY,
-    Nazwisko NVARCHAR(50) NOT NULL,
-    Imie NVARCHAR(50) NOT NULL,
-    Stawka MONEY,
-    DataZatrudnienia DATE,
-    LiczbaDzieci TINYINT
-  )
-   */
-  val relation = Relation(
-    "Pracownicy",
-    Nil,
-    None,
+  test("DELETE FROM Pracownicy WHERE Nr=1") {
+    val query = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(1))))
+    val isDeleted = for {
+      newRelation <- ManipulationBuilder.deleteRows(query, pracownicyRelation)
+      rows = newRelation.body
+    } yield !rows.contains(pracownicyRow1)
+    assert(isDeleted.contains(true))
+  }
+
+  val pracownicyRelationWithIdentity = Relation(
+    "Pracownicy2",
+    List("Nr"),
+    Some(Identity("Nr", 1, 1)),
     List(
       HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
       HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
@@ -134,36 +83,9 @@ class ManipulationBuilderTest extends FunSuite {
       HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
     ),
-    List(
-      row1,
-      row2
-    )
+    Nil
   )
 
-  test("DELETE FROM Pracownicy WHERE Nr=1") {
-    val query = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(1))))
-    val isDeleted = for {
-      newRelation <- ManipulationBuilder.deleteRows(query, relation)
-      rows = newRelation.body
-    } yield !rows.contains(row1)
-    assert(isDeleted.contains(true))
-  }
-
-  val pracownicy2: Either[SQLError, Relation] = RelationBuilder.build(
-    Create(
-      "Pracownicy2",
-      List(
-        HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
-        HeadingAttribute("Imie", StringType, List(NotNULL)),
-        HeadingAttribute("Stawka", MoneyType, Nil),
-        HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
-        HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
-      ),
-      Nil,
-      Some(Identity("Nr", 1, 1))
-    )
-  )
 
   test("Anonymous insert into table with defined Identity") {
     /*
@@ -183,8 +105,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val containsRow = for {
-      relation <- pracownicy2
-      newRelation <- ManipulationBuilder.insertRow(query, relation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelationWithIdentity)
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(rowWithID)
     assert(containsRow == Right(true))
@@ -208,8 +129,7 @@ class ManipulationBuilderTest extends FunSuite {
     )
 
     val violation = for {
-      relation <- pracownicy2
-      newRelation <- ManipulationBuilder.insertRow(query, relation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelationWithIdentity)
     } yield newRelation
     assert(violation == Left(IdentityViolation("Nr")))
   }
@@ -239,8 +159,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val hasRow = for {
-      relation <- pracownicy2
-      newRelation1 <- ManipulationBuilder.insertRow(query1, relation)
+      newRelation1 <- ManipulationBuilder.insertRow(query1, pracownicyRelationWithIdentity)
       newRelation2 <- ManipulationBuilder.insertRow(query2, newRelation1)
       rows = newRelation2.body
     } yield
@@ -267,9 +186,9 @@ class ManipulationBuilderTest extends FunSuite {
       BodyAttribute("LiczbaDzieci", IntegerLiteral(3))
     )
     val isUpdated = for {
-      newRelation <- ManipulationBuilder.updateRows(query, relation)
+      newRelation <- ManipulationBuilder.updateRows(query, pracownicyRelation)
       rows = newRelation.body
-    } yield rows.contains(expectedRow) && !rows.contains(row1)
+    } yield rows.contains(expectedRow) && !rows.contains(pracownicyRow1)
     assert(isUpdated == Right(true))
   }
 
@@ -282,8 +201,8 @@ class ManipulationBuilderTest extends FunSuite {
       Some(Equals("Nr", IntegerLiteral(999)))
     )
     val noEffect = for {
-      newRelation <- ManipulationBuilder.updateRows(query, relation)
-    } yield newRelation.body == relation.body
+      newRelation <- ManipulationBuilder.updateRows(query, pracownicyRelation)
+    } yield newRelation.body == pracownicyRelation.body
     assert(noEffect == Right(true))
   }
 
