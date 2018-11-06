@@ -11,7 +11,7 @@ class SelectionBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=1
      */
-    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), None)
+    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), Nil)
     val hasRow1 = for {
       rows <- SelectionBuilder.select(query, schemaPracownicy)
     } yield rows == List(pracownicyRow1)
@@ -23,7 +23,7 @@ class SelectionBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=9999
      */
-    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), None)
+    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), Nil)
     val isEmpty = for {
       rows <- SelectionBuilder.select(query, schemaPracownicy)
     } yield rows == Nil
@@ -36,7 +36,7 @@ class SelectionBuilderTest extends FunSuite {
       SELECT Nr, Nazwisko, Imie FROM Pracownicy
      */
     val query =
-      Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", Nil, None, None)
+      Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", Nil, None, Nil)
     val hasRow = for {
       rows <- SelectionBuilder.select(query, schemaPracownicy)
     } yield
@@ -84,7 +84,7 @@ class SelectionBuilderTest extends FunSuite {
           Equals("Nazwisko", StringLiteral("Kowalski")),
           Equals("Nazwisko", StringLiteral("Nowak"))
         )),
-      None,
+      Nil,
     )
     val haveRows = for {
       rows <- SelectionBuilder.select(query, schemaPracownicy)
@@ -106,7 +106,7 @@ class SelectionBuilderTest extends FunSuite {
           Equals("Nazwisko", StringLiteral("Kowalski")),
           Equals("Imie", StringLiteral("Jacek"))
         )),
-      None
+      Nil
     )
     val haveRows = for {
       rows <- SelectionBuilder.select(query, schemaPracownicy)
@@ -120,14 +120,14 @@ class SelectionBuilderTest extends FunSuite {
       "Pracownicy",
       Nil,
       Some(Equals("Nr", IntegerLiteral(1))),
-      None
+      Nil
     )
     val query2 = Select(
       List("Nr"),
       "Pracownicy",
       Nil,
       Some(Equals("Nr", IntegerLiteral(2))),
-      None
+      Nil
     )
     val union = Union(List(query1, query2))
     val expected = List(
@@ -146,7 +146,7 @@ class SelectionBuilderTest extends FunSuite {
       "Pracownicy",
       Nil,
       None,
-      None,
+      Nil,
       distinct = true
     )
     val expected = List(
@@ -167,7 +167,7 @@ class SelectionBuilderTest extends FunSuite {
       "Pracownicy",
       Nil,
       Some(Greater("Nr", IntegerLiteral(1))),
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("Nr", IntegerLiteral(2))),
@@ -187,7 +187,7 @@ class SelectionBuilderTest extends FunSuite {
       "Pracownicy",
       Nil,
       Some(LessOrEquals("Nr", IntegerLiteral(2))),
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("Nr", IntegerLiteral(1))),
@@ -205,7 +205,7 @@ class SelectionBuilderTest extends FunSuite {
       "Pracownicy",
       Nil,
       Some(Between("Nr", IntegerLiteral(2), IntegerLiteral(3))),
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("Nr", IntegerLiteral(2))),
@@ -223,7 +223,7 @@ class SelectionBuilderTest extends FunSuite {
       "Pracownicy",
       Nil,
       Some(IsNULL("LiczbaDzieci")),
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
@@ -232,5 +232,68 @@ class SelectionBuilderTest extends FunSuite {
       result <- SelectionBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isFiltered == Right(true))
+  }
+
+  test("SELECT Nr FROM Pracownicy ORDER BY Nr DESC") {
+    val query = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      None,
+      List(Descending("Nr"))
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+      Row(BodyAttribute("Nr", IntegerLiteral(4))),
+      Row(BodyAttribute("Nr", IntegerLiteral(3))),
+      Row(BodyAttribute("Nr", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(1))),
+    )
+    val isSorted = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield result == expected
+    assert(isSorted == Right(true))
+  }
+  test("SELECT Nr FROM Pracownicy ORDER BY Nr ASC") {
+    val query = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      None,
+      List(Ascending("Nr"))
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(1))),
+      Row(BodyAttribute("Nr", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(3))),
+      Row(BodyAttribute("Nr", IntegerLiteral(4))),
+      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+    )
+    val isSorted = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+    } yield result == expected
+    assert(isSorted == Right(true))
+  }
+
+  test("SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC") {
+    val query = Select(
+      List("Nr", "LiczbaDzieci"),
+      "Pracownicy",
+      Nil,
+      None,
+      List(Ascending("Nr"), Ascending("LiczbaDzieci"))
+    )
+    val expected = List(
+      Row(BodyAttribute("Nr", IntegerLiteral(1)), BodyAttribute("LiczbaDzieci", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(2)), BodyAttribute("LiczbaDzieci", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(3)), BodyAttribute("LiczbaDzieci", IntegerLiteral(2))),
+      Row(BodyAttribute("Nr", IntegerLiteral(4)), BodyAttribute("LiczbaDzieci", IntegerLiteral(1))),
+      Row(BodyAttribute("Nr", IntegerLiteral(5)), BodyAttribute("LiczbaDzieci", NULLLiteral)),
+    )
+    val isSorted = for {
+      result <- SelectionBuilder.select(query, schemaPracownicy)
+      _ = println(result)
+    } yield result
+    assert(isSorted == Right(expected))
   }
 }

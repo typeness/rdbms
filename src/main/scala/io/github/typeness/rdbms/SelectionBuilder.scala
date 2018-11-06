@@ -3,7 +3,7 @@ package io.github.typeness.rdbms
 import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
-
+import cats.syntax.either._
 import SQLError.EitherSQLError
 
 object SelectionBuilder extends BuilderUtils {
@@ -19,9 +19,9 @@ object SelectionBuilder extends BuilderUtils {
       //    _ <- checkUndefinedNames(query.projection, relation.heading.map(_.name))
       joined <- makeJoins(relation, query.joins, schema)
       filteredRows <- filterRows(joined, query.condition)
-      selectedColumns = project(query.projection, filteredRows)
-      sortedRows = sortRows(selectedColumns, query.order)
-    } yield if (query.distinct) sortedRows.distinct else sortedRows
+      sortedRows <- sortRows(filteredRows, query.order)
+      selectedColumns = project(query.projection, sortedRows)
+    } yield if (query.distinct) selectedColumns.distinct else selectedColumns
 
   private def project(names: List[String], rows: List[Row]): List[Row] =
     names match {
@@ -36,9 +36,41 @@ object SelectionBuilder extends BuilderUtils {
       case Some(cond) => BoolInterpreter.eval(cond, rows)
     }
 
-  private def sortRows(filteredRows: List[Row], order: Option[Order]): List[Row] = order match {
-    case None => filteredRows
-    case _    => ???
+  private def sortRows(rows: List[Row], order: List[Order]): Either[SQLError, List[Row]] = {
+
+    def sortRowsWithKey(rows: List[(Literal, Row)], condition: Int => Boolean): List[Row] =
+      rows
+        .sortWith {
+          case ((key1, _), (key2, _)) => condition(Literal.compareUnsafe(key1, key2))
+        }
+        .map {
+          case (_, row) => row
+        }
+
+    order match {
+      case Nil =>
+        Right(rows)
+      case _ =>
+        order.foldRight[Either[SQLError, List[Row]]](Right(rows))((order, rows) => {
+          rows.flatMap { rowList =>
+            val name = order.name
+            val rowsWithKey = rowList
+              .map(
+                row =>
+                  Either.fromOption(
+                    row.select(name).map(key => (key.literal, row)),
+                    ColumnDoesNotExists(name)
+                ))
+              .sequence[EitherSQLError, (Literal, Row)]
+            order match {
+              case Descending(_) =>
+                rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
+              case Ascending(_) =>
+                rowsWithKey.map(sortRowsWithKey(_, _ <= 0))
+            }
+          }
+        })
+    }
   }
 
   private def makeJoins(relation: Relation,

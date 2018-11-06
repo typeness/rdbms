@@ -4,6 +4,40 @@ sealed trait Expression
 
 case class Var(name: String) extends Expression
 
+object Literal {
+
+  def compare[A >: Literal](lhs: Literal, rhs: Literal): Either[SQLError, Int] = {
+    if (lhs.typeOf != rhs.typeOf) Left(TypeMismatch(lhs.typeOf, rhs.typeOf))
+    // find a better way to do this?
+    else Right(compareUnsafe(lhs, rhs))
+  }
+
+  def compareUnsafe(lhs: Literal, rhs: Literal): Int = {
+    lhs.typeOf match {
+      case IntegerType =>
+        comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
+      case DateType =>
+        comparison(lhs.asInstanceOf[StringLiteral], rhs.asInstanceOf[StringLiteral])
+      case StringType =>
+        comparison(lhs.asInstanceOf[StringLiteral], rhs.asInstanceOf[StringLiteral])
+      case NullType => -1
+      case MoneyType =>
+        comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
+      case BitType =>
+        comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
+    }
+  }
+  def reverseCompare(lhs: Literal, rhs: Literal): Either[SQLError, Int] = compare(lhs, rhs).map(-_)
+
+  def comparison(lhs: IntegerLiteral, rhs: IntegerLiteral): Int =
+    implicitly[Ordering[Int]].compare(lhs.value, rhs.value)
+  def comparison(lhs: StringLiteral, rhs: StringLiteral): Int =
+    implicitly[Ordering[String]].compare(lhs.value, rhs.value)
+  def comparison(lhs: Date, rhs: Date): Int =
+    implicitly[Ordering[String]].compare(lhs.value, rhs.value)
+  def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
+}
+
 sealed trait Literal extends Expression {
   def typeOf: AnyType
 }

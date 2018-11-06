@@ -12,7 +12,7 @@ class JoinsTest extends FunSuite {
       "RelationA",
       List(CrossJoin("RelationB")),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2))),
@@ -35,7 +35,7 @@ class JoinsTest extends FunSuite {
       "RelationA",
       List(CrossJoin("RelationB"), CrossJoin("RelationC")),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(1)),
@@ -130,7 +130,7 @@ class JoinsTest extends FunSuite {
       "RelationA",
       List(InnerJoin("RelationB", Equals("a", Var("b")))),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
@@ -149,7 +149,7 @@ class JoinsTest extends FunSuite {
         InnerJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(3)),
@@ -166,7 +166,7 @@ class JoinsTest extends FunSuite {
       "RelationA",
       List(LeftOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
@@ -186,7 +186,7 @@ class JoinsTest extends FunSuite {
         LeftOuterJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(1)),
@@ -209,7 +209,7 @@ class JoinsTest extends FunSuite {
       "RelationA",
       List(RightOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
@@ -229,7 +229,7 @@ class JoinsTest extends FunSuite {
         RightOuterJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(3)),
@@ -252,7 +252,7 @@ class JoinsTest extends FunSuite {
       "RelationA",
       List(FullOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
@@ -273,7 +273,7 @@ class JoinsTest extends FunSuite {
         FullOuterJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
-      None
+      Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(1)),

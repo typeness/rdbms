@@ -1,7 +1,7 @@
 package io.github.typeness.rdbms
 
 object SQLError {
-  type EitherSQLError[A] = Either[SQLError, A]
+  type EitherSQLError[+A] = Either[SQLError, A]
 }
 
 sealed trait SQLError

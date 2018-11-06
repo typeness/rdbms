@@ -34,15 +34,17 @@ case class Select(
     from: String,
     joins: List[Join],
     condition: Option[Bool],
-    order: Option[Order],
+    order: List[Order],
     distinct: Boolean = false
 ) extends SQL
 
 case class Union(selects: List[Select]) extends SQL
 
-sealed trait Order
-case object Ascending extends Order
-case object Descending extends Order
+sealed trait Order {
+  def name: String
+}
+case class Ascending(name: String) extends Order
+case class Descending(name: String) extends Order
 
 sealed trait Bool
 case class Equals(name: String, value: Expression) extends Bool
