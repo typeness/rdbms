@@ -39,6 +39,7 @@ case class Select(
 ) extends SQL
 
 case class Union(selects: List[Select]) extends SQL
+case class UnionAll(selects: List[Select]) extends SQL
 case class Intersect(selects: List[Select]) extends SQL
 case class Except(selects: List[Select]) extends SQL
 

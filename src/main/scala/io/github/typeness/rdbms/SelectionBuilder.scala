@@ -17,6 +17,9 @@ object SelectionBuilder extends BuilderUtils {
     } yield unions.map(_.toSet).reduceLeft(_.union(_)).toList
   }
 
+  def unionAllSelect(unionAll: UnionAll, schema: Schema): Either[SQLError, List[Row]] =
+    unionAll.selects.flatTraverse[EitherSQLError, Row](select(_, schema))
+
   def intersectSelect(intersect: Intersect, schema: Schema): Either[SQLError, List[Row]] = {
     val intersectsEither = intersect.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
     for {
