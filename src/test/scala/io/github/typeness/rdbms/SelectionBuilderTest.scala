@@ -292,8 +292,30 @@ class SelectionBuilderTest extends FunSuite {
     )
     val isSorted = for {
       result <- SelectionBuilder.select(query, schemaPracownicy)
-      _ = println(result)
     } yield result
     assert(isSorted == Right(expected))
+  }
+
+  test("SELECT a FROM RelationA WHERE INTERSECT SELECT a FROM RelationA WHERE a=3") {
+    val query1 = Select(
+      List("a"),
+      "RelationA",
+      Nil,
+      None,
+      Nil
+    )
+    val query2 = Select(
+      List("a"),
+      "RelationA",
+      Nil,
+      Some(Equals("a", IntegerLiteral(3))),
+      Nil
+    )
+    val intersect = Intersect(List(query1, query2))
+    val expected = List(
+      Row(BodyAttribute("a", IntegerLiteral(3)))
+    )
+    val result = SelectionBuilder.intersectSelect(intersect, schemaABC)
+    assert(result == Right(expected))
   }
 }

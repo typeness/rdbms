@@ -10,8 +10,26 @@ object SelectionBuilder extends BuilderUtils {
 
   private case class JoinWithRelation(join: Join, relation: Relation)
 
-  def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] =
-    union.selects.flatTraverse[EitherSQLError, Row](select1 => select(select1, schema))
+  def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] = {
+    val unionEither = union.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
+    for {
+      unions <- unionEither
+    } yield unions.map(_.toSet).reduceLeft(_.union(_)).toList
+  }
+
+  def intersectSelect(intersect: Intersect, schema: Schema): Either[SQLError, List[Row]] = {
+    val intersectsEither = intersect.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
+    for {
+      intersects <- intersectsEither
+    } yield intersects.map(_.toSet).reduceLeft(_.intersect(_)).toList
+  }
+
+  def exceptSelect(except: Except, schema: Schema): Either[SQLError, List[Row]] = {
+    val intersectsEither = except.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
+    for {
+      intersects <- intersectsEither
+    } yield intersects.map(_.toSet).reduceLeft(_.diff(_)).toList
+  }
 
   def select(query: Select, schema: Schema): Either[SQLError, List[Row]] =
     for {
