@@ -6,32 +6,53 @@ import cats.syntax.traverse._
 import cats.syntax.either._
 import SQLError.EitherSQLError
 
-object SelectionBuilder extends BuilderUtils {
+object QueryBuilder extends BuilderUtils {
 
   private case class JoinWithRelation(join: Join, relation: Relation)
 
-  def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] = {
-    val unionEither = union.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
-    for {
-      unions <- unionEither
-    } yield unions.map(_.toSet).reduceLeft(_.union(_)).toList
+  def makeQuery(query: Query, schema: Schema): Either[SQLError, List[Row]] = query match {
+    case sel: Select => select(sel, schema)
+    case union: Union => unionSelect(union, schema)
+    case unionAll: UnionAll => unionAllSelect(unionAll, schema)
+    case intersect: Intersect => intersectSelect(intersect, schema)
+    case except: Except => exceptSelect(except, schema)
   }
 
-  def unionAllSelect(unionAll: UnionAll, schema: Schema): Either[SQLError, List[Row]] =
-    unionAll.selects.flatTraverse[EitherSQLError, Row](select(_, schema))
+  def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] = {
+    val leftEither = makeQuery(union.left, schema)
+    val rightEither = makeQuery(union.right, schema)
+    for {
+      left <- leftEither
+      right <- rightEither
+    } yield left.toSet.union(right.toSet).toList
+  }
+
+  def unionAllSelect(unionAll: UnionAll, schema: Schema): Either[SQLError, List[Row]] = {
+    val leftEither = makeQuery(unionAll.left, schema)
+    val rightEither = makeQuery(unionAll.right, schema)
+    for {
+      left <- leftEither
+      right <- rightEither
+    } yield left ::: right
+  }
 
   def intersectSelect(intersect: Intersect, schema: Schema): Either[SQLError, List[Row]] = {
-    val intersectsEither = intersect.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
+    val leftEither = makeQuery(intersect.left, schema)
+    val rightEither = makeQuery(intersect.right, schema)
     for {
-      intersects <- intersectsEither
-    } yield intersects.map(_.toSet).reduceLeft(_.intersect(_)).toList
+      left <- leftEither
+      right <- rightEither
+    } yield left.toSet.intersect(right.toSet).toList
   }
 
   def exceptSelect(except: Except, schema: Schema): Either[SQLError, List[Row]] = {
-    val intersectsEither = except.selects.traverse[EitherSQLError, List[Row]](select(_, schema))
+    val leftEither = makeQuery(except.left, schema)
+    val rightEither = makeQuery(except.right, schema)
+
     for {
-      intersects <- intersectsEither
-    } yield intersects.map(_.toSet).reduceLeft(_.diff(_)).toList
+      left <- leftEither
+      right <- rightEither
+    } yield left.toSet.diff(right.toSet).toList
   }
 
   def select(query: Select, schema: Schema): Either[SQLError, List[Row]] =

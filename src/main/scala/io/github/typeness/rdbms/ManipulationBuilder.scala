@@ -31,7 +31,7 @@ object ManipulationBuilder extends BuilderUtils {
           val header =
             if (relation.identity.isEmpty) relation.heading
             else
-              relation.heading.filter(_.properties.collect {
+              relation.heading.filter(_.constraints.collect {
                 case PrimaryKey => true
               }.isEmpty)
           val newRow = Row(
@@ -88,7 +88,7 @@ object ManipulationBuilder extends BuilderUtils {
 
   private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
     val missing = header.filter(attribute => row.select(attribute.name).isEmpty)
-    val mandatory = missing.filter(_.properties.exists {
+    val mandatory = missing.filter(_.constraints.exists {
       case _: PrimaryKey.type => true
       case _: NotNULL.type    => true
       case _                  => false
@@ -100,7 +100,7 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def fillMissingAttributes(attributes: List[HeadingAttribute]): Row = {
-    def getDefaultValue(properties: List[Property]): Literal = {
+    def getDefaultValue(properties: List[Constraint]): Literal = {
       val haveDefault = properties.filter {
         case _: Default => true
         case _          => false
@@ -113,7 +113,7 @@ object ManipulationBuilder extends BuilderUtils {
 
     Row(
       attributes.map(attribute =>
-        BodyAttribute(attribute.name, getDefaultValue(attribute.properties)))
+        BodyAttribute(attribute.name, getDefaultValue(attribute.constraints)))
     )
   }
 

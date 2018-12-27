@@ -44,14 +44,14 @@ class RelationBuilderTest extends FunSuite {
   test("Primary key referencing non-existing column name") {
     /*
     CREATE TABLE Test(
-      name STRING
+      name NVARCHAR(50)
       PRIMARY KEY(id)
     )
      */
     val query = Create(
       "Test",
       List(
-        HeadingAttribute("name", StringType, Nil)
+        HeadingAttribute("name", NVarCharType(50), Nil)
       ),
       List("id"),
       None
@@ -66,7 +66,7 @@ class RelationBuilderTest extends FunSuite {
       None,
       List(
         HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
+        HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
       ),
       Nil
     )
@@ -76,7 +76,7 @@ class RelationBuilderTest extends FunSuite {
       None,
       List(
         HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("Imie", StringType, List(NotNULL)),
+        HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
       ),
       Nil
     )

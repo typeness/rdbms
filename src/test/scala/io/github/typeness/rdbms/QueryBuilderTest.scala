@@ -2,7 +2,7 @@ package io.github.typeness.rdbms
 
 import org.scalatest.FunSuite
 
-class SelectionBuilderTest extends FunSuite {
+class QueryBuilderTest extends FunSuite {
 
   import Relations._
 
@@ -13,7 +13,7 @@ class SelectionBuilderTest extends FunSuite {
      */
     val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), Nil)
     val hasRow1 = for {
-      rows <- SelectionBuilder.select(query, schemaPracownicy)
+      rows <- QueryBuilder.select(query, schemaPracownicy)
     } yield rows == List(pracownicyRow1)
     assert(hasRow1.contains(true))
   }
@@ -25,7 +25,7 @@ class SelectionBuilderTest extends FunSuite {
      */
     val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), Nil)
     val isEmpty = for {
-      rows <- SelectionBuilder.select(query, schemaPracownicy)
+      rows <- QueryBuilder.select(query, schemaPracownicy)
     } yield rows == Nil
     assert(isEmpty.contains(true))
   }
@@ -38,7 +38,7 @@ class SelectionBuilderTest extends FunSuite {
     val query =
       Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", Nil, None, Nil)
     val hasRow = for {
-      rows <- SelectionBuilder.select(query, schemaPracownicy)
+      rows <- QueryBuilder.select(query, schemaPracownicy)
     } yield
       rows == List(
         Row(
@@ -87,7 +87,7 @@ class SelectionBuilderTest extends FunSuite {
       Nil,
     )
     val haveRows = for {
-      rows <- SelectionBuilder.select(query, schemaPracownicy)
+      rows <- QueryBuilder.select(query, schemaPracownicy)
     } yield rows == List(pracownicyRow1, pracownicyRow4, pracownicyRow2)
     assert(haveRows.contains(true))
   }
@@ -109,7 +109,7 @@ class SelectionBuilderTest extends FunSuite {
       Nil
     )
     val haveRows = for {
-      rows <- SelectionBuilder.select(query, schemaPracownicy)
+      rows <- QueryBuilder.select(query, schemaPracownicy)
     } yield rows == List(pracownicyRow4)
     assert(haveRows.contains(true))
   }
@@ -129,13 +129,13 @@ class SelectionBuilderTest extends FunSuite {
       Some(Equals("Nr", IntegerLiteral(2))),
       Nil
     )
-    val union = Union(List(query1, query2))
+    val union = Union(query1, query2)
     val expected = List(
       Row(BodyAttribute("Nr", IntegerLiteral(1))),
       Row(BodyAttribute("Nr", IntegerLiteral(2)))
     )
     val hasRows = for {
-      result <- SelectionBuilder.unionSelect(union, schemaPracownicy)
+      result <- QueryBuilder.unionSelect(union, schemaPracownicy)
     } yield result == expected
     assert(hasRows == Right(true))
   }
@@ -156,7 +156,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nazwisko", StringLiteral("Grzyb"))),
     )
     val isDistinct = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isDistinct == Right(true))
   }
@@ -176,7 +176,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
     )
     val isFiltered = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -194,7 +194,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(2))),
     )
     val isFiltered = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -212,7 +212,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(3))),
     )
     val isFiltered = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -229,7 +229,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
     )
     val isFiltered = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -250,7 +250,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(1))),
     )
     val isSorted = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isSorted == Right(true))
   }
@@ -270,7 +270,7 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
     )
     val isSorted = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result == expected
     assert(isSorted == Right(true))
   }
@@ -291,12 +291,12 @@ class SelectionBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5)), BodyAttribute("LiczbaDzieci", NULLLiteral)),
     )
     val isSorted = for {
-      result <- SelectionBuilder.select(query, schemaPracownicy)
+      result <- QueryBuilder.select(query, schemaPracownicy)
     } yield result
     assert(isSorted == Right(expected))
   }
 
-  test("SELECT a FROM RelationA WHERE INTERSECT SELECT a FROM RelationA WHERE a=3") {
+  test("SELECT a FROM RelationA INTERSECT SELECT a FROM RelationA WHERE a=3") {
     val query1 = Select(
       List("a"),
       "RelationA",
@@ -311,11 +311,11 @@ class SelectionBuilderTest extends FunSuite {
       Some(Equals("a", IntegerLiteral(3))),
       Nil
     )
-    val intersect = Intersect(List(query1, query2))
+    val intersect = Intersect(query1, query2)
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(3)))
     )
-    val result = SelectionBuilder.intersectSelect(intersect, schemaABC)
+    val result = QueryBuilder.intersectSelect(intersect, schemaABC)
     assert(result == Right(expected))
   }
 }

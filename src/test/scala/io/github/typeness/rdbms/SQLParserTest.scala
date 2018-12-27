@@ -1,0 +1,249 @@
+package io.github.typeness.rdbms
+import fastparse._
+import org.scalatest.FunSuite
+
+class SQLParserTest extends FunSuite {
+  test("INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')") {
+    val sql = "INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')"
+    val expected = AnonymousInsert(
+      "Abc",
+      List(IntegerLiteral(1), IntegerLiteral(123), NULLLiteral, DateLiteral("'2010-01-01'"))
+    )
+    val Parsed.Success(value, _) = SQLParser.parse(sql)
+    assert(value == expected)
+  }
+
+  test("INSERT INTO Pracownicy (Nr, Nazwisko, Imie) VALUES (1, 'Kowal', 'Piotr')") {
+    val sql = "INSERT INTO Pracownicy (Nr, Nazwisko, Imie) VALUES (1, 'Kowal', 'Piotr')"
+    val expected = NamedInsert(
+      "Pracownicy",
+      Row(
+        BodyAttribute("Nr", IntegerLiteral(1)),
+        BodyAttribute("Nazwisko", StringLiteral("Kowal")),
+        BodyAttribute("Imie", StringLiteral("Piotr")),
+      )
+    )
+    val Parsed.Success(value, _) = SQLParser.parse(sql)
+    assert(value == expected)
+  }
+
+  test("DELETE FROM Pracownicy WHERE Nr = 1") {
+    val sql = "DELETE FROM Pracownicy WHERE Nr = 1"
+    val expected = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(1))))
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("UPDATE Pracownicy SET Stawka = 1234, LiczbaDzieci = 3 WHERE Nr = 1") {
+    val sql = "UPDATE Pracownicy SET Stawka = 1234, LiczbaDzieci = 3 WHERE Nr = 1"
+    val expected = Update(
+      "Pracownicy",
+      Row(
+        List(BodyAttribute("Stawka", IntegerLiteral(1234)),
+             BodyAttribute("LiczbaDzieci", IntegerLiteral(3)))),
+      Some(Equals("Nr", IntegerLiteral(1)))
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT * FROM Pracownicy WHERE Nr = 1") {
+    val sql = "SELECT * FROM Pracownicy WHERE Nr = 1"
+    val expected =
+      Select(List(), "Pracownicy", List(), Some(Equals("Nr", IntegerLiteral(1))), List())
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT Nr, Nazwisko, Imie FROM Pracownicy") {
+    val sql = "SELECT Nr, Nazwisko, Imie FROM Pracownicy"
+    val expected = Select(List("Nr", "Nazwisko", "Imie"), "Pracownicy", List(), None, List())
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' OR Nazwisko='Nowak'") {
+    val sql = "SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' OR Nazwisko='Nowak'"
+    val expected = Select(List(),
+                          "Pracownicy",
+                          List(),
+                          Some(
+                            Or(Equals("Nazwisko", StringLiteral("Kowalski")),
+                               Equals("Nazwisko", StringLiteral("Nowak")))),
+                          List())
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC") {
+    val sql = "SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC"
+    val expected = Select(List("Nr", "LiczbaDzieci"),
+                          "Pracownicy",
+                          List(),
+                          None,
+                          List(Ascending("Nr"), Ascending("LiczbaDzieci")))
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT a, b FROM RelationA CROSS JOIN RelationB") {
+    val sql = "SELECT a, b FROM RelationA CROSS JOIN RelationB"
+    val expected = Select(
+      List("a", "b"),
+      "RelationA",
+      List(CrossJoin("RelationB")),
+      None,
+      Nil
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT a, b, c FROM RelationA CROSS JOIN RelationB CROSS JOIN RelationC") {
+    val sql = "SELECT a, b, c FROM RelationA CROSS JOIN RelationB CROSS JOIN RelationC"
+    val expected = Select(
+      List("a", "b", "c"),
+      "RelationA",
+      List(CrossJoin("RelationB"), CrossJoin("RelationC")),
+      None,
+      Nil
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT a, b, c FROM RelationA INNER JOIN RelationB ON a = b INNER JOIN RelationC ON a = c") {
+    val sql =
+      "SELECT a, b, c FROM RelationA INNER JOIN RelationB ON a = b INNER JOIN RelationC ON a = c"
+    val expected = Select(
+      List("a", "b", "c"),
+      "RelationA",
+      List(
+        InnerJoin("RelationB", Equals("a", Var("b"))),
+        InnerJoin("RelationC", Equals("a", Var("c"))),
+      ),
+      None,
+      Nil
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test(
+    "SELECT a, b, c FROM RelationA LEFT OUTER JOIN RelationB ON a = b LEFT OUTER JOIN RelationC ON a = c") {
+    val sql =
+      "SELECT a, b, c FROM RelationA LEFT OUTER JOIN RelationB ON a = b LEFT OUTER JOIN RelationC ON a = c"
+    val expected = Select(
+      List("a", "b", "c"),
+      "RelationA",
+      List(
+        LeftOuterJoin("RelationB", Equals("a", Var("b"))),
+        LeftOuterJoin("RelationC", Equals("a", Var("c"))),
+      ),
+      None,
+      Nil
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test(
+    "SELECT a, b, c FROM RelationA RIGHT OUTER JOIN RelationB ON a = b RIGHT OUTER JOIN RelationC ON a = c") {
+    val sql =
+      "SELECT a, b, c FROM RelationA RIGHT OUTER JOIN RelationB ON a = b RIGHT OUTER JOIN RelationC ON a = c"
+    val expected = Select(
+      List("a", "b", "c"),
+      "RelationA",
+      List(
+        RightOuterJoin("RelationB", Equals("a", Var("b"))),
+        RightOuterJoin("RelationC", Equals("a", Var("c"))),
+      ),
+      None,
+      Nil
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test(
+    "SELECT a, b, c FROM RelationA FULL OUTER JOIN RelationB ON a = b FULL OUTER JOIN RelationC ON a = c") {
+    val sql =
+      "SELECT a, b, c FROM RelationA FULL OUTER JOIN RelationB ON a = b FULL OUTER JOIN RelationC ON a = c"
+    val expected = Select(
+      List("a", "b", "c"),
+      "RelationA",
+      List(
+        FullOuterJoin("RelationB", Equals("a", Var("b"))),
+        FullOuterJoin("RelationC", Equals("a", Var("c"))),
+      ),
+      None,
+      Nil
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT Nr FROM Pracownicy WHERE Nr = 1 UNION SELECT Nr FROM Pracownicy WHERE Nr = 2") {
+    val sql = "SELECT Nr FROM Pracownicy WHERE Nr = 1 UNION SELECT Nr FROM Pracownicy WHERE Nr = 2"
+    val query1 = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(Equals("Nr", IntegerLiteral(1))),
+      Nil
+    )
+    val query2 = Select(
+      List("Nr"),
+      "Pracownicy",
+      Nil,
+      Some(Equals("Nr", IntegerLiteral(2))),
+      Nil
+    )
+    val expected = Union(query1, query2)
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("SELECT a FROM RelationA INTERSECT SELECT a FROM RelationA WHERE a=3") {
+    val sql = "SELECT a FROM RelationA INTERSECT SELECT a FROM RelationA WHERE a=3"
+    val query1 = Select(
+      List("a"),
+      "RelationA",
+      Nil,
+      None,
+      Nil
+    )
+    val query2 = Select(
+      List("a"),
+      "RelationA",
+      Nil,
+      Some(Equals("a", IntegerLiteral(3))),
+      Nil
+    )
+    val expected = Intersect(query1, query2)
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("CREATE TABLE Urlopy(NrPrac INT PRIMARY KEY, OdKiedy DATE PRIMARY KEY, DoKiedy DATE)") {
+    val sql = "CREATE TABLE Urlopy(NrPrac INT PRIMARY KEY, OdKiedy DATE PRIMARY KEY, DoKiedy DATE)"
+    val expected = Create(
+      "Urlopy",
+      List(
+        HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey)),
+        HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+        HeadingAttribute("DoKiedy", DateType, Nil)
+      ),
+      Nil,
+      None
+    )
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    assert(result == expected)
+  }
+
+  test("CREATE TABLE PRacoWniCy(NrPrac INT pRiMaRY KeY, PESEL CHAR(11) UNIQUE NOT NULL, Nazwisko NVARCHAR(50) NOT NULL, Imie NVARCHAR(50) NOT NULL, Stawka MONEY NULL, [Data urodzenia] DATE, LiczbaDzieci TINYINT, Premia DECIMAL(5,3))") {
+    val sql = "CREATE TABLE PRacoWniCy(NrPrac INT pRiMaRY KeY, PESEL CHAR(11) UNIQUE NOT NULL, Nazwisko NVARCHAR(50) NOT NULL, Imie NVARCHAR(50) NOT NULL, Stawka MONEY NULL, [Data urodzenia] DATE, LiczbaDzieci TINYINT, Premia DECIMAL(5,3))"
+    val Parsed.Success(result, _) = SQLParser.parse(sql)
+  }
+
+}

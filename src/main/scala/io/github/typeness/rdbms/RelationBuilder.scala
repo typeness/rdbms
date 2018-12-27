@@ -14,6 +14,8 @@ object RelationBuilder extends BuilderUtils {
       Schema(schema.relations.filter(_.name != query.name))
     )
 
+//  def alterDrop(alter: AlterDrop): Either[SQLError, Relation] = ???
+
   private def getPrimaryKey(query: Create): Either[SQLError, List[String]] =
     query.primaryKeys match {
       case Nil => getPrimaryKeyFromAttributes(query.attributes).map(_.toList)
@@ -27,13 +29,13 @@ object RelationBuilder extends BuilderUtils {
   private def getPrimaryKeyFromAttributes(
       attributes: List[HeadingAttribute]): Either[SQLError, Option[String]] = {
 
-    def isPrimaryKey(property: Property): Boolean = property match {
+    def isPrimaryKey(property: Constraint): Boolean = property match {
       case PrimaryKey => true
       case _          => false
     }
 
     val primaryKeys = attributes.collect {
-      case attribute: HeadingAttribute if attribute.properties.exists(isPrimaryKey) =>
+      case attribute: HeadingAttribute if attribute.constraints.exists(isPrimaryKey) =>
         attribute.name
     }
     primaryKeys match {

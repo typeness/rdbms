@@ -29,6 +29,8 @@ sealed trait Control extends SQL
 case object Grant extends Control
 
 // Data Query Language
+sealed trait Query extends SQL
+
 case class Select(
     projection: List[String],
     from: String,
@@ -36,12 +38,12 @@ case class Select(
     condition: Option[Bool],
     order: List[Order],
     distinct: Boolean = false
-) extends SQL
+) extends Query
 
-case class Union(selects: List[Select]) extends SQL
-case class UnionAll(selects: List[Select]) extends SQL
-case class Intersect(selects: List[Select]) extends SQL
-case class Except(selects: List[Select]) extends SQL
+case class Union(left: Query, right: Query) extends Query
+case class UnionAll(left: Query, right: Query) extends Query
+case class Intersect(left: Query, right: Query) extends Query
+case class Except(left: Query, right: Query) extends Query
 
 sealed trait Order {
   def name: String

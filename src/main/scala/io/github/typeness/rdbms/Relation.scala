@@ -1,10 +1,5 @@
 package io.github.typeness.rdbms
 
-sealed trait Property
-case object Unique extends Property
-case object NotNULL extends Property
-case object PrimaryKey extends Property
-case class Default(value: Literal) extends Property
 case class Identity(name: String, current: Int, step: Int)
 
 case class Schema(relations: List[Relation]) {

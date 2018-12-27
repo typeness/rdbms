@@ -4,6 +4,26 @@ sealed trait Expression
 
 case class Var(name: String) extends Expression
 
+sealed trait Literal extends Expression {
+  def typeOf: AnyType
+}
+
+case class IntegerLiteral(value: Int) extends Literal {
+  override def typeOf: AnyType = IntegerType
+}
+
+case class StringLiteral(value: String) extends Literal {
+  override def typeOf: AnyType = NVarCharType(1)
+}
+
+case class DateLiteral(value: String) extends Literal {
+  override def typeOf: AnyType = DateType
+}
+
+case object NULLLiteral extends Literal {
+  override def typeOf: AnyType = NullType
+}
+
 object Literal {
 
   def compare[A >: Literal](lhs: Literal, rhs: Literal): Either[SQLError, Int] = {
@@ -18,7 +38,7 @@ object Literal {
         comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
       case DateType =>
         comparison(lhs.asInstanceOf[StringLiteral], rhs.asInstanceOf[StringLiteral])
-      case StringType =>
+      case NVarCharType(_) =>
         comparison(lhs.asInstanceOf[StringLiteral], rhs.asInstanceOf[StringLiteral])
       case NullType => -1
       case MoneyType =>
@@ -33,27 +53,8 @@ object Literal {
     implicitly[Ordering[Int]].compare(lhs.value, rhs.value)
   def comparison(lhs: StringLiteral, rhs: StringLiteral): Int =
     implicitly[Ordering[String]].compare(lhs.value, rhs.value)
-  def comparison(lhs: Date, rhs: Date): Int =
+  def comparison(lhs: DateLiteral, rhs: DateLiteral): Int =
     implicitly[Ordering[String]].compare(lhs.value, rhs.value)
   def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
 }
 
-sealed trait Literal extends Expression {
-  def typeOf: AnyType
-}
-
-case class IntegerLiteral(value: Int) extends Literal {
-  override def typeOf: AnyType = IntegerType
-}
-
-case class StringLiteral(value: String) extends Literal {
-  override def typeOf: AnyType = StringType
-}
-
-case class Date(value: String) extends Literal {
-  override def typeOf: AnyType = DateType
-}
-
-case object NULLLiteral extends Literal {
-  override def typeOf: AnyType = NullType
-}

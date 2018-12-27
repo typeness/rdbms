@@ -117,8 +117,8 @@ object Relations {
     None,
     List(
       HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-      HeadingAttribute("Nazwisko", StringType, List(NotNULL)),
-      HeadingAttribute("Imie", StringType, List(NotNULL)),
+      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
+      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
       HeadingAttribute("Stawka", MoneyType, Nil),
       HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
