@@ -60,9 +60,10 @@ object QueryBuilder extends BuilderUtils {
       relation <- schema.getRelation(query.from)
       //    _ <- checkUndefinedNames(query.projection, relation.heading.map(_.name))
       joined <- makeJoins(relation, query.joins, schema)
-      filteredRows <- filterRows(joined, query.condition)
+      filteredRows <- filterRows(joined, query.where)
       groupedRows <- groupBy(query.groupBy, filteredRows, query.getAggregates)
-      sortedRows <- sortRows(groupedRows, query.order)
+      havingResult <- having(groupedRows, query.having)
+      sortedRows <- sortRows(havingResult, query.order)
       selectedColumns = project(query.projection, sortedRows)
     } yield if (query.distinct) selectedColumns.distinct else selectedColumns
 
@@ -85,6 +86,9 @@ object QueryBuilder extends BuilderUtils {
       case None       => Right(rows)
       case Some(cond) => BoolInterpreter.eval(cond, rows)
     }
+
+  private def having(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] =
+    filterRows(rows, condition)
 
   private def sortRows(rows: List[Row], order: List[Order]): Either[SQLError, List[Row]] = {
     def sortRowsWithKey(rows: List[(Literal, Row)], condition: Int => Boolean): List[Row] =

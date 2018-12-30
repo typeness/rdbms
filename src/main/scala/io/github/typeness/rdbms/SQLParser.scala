@@ -46,14 +46,15 @@ object SQLParser {
     P(
       IgnoreCase("SELECT") ~ space ~ IgnoreCase("DISTINCT").!.? ~ space ~ selectList ~ space ~
         IgnoreCase("FROM") ~ space ~ id ~ space ~ join ~ (space ~ where).? ~
-        (space ~ groupBy).? ~ space ~ order.?
+        (space ~ groupBy).? ~ (space ~ having).? ~ (space ~ order).?
     ).map {
-      case (distinct, proj, name, join, cond, group, order) =>
+      case (distinct, proj, name, join, cond, group, having, order) =>
         Select(proj,
                name,
                join,
                cond,
                group.getOrElse(Nil),
+               having,
                order.getOrElse(Nil),
                distinct.isDefined)
     }
@@ -81,6 +82,9 @@ object SQLParser {
 
   private def where[_: P]: P[Bool] =
     P(IgnoreCase("WHERE") ~ space ~ or)
+
+  private def having[_: P]: P[Bool] =
+    P(IgnoreCase("HAVING") ~ space ~ or)
 
   private def groupBy[_: P]: P[List[String]] =
     P(IgnoreCase("GROUP BY") ~ space ~ id.rep(min = 1, sep = ", ").map(_.toList))
@@ -146,8 +150,8 @@ object SQLParser {
   private def id[_: P]: P[String] =
     P(
       aggregate.! |
-      CharIn("a-zA-Z").rep(1).! |
-      ("[" ~ CharIn("a-zA-Z ").rep(1) ~ "]").!
+        CharIn("a-zA-Z").rep(1).! |
+        ("[" ~ CharIn("a-zA-Z ").rep(1) ~ "]").!
     )
 
   private def `null`[_: P]: P[NULLLiteral.type] =

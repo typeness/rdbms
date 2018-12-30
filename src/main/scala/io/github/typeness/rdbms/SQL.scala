@@ -35,8 +35,9 @@ case class Select(
     projection: List[Expression],
     from: String,
     joins: List[Join],
-    condition: Option[Bool],
+    where: Option[Bool],
     groupBy: List[String],
+    having: Option[Bool],
     order: List[Order],
     distinct: Boolean = false
 ) extends Query {

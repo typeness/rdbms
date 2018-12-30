@@ -13,6 +13,7 @@ class JoinsTest extends FunSuite {
       List(CrossJoin("RelationB")),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -37,6 +38,7 @@ class JoinsTest extends FunSuite {
       List(CrossJoin("RelationB"), CrossJoin("RelationC")),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -133,6 +135,7 @@ class JoinsTest extends FunSuite {
       List(InnerJoin("RelationB", Equals("a", Var("b")))),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -153,6 +156,7 @@ class JoinsTest extends FunSuite {
       ),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -171,6 +175,7 @@ class JoinsTest extends FunSuite {
       List(LeftOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -192,6 +197,7 @@ class JoinsTest extends FunSuite {
       ),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -216,6 +222,7 @@ class JoinsTest extends FunSuite {
       List(RightOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -237,6 +244,7 @@ class JoinsTest extends FunSuite {
       ),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -261,6 +269,7 @@ class JoinsTest extends FunSuite {
       List(FullOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -283,6 +292,7 @@ class JoinsTest extends FunSuite {
       ),
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(

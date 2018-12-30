@@ -11,7 +11,8 @@ class QueryBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=1
      */
-    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), Nil, Nil)
+    val query =
+      Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), Nil, None, Nil)
     val hasRow1 = for {
       rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
     } yield rows == List(pracownicyRow1)
@@ -23,7 +24,8 @@ class QueryBuilderTest extends FunSuite {
     /*
       SELECT * FROM Pracownicy WHERE Nr=9999
      */
-    val query = Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), Nil, Nil)
+    val query =
+      Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), Nil, None, Nil)
     val isEmpty = for {
       rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
     } yield rows == Nil
@@ -36,7 +38,7 @@ class QueryBuilderTest extends FunSuite {
       SELECT Nr, Nazwisko, Imie FROM Pracownicy
      */
     val query =
-      Select(List(Var("Nr"), Var("Nazwisko"), Var("Imie")), "Pracownicy", Nil, None, Nil, Nil)
+      Select(List(Var("Nr"), Var("Nazwisko"), Var("Imie")), "Pracownicy", Nil, None, Nil, None, Nil)
     val expected = List(
       Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
@@ -85,6 +87,7 @@ class QueryBuilderTest extends FunSuite {
           Equals("Nazwisko", StringLiteral("Nowak"))
         )),
       Nil,
+      None,
       Nil,
     )
     val haveRows = for {
@@ -108,6 +111,7 @@ class QueryBuilderTest extends FunSuite {
           Equals("Imie", StringLiteral("Jacek"))
         )),
       Nil,
+      None,
       Nil
     )
     val haveRows = for {
@@ -123,6 +127,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(Equals("Nr", IntegerLiteral(1))),
       Nil,
+      None,
       Nil
     )
     val query2 = Select(
@@ -131,6 +136,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(Equals("Nr", IntegerLiteral(2))),
       Nil,
+      None,
       Nil
     )
     val union = Union(query1, query2)
@@ -151,6 +157,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil,
       distinct = true
     )
@@ -173,6 +180,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(Greater("Nr", IntegerLiteral(1))),
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -194,6 +202,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(LessOrEquals("Nr", IntegerLiteral(2))),
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -213,6 +222,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(Between("Nr", IntegerLiteral(2), IntegerLiteral(3))),
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -232,6 +242,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(IsNULL("LiczbaDzieci")),
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -250,6 +261,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       List(Descending("Nr"))
     )
     val expected = List(
@@ -271,6 +283,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       List(Ascending("Nr"))
     )
     val expected = List(
@@ -293,6 +306,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       List(Ascending("Nr"), Ascending("LiczbaDzieci"))
     )
     val expected = List(
@@ -315,6 +329,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil
     )
     val query2 = Select(
@@ -323,6 +338,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       Some(Equals("a", IntegerLiteral(3))),
       Nil,
+      None,
       Nil
     )
     val intersect = Intersect(query1, query2)
@@ -340,6 +356,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -356,6 +373,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -372,6 +390,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -388,6 +407,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -404,6 +424,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       Nil,
+      None,
       Nil
     )
     val expected = List(
@@ -420,6 +441,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       List("Nr"),
+      None,
       List(Ascending("Nr"))
     )
     val expected = List(
@@ -440,6 +462,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
       None,
       List("Nazwisko"),
+      None,
       List(Descending("Count(Nr)"))
     )
     val expected = List(
@@ -457,8 +480,29 @@ class QueryBuilderTest extends FunSuite {
              BodyAttribute("Count(Nr)", IntegerLiteral(1))))
     )
 
-    val resullt = QueryBuilder.makeQuery(query, schemaPracownicy)
-    assert(resullt == Right(expected))
+    val result = QueryBuilder.makeQuery(query, schemaPracownicy)
+    assert(result == Right(expected))
+  }
+
+  test(
+    "SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko HAVING Count(Nr) >= 2 ORDER BY Count(Nr) DESC") {
+    val query = Select(
+      List(Var("Nazwisko"), Count("Nr")),
+      "Pracownicy",
+      Nil,
+      None,
+      List("Nazwisko"),
+      Some(GreaterOrEquals("Count(Nr)", IntegerLiteral(2))),
+      List(Descending("Count(Nr)"))
+    )
+    val expected = List(
+      Row(
+        List(BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
+             BodyAttribute("Count(Nr)", IntegerLiteral(2)))
+      )
+    )
+    val result = QueryBuilder.makeQuery(query, schemaPracownicy)
+    assert(result == Right(expected))
   }
 
 }
