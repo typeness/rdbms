@@ -8,10 +8,11 @@ class JoinsTest extends FunSuite {
 
   test("CROSS JOIN on 2 relations") {
     val join = Select(
-      List("a", "b"),
+      List(Var("a"), Var("b")),
       "RelationA",
       List(CrossJoin("RelationB")),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -25,16 +26,17 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)))
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("CROSS JOIN on 3 relations") {
     val join = Select(
-      List("a", "b", "c"),
+      List(Var("a"), Var("b"), Var("c")),
       "RelationA",
       List(CrossJoin("RelationB"), CrossJoin("RelationC")),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -120,35 +122,37 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", IntegerLiteral(4)),
           BodyAttribute("c", IntegerLiteral(5))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("INNER JOIN on 2 relations") {
     val join = Select(
-      List("a", "b"),
+      List(Var("a"), Var("b")),
       "RelationA",
       List(InnerJoin("RelationB", Equals("a", Var("b")))),
       None,
+      Nil,
       Nil
     )
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("INNER JOIN on 3 relations") {
     val join = Select(
-      List("a", "b", "c"),
+      List(Var("a"), Var("b"), Var("c")),
       "RelationA",
       List(
         InnerJoin("RelationB", Equals("a", Var("b"))),
         InnerJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -156,16 +160,17 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", IntegerLiteral(3)),
           BodyAttribute("c", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("LEFT OUTER JOIN on 2 relations") {
     val join = Select(
-      List("a", "b"),
+      List(Var("a"), Var("b")),
       "RelationA",
       List(LeftOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -173,19 +178,20 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("LEFT OUTER JOIN on 3 relations") {
     val join = Select(
-      List("a", "b", "c"),
+      List(Var("a"), Var("b"), Var("c")),
       "RelationA",
       List(
         LeftOuterJoin("RelationB", Equals("a", Var("b"))),
         LeftOuterJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -199,16 +205,17 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", IntegerLiteral(3)),
           BodyAttribute("c", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("RIGHT OUTER JOIN on 2 relations") {
     val join = Select(
-      List("a", "b"),
+      List(Var("a"), Var("b")),
       "RelationA",
       List(RightOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -216,19 +223,20 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("RIGHT OUTER JOIN on 3 relations") {
     val join = Select(
-      List("a", "b", "c"),
+      List(Var("a"), Var("b"), Var("c")),
       "RelationA",
       List(
         RightOuterJoin("RelationB", Equals("a", Var("b"))),
         RightOuterJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -242,16 +250,17 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", NULLLiteral),
           BodyAttribute("c", IntegerLiteral(5))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("FULL OUTER JOIN on 2 relations") {
     val join = Select(
-      List("a", "b"),
+      List(Var("a"), Var("b")),
       "RelationA",
       List(FullOuterJoin("RelationB", Equals("a", Var("b")))),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -260,19 +269,20 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 
   test("FULL OUTER JOIN on 3 relations") {
     val join = Select(
-      List("a", "b", "c"),
+      List(Var("a"), Var("b"), Var("c")),
       "RelationA",
       List(
         FullOuterJoin("RelationB", Equals("a", Var("b"))),
         FullOuterJoin("RelationC", Equals("a", Var("c"))),
       ),
       None,
+      Nil,
       Nil
     )
     val expected = List(
@@ -295,7 +305,7 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", NULLLiteral),
           BodyAttribute("c", IntegerLiteral(5))),
     )
-    val result = QueryBuilder.select(join, schemaABC)
+    val result = QueryBuilder.makeQuery(join, schemaABC)
     assert(result == Right(expected))
   }
 }

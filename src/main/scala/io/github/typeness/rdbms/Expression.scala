@@ -58,3 +58,49 @@ object Literal {
   def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
 }
 
+sealed trait Aggregate extends Expression {
+  def eval(literals: List[Literal]): Either[TypeMismatch, Literal]
+  def argument: String
+}
+case class Sum(argument: String) extends Aggregate {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] = {
+    val (nonInts, ints) = literals.partition {
+      case _: IntegerLiteral => false
+    }
+    if (nonInts.nonEmpty) Left(TypeMismatch(nonInts.head.typeOf, IntegerType))
+    // find a way to avoid using isInstanceOf
+    else Right(IntegerLiteral(ints.asInstanceOf[List[IntegerLiteral]].map(_.value).sum))
+  }
+}
+case class Avg(argument: String) extends Aggregate {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] = {
+    for {
+      sum <- Sum(argument).eval(literals)
+      count <- Count(argument).eval(literals)
+    } yield IntegerLiteral(sum.value / count.value)
+  }
+}
+case class Count(argument: String) extends Aggregate {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] =
+    Right(IntegerLiteral(literals.size))
+}
+case class Max(argument: String) extends Aggregate {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, Literal] =
+    Right(
+      literals
+        .sortWith {
+          case (left, right) => Literal.compareUnsafe(left, right) > 0
+        }
+        .headOption
+        .getOrElse(NULLLiteral))
+}
+case class Min(argument: String) extends Aggregate {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, Literal] =
+    Right(
+      literals
+        .sortWith {
+          case (left, right) => Literal.compareUnsafe(left, right) < 0
+        }
+        .headOption
+        .getOrElse(NULLLiteral))
+}

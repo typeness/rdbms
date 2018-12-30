@@ -15,8 +15,10 @@ object Relation {
 }
 
 case class Row(attributes: List[BodyAttribute]) {
-  def select(name: String): Option[BodyAttribute] =
+  def project(name: String): Option[BodyAttribute] =
     attributes.find(_.name == name)
+  def projectMany(names: List[String]): Row =
+    Row(attributes.filter(attrib => names.contains(attrib.name)))
   def getNames: List[String] = attributes.map(_.name)
   def getValues: List[Literal] = attributes.map(_.literal)
   def map(f: BodyAttribute => BodyAttribute): Row = Row(attributes.map(f))
@@ -32,4 +34,6 @@ case class Relation(name: String,
                     primaryKey: List[String],
                     identity: Option[Identity],
                     heading: List[HeadingAttribute],
-                    body: List[Row])
+                    body: List[Row]) {
+
+}

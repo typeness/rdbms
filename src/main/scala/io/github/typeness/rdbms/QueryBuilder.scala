@@ -11,14 +11,14 @@ object QueryBuilder extends BuilderUtils {
   private case class JoinWithRelation(join: Join, relation: Relation)
 
   def makeQuery(query: Query, schema: Schema): Either[SQLError, List[Row]] = query match {
-    case sel: Select => select(sel, schema)
-    case union: Union => unionSelect(union, schema)
-    case unionAll: UnionAll => unionAllSelect(unionAll, schema)
+    case sel: Select          => select(sel, schema)
+    case union: Union         => unionSelect(union, schema)
+    case unionAll: UnionAll   => unionAllSelect(unionAll, schema)
     case intersect: Intersect => intersectSelect(intersect, schema)
-    case except: Except => exceptSelect(except, schema)
+    case except: Except       => exceptSelect(except, schema)
   }
 
-  def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] = {
+  private def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] = {
     val leftEither = makeQuery(union.left, schema)
     val rightEither = makeQuery(union.right, schema)
     for {
@@ -27,7 +27,7 @@ object QueryBuilder extends BuilderUtils {
     } yield left.toSet.union(right.toSet).toList
   }
 
-  def unionAllSelect(unionAll: UnionAll, schema: Schema): Either[SQLError, List[Row]] = {
+  private def unionAllSelect(unionAll: UnionAll, schema: Schema): Either[SQLError, List[Row]] = {
     val leftEither = makeQuery(unionAll.left, schema)
     val rightEither = makeQuery(unionAll.right, schema)
     for {
@@ -36,7 +36,7 @@ object QueryBuilder extends BuilderUtils {
     } yield left ::: right
   }
 
-  def intersectSelect(intersect: Intersect, schema: Schema): Either[SQLError, List[Row]] = {
+  private def intersectSelect(intersect: Intersect, schema: Schema): Either[SQLError, List[Row]] = {
     val leftEither = makeQuery(intersect.left, schema)
     val rightEither = makeQuery(intersect.right, schema)
     for {
@@ -45,7 +45,7 @@ object QueryBuilder extends BuilderUtils {
     } yield left.toSet.intersect(right.toSet).toList
   }
 
-  def exceptSelect(except: Except, schema: Schema): Either[SQLError, List[Row]] = {
+  private def exceptSelect(except: Except, schema: Schema): Either[SQLError, List[Row]] = {
     val leftEither = makeQuery(except.left, schema)
     val rightEither = makeQuery(except.right, schema)
 
@@ -55,22 +55,30 @@ object QueryBuilder extends BuilderUtils {
     } yield left.toSet.diff(right.toSet).toList
   }
 
-  def select(query: Select, schema: Schema): Either[SQLError, List[Row]] =
+  private def select(query: Select, schema: Schema): Either[SQLError, List[Row]] =
     for {
       relation <- schema.getRelation(query.from)
       //    _ <- checkUndefinedNames(query.projection, relation.heading.map(_.name))
       joined <- makeJoins(relation, query.joins, schema)
       filteredRows <- filterRows(joined, query.condition)
-      sortedRows <- sortRows(filteredRows, query.order)
+      groupedRows <- groupBy(query.groupBy, filteredRows, query.getAggregates)
+      sortedRows <- sortRows(groupedRows, query.order)
       selectedColumns = project(query.projection, sortedRows)
     } yield if (query.distinct) selectedColumns.distinct else selectedColumns
 
-  private def project(names: List[String], rows: List[Row]): List[Row] =
-    names match {
-      case Nil => rows
-      case _ =>
-        rows.map(row => row.filter(attribute => names.contains(attribute.name)))
-    }
+  private def project(exprs: List[Expression], rows: List[Row]): List[Row] = exprs match {
+    case Nil =>
+      rows
+    case _ =>
+      val literals = exprs.collect {
+        case lit: Literal => BodyAttribute(lit.value.toString, lit)
+      }
+      val names = exprs.collect {
+        case Var(name)            => name
+        case aggregate: Aggregate => aggregate.toString
+      }
+      rows.map(row => Row(row.projectMany(names).attributes ::: literals))
+  }
 
   private def filterRows(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] =
     condition match {
@@ -79,7 +87,6 @@ object QueryBuilder extends BuilderUtils {
     }
 
   private def sortRows(rows: List[Row], order: List[Order]): Either[SQLError, List[Row]] = {
-
     def sortRowsWithKey(rows: List[(Literal, Row)], condition: Int => Boolean): List[Row] =
       rows
         .sortWith {
@@ -88,28 +95,28 @@ object QueryBuilder extends BuilderUtils {
         .map {
           case (_, row) => row
         }
-
     order match {
       case Nil =>
         Right(rows)
       case _ =>
         order.foldRight[Either[SQLError, List[Row]]](Right(rows))((order, rows) => {
-          rows.flatMap { rowList =>
-            val name = order.name
-            val rowsWithKey = rowList
-              .map(
-                row =>
-                  Either.fromOption(
-                    row.select(name).map(key => (key.literal, row)),
-                    ColumnDoesNotExists(name)
-                ))
-              .sequence[EitherSQLError, (Literal, Row)]
-            order match {
-              case Descending(_) =>
-                rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
-              case Ascending(_) =>
-                rowsWithKey.map(sortRowsWithKey(_, _ <= 0))
-            }
+          rows.flatMap {
+            rowList =>
+              val name = order.name
+              val rowsWithKey = rowList
+                .map(
+                  row =>
+                    Either.fromOption(
+                      row.project(name).map(key => (key.literal, row)),
+                      ColumnDoesNotExists(name)
+                  ))
+                .sequence[EitherSQLError, (Literal, Row)]
+              order match {
+                case Descending(_) =>
+                  rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
+                case Ascending(_) =>
+                  rowsWithKey.map(sortRowsWithKey(_, _ <= 0))
+              }
           }
         })
     }
@@ -195,4 +202,43 @@ object QueryBuilder extends BuilderUtils {
     } yield leftJoin ::: inner ::: rightJoin
   }
 
+  case class Group(values: List[BodyAttribute]) extends AnyVal
+
+  private def groupBy(names: List[String],
+                      rows: List[Row],
+                      aggregates: List[Aggregate]): Either[SQLError, List[Row]] = {
+    def select(rows: List[Row], name: String): List[BodyAttribute] = rows.flatMap(_.project(name))
+    def updateGroup(groups: Map[Group, List[Row]],
+                    group: Group,
+                    values: List[BodyAttribute]): Map[Group, List[Row]] =
+      groups.get(group) match {
+        case Some(values1) => groups.updated(group, Row(values) :: values1)
+        case None          => groups + (group -> List(Row(values)))
+      }
+    def aggregate(groupRow: List[Row]): EitherSQLError[List[BodyAttribute]] =
+      aggregates.traverse[EitherSQLError, BodyAttribute] { function =>
+        val arguments = select(groupRow, function.argument).map(_.literal)
+        function.eval(arguments).map(literal => BodyAttribute(function.toString, literal))
+      }
+
+    if (names.isEmpty && aggregates.isEmpty) Right(rows)
+    else if (names.isEmpty && aggregates.nonEmpty) aggregate(rows).map(row => List(Row(row)))
+    else {
+      val grouped = rows.foldLeft(Map[Group, List[Row]]()) {
+        case (groups, row) =>
+          val (group, values) = row.attributes.partition {
+            case attribute: BodyAttribute if names.contains(attribute.name) => true
+            case _                                                          => false
+          }
+          updateGroup(groups, Group(group), values)
+      }
+      grouped.toList.traverse[EitherSQLError, Row] {
+        case (group, groupRow) =>
+          val aggregateResult = aggregate(groupRow)
+          aggregateResult.map { result =>
+            Row(group.values ::: result)
+          }
+      }
+    }
+  }
 }

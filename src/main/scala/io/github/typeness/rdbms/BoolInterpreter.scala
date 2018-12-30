@@ -20,7 +20,7 @@ object BoolInterpreter {
           case _                             => false
         }
         val filtered: List[Either[SQLError, Option[Row]]] = rows.map { row =>
-          val attribute = row.select(name)
+          val attribute = row.project(name)
           Either.fromOption(attribute, ColumnDoesNotExists(name)).map(isNull).map {
             case true  => Some(row)
             case false => None
@@ -60,7 +60,7 @@ object BoolInterpreter {
   private def getLiteral(expression: Expression, row: Row): Either[ColumnDoesNotExists, Literal] =
     expression match {
       case Var(name) =>
-        Either.fromOption(row.select(name), ColumnDoesNotExists(name)).map(_.literal)
+        Either.fromOption(row.project(name), ColumnDoesNotExists(name)).map(_.literal)
       case literal: Literal =>
         Right(literal)
     }

@@ -45,10 +45,17 @@ object SQLParser {
   private def select[_: P]: P[Select] =
     P(
       IgnoreCase("SELECT") ~ space ~ IgnoreCase("DISTINCT").!.? ~ space ~ selectList ~ space ~
-        IgnoreCase("FROM") ~ space ~ id ~ space ~ join ~ (space ~ where).? ~ space ~ order.?
+        IgnoreCase("FROM") ~ space ~ id ~ space ~ join ~ (space ~ where).? ~
+        (space ~ groupBy).? ~ space ~ order.?
     ).map {
-      case (distinct, proj, name, join, cond, order) =>
-        Select(proj, name, join, cond, order.getOrElse(List.empty), distinct.isDefined)
+      case (distinct, proj, name, join, cond, group, order) =>
+        Select(proj,
+               name,
+               join,
+               cond,
+               group.getOrElse(Nil),
+               order.getOrElse(Nil),
+               distinct.isDefined)
     }
 
   private def create[_: P]: P[Create] =
@@ -74,6 +81,9 @@ object SQLParser {
 
   private def where[_: P]: P[Bool] =
     P(IgnoreCase("WHERE") ~ space ~ or)
+
+  private def groupBy[_: P]: P[List[String]] =
+    P(IgnoreCase("GROUP BY") ~ space ~ id.rep(min = 1, sep = ", ").map(_.toList))
 
   private def join[_: P]: P[List[Join]] =
     P(crossJoin | innerJoin | leftOuterJoin | rightOuterJoin | fullOuterJoin)
@@ -106,8 +116,11 @@ object SQLParser {
       case (name, on) => FullOuterJoin(name, on)
     }
 
-  private def selectList[_: P]: P[List[String]] =
-    P("*".!.map(_ => List.empty) | id.rep(1, sep = ", ").map(_.toList))
+  private def selectList[_: P]: P[List[Expression]] =
+    P(
+      "*".!.map(_ => List.empty) |
+        (aggregate | id.map(Var) | literal).rep(1, sep = ", ").map(_.toList)
+    )
 
   private def ids[_: P]: P[List[String]] =
     P("(" ~ id.rep(1, sep = ", ").map(_.toList) ~ ") ")
@@ -131,7 +144,11 @@ object SQLParser {
     ).!.map(DateLiteral)
 
   private def id[_: P]: P[String] =
-    P(CharIn("a-zA-Z").rep(1).! | ("[" ~ CharIn("a-zA-Z ").rep(1) ~ "]").!)
+    P(
+      aggregate.! |
+      CharIn("a-zA-Z").rep(1).! |
+      ("[" ~ CharIn("a-zA-Z ").rep(1) ~ "]").!
+    )
 
   private def `null`[_: P]: P[NULLLiteral.type] =
     P(IgnoreCase("NULL")).map(_ => NULLLiteral)
@@ -229,5 +246,14 @@ object SQLParser {
         (IgnoreCase("FOREIGN KEY REFERENCES") ~ space ~ id ~ "(" ~ id ~ ")").map {
           case (name, schema) => ForeignKey(name, schema)
         }
+    )
+
+  private def aggregate[_: P]: P[Aggregate] =
+    P(
+      (IgnoreCase("SUM") ~ "(" ~ id ~ ")").map(Sum) |
+        (IgnoreCase("AVG") ~ "(" ~ id ~ ")").map(Avg) |
+        (IgnoreCase("COUNT") ~ "(" ~ id ~ ")").map(Count) |
+        (IgnoreCase("MAX") ~ "(" ~ id ~ ")").map(Max) |
+        (IgnoreCase("MIN") ~ "(" ~ id ~ ")").map(Min)
     )
 }

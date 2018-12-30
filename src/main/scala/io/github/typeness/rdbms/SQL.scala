@@ -32,13 +32,22 @@ case object Grant extends Control
 sealed trait Query extends SQL
 
 case class Select(
-    projection: List[String],
+    projection: List[Expression],
     from: String,
     joins: List[Join],
     condition: Option[Bool],
+    groupBy: List[String],
     order: List[Order],
     distinct: Boolean = false
-) extends Query
+) extends Query {
+  def getAggregates: List[Aggregate] =
+    projection
+      .filter {
+        case d: Aggregate => true
+        case _            => false
+      }
+      .asInstanceOf[List[Aggregate]]
+}
 
 case class Union(left: Query, right: Query) extends Query
 case class UnionAll(left: Query, right: Query) extends Query

@@ -70,7 +70,7 @@ object ManipulationBuilder extends BuilderUtils {
         for {
           matchingRows <- BoolInterpreter.eval(condition, relation.body)
           updatedRows = matchingRows.map { row =>
-            row.map(attribute => query.updated.select(attribute.name).getOrElse(attribute))
+            row.map(attribute => query.updated.project(attribute.name).getOrElse(attribute))
           }
         } yield relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
     }
@@ -87,7 +87,7 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
-    val missing = header.filter(attribute => row.select(attribute.name).isEmpty)
+    val missing = header.filter(attribute => row.project(attribute.name).isEmpty)
     val mandatory = missing.filter(_.constraints.exists {
       case _: PrimaryKey.type => true
       case _: NotNULL.type    => true
@@ -123,7 +123,7 @@ object ManipulationBuilder extends BuilderUtils {
     identityOption match {
       case None => Right((row, None))
       case Some(identity) =>
-        if (row.select(identity.name).isDefined) {
+        if (row.project(identity.name).isDefined) {
           Left(IdentityViolation(identity.name))
         } else {
           val primaryKey =
