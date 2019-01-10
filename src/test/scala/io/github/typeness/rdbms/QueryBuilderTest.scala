@@ -485,9 +485,9 @@ class QueryBuilderTest extends FunSuite {
   }
 
   test(
-    "SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko HAVING Count(Nr) >= 2 ORDER BY Count(Nr) DESC") {
+    "SELECT Nazwisko, 1, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko HAVING Count(Nr) >= 2 ORDER BY Count(Nr) DESC") {
     val query = Select(
-      List(Var("Nazwisko"), Count("Nr")),
+      List(Var("Nazwisko"), IntegerLiteral(1), Count("Nr")),
       "Pracownicy",
       Nil,
       None,
@@ -498,10 +498,12 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(
         List(BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
+             BodyAttribute("1", IntegerLiteral(1)),
              BodyAttribute("Count(Nr)", IntegerLiteral(2)))
       )
     )
     val result = QueryBuilder.makeQuery(query, schemaPracownicy)
+    println(result)
     assert(result == Right(expected))
   }
 

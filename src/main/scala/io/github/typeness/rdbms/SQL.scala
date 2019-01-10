@@ -32,7 +32,7 @@ case object Grant extends Control
 sealed trait Query extends SQL
 
 case class Select(
-    projection: List[Expression],
+    projection: List[Projection],
     from: String,
     joins: List[Join],
     where: Option[Bool],
@@ -62,13 +62,13 @@ case class Ascending(name: String) extends Order
 case class Descending(name: String) extends Order
 
 sealed trait Bool
-case class Equals(name: String, value: Expression) extends Bool
-case class GreaterOrEquals(name: String, value: Expression) extends Bool
-case class Greater(name: String, value: Expression) extends Bool
-case class LessOrEquals(name: String, value: Expression) extends Bool
-case class Less(name: String, value: Expression) extends Bool
+case class Equals(name: String, value: Projection) extends Bool
+case class GreaterOrEquals(name: String, value: Projection) extends Bool
+case class Greater(name: String, value: Projection) extends Bool
+case class LessOrEquals(name: String, value: Projection) extends Bool
+case class Less(name: String, value: Projection) extends Bool
 case class IsNULL(name: String) extends Bool
-case class Between(name: String, lhs: Expression, rhs: Expression) extends Bool
+case class Between(name: String, lhs: Projection, rhs: Projection) extends Bool
 case class And(lhs: Bool, rhs: Bool) extends Bool
 case class Or(lhs: Bool, rhs: Bool) extends Bool
 

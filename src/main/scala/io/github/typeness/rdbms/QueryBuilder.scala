@@ -65,14 +65,17 @@ object QueryBuilder extends BuilderUtils {
       havingResult <- having(groupedRows, query.having)
       sortedRows <- sortRows(havingResult, query.order)
       selectedColumns = project(query.projection, sortedRows)
-    } yield if (query.distinct) selectedColumns.distinct else selectedColumns
+      projections = if (query.projection.nonEmpty) query.projection
+      else relation.heading.map(a => Var(a.name))
+      withCorrectedColumnsOrder <- reorderColumns(projections, selectedColumns)
+    } yield if (query.distinct) withCorrectedColumnsOrder.distinct else withCorrectedColumnsOrder
 
-  private def project(exprs: List[Expression], rows: List[Row]): List[Row] = exprs match {
+  private def project(exprs: List[Projection], rows: List[Row]): List[Row] = exprs match {
     case Nil =>
       rows
     case _ =>
       val literals = exprs.collect {
-        case lit: Literal => BodyAttribute(lit.value.toString, lit)
+        case lit: Literal => BodyAttribute(lit.show, lit)
       }
       val names = exprs.collect {
         case Var(name)            => name
@@ -244,5 +247,25 @@ object QueryBuilder extends BuilderUtils {
           }
       }
     }
+  }
+
+  private def reorderColumns(projections: List[Projection],
+                             rows: List[Row]): Either[MissingColumnName, List[Row]] = {
+    val names = projections
+      .map {
+        case Var(name)            => name
+        case literal: Literal     => literal.show
+        case aggregate: Aggregate => aggregate.toString
+      }
+      .zipWithIndex
+      .toMap
+    val eitherRows = rows.map { row =>
+      row.attributes.map { attribute =>
+        Either
+          .fromOption(names.get(attribute.name), MissingColumnName(attribute.name))
+          .map((attribute, _))
+      }.sequence
+    }.sequence
+    eitherRows.map(_.map(row => Row(row.sortBy(_._2).map(_._1))))
   }
 }

@@ -120,7 +120,7 @@ object SQLParser {
       case (name, on) => FullOuterJoin(name, on)
     }
 
-  private def selectList[_: P]: P[List[Expression]] =
+  private def selectList[_: P]: P[List[Projection]] =
     P(
       "*".!.map(_ => List.empty) |
         (aggregate | id.map(Var) | literal).rep(1, sep = ", ").map(_.toList)
@@ -159,7 +159,7 @@ object SQLParser {
 
   private def space[_: P]: P[Unit] = P(CharsWhileIn(" \r\n", 0))
 
-  private def expression[_: P]: P[Expression] =
+  private def expression[_: P]: P[Projection] =
     P(id.map(Var) | literal)
 
   private def booleanOperator[_: P]: P[Bool] =

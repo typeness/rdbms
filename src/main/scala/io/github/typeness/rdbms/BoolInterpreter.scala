@@ -43,8 +43,8 @@ object BoolInterpreter {
         } yield left.toSet.union(right.toSet).toList
     }
 
-  def filter(left: Expression,
-             right: Expression,
+  def filter(left: Projection,
+             right: Projection,
              condition: Int => Boolean,
              rows: List[Row]): Either[SQLError, List[Row]] = {
     val filtered: List[Either[SQLError, Option[Row]]] = rows.map { row =>
@@ -57,7 +57,7 @@ object BoolInterpreter {
     filtered.sequence[EitherSQLError, Option[Row]].map(_.flatten)
   }
 
-  private def getLiteral(expression: Expression, row: Row): Either[ColumnDoesNotExists, Literal] =
+  private def getLiteral(expression: Projection, row: Row): Either[ColumnDoesNotExists, Literal] =
     expression match {
       case Var(name) =>
         Either.fromOption(row.project(name), ColumnDoesNotExists(name)).map(_.literal)

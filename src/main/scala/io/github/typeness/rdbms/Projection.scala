@@ -1,27 +1,32 @@
 package io.github.typeness.rdbms
 
-sealed trait Expression
+sealed trait Projection
 
-case class Var(name: String) extends Expression
+case class Var(name: String) extends Projection
 
-sealed trait Literal extends Expression {
+sealed trait Literal extends Projection {
   def typeOf: AnyType
+  def show: String
 }
 
 case class IntegerLiteral(value: Int) extends Literal {
   override def typeOf: AnyType = IntegerType
+  override def show: String = value.toString
 }
 
 case class StringLiteral(value: String) extends Literal {
   override def typeOf: AnyType = NVarCharType(1)
+  override def show: String = value
 }
 
 case class DateLiteral(value: String) extends Literal {
   override def typeOf: AnyType = DateType
+  override def show: String = value
 }
 
 case object NULLLiteral extends Literal {
   override def typeOf: AnyType = NullType
+  override def show: String = "NULL"
 }
 
 object Literal {
@@ -58,7 +63,7 @@ object Literal {
   def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
 }
 
-sealed trait Aggregate extends Expression {
+sealed trait Aggregate extends Projection {
   def eval(literals: List[Literal]): Either[TypeMismatch, Literal]
   def argument: String
 }
