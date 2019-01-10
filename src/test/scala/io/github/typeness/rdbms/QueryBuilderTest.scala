@@ -503,7 +503,6 @@ class QueryBuilderTest extends FunSuite {
       )
     )
     val result = QueryBuilder.makeQuery(query, schemaPracownicy)
-    println(result)
     assert(result == Right(expected))
   }
 
