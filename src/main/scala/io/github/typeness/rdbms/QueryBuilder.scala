@@ -109,11 +109,8 @@ object QueryBuilder extends BuilderUtils {
         order.foldRight[Either[SQLError, List[Row]]](Right(rows))((order, rows) => {
           rows.flatMap { rowList =>
             val name = order.name
-            val rowsWithKey = rowList
-              .map(
-                row => row.projectEither(name).map(key => (key.literal, row)),
-              )
-              .sequence[EitherSQLError, (Literal, Row)]
+            val rowsWithKey =
+              rowList.traverse(row => row.projectEither(name).map(key => (key.literal, row)))
             order match {
               case Descending(_) =>
                 rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
@@ -256,13 +253,13 @@ object QueryBuilder extends BuilderUtils {
       }
       .zipWithIndex
       .toMap
-    val eitherRows = rows.map { row =>
-      row.attributes.map { attribute =>
+    val eitherRows = rows.traverse { row =>
+      row.attributes.traverse { attribute =>
         Either
           .fromOption(names.get(attribute.name), MissingColumnName(attribute.name))
-          .map((attribute, _))
-      }.sequence
-    }.sequence
+          .map(index => (attribute, index))
+      }
+    }
     eitherRows.map(_.map(row => Row(row.sortBy(_._2).map(_._1))))
   }
 }
