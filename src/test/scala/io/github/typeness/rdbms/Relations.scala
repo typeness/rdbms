@@ -48,8 +48,8 @@ object Relations {
     BodyAttribute("Nr", IntegerLiteral(1)),
     BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
     BodyAttribute("Imie", StringLiteral("Jan")),
-    BodyAttribute("Stawka", IntegerLiteral(1500)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2010-01-01")),
+    BodyAttribute("Stawka", MoneyLiteral(1500)),
+    BodyAttribute("DataZatrudnienia", DateLiteral("2010-01-01")),
     BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
   )
 
@@ -61,8 +61,8 @@ object Relations {
     BodyAttribute("Nr", IntegerLiteral(2)),
     BodyAttribute("Nazwisko", StringLiteral("Nowak")),
     BodyAttribute("Imie", StringLiteral("Anna")),
-    BodyAttribute("Stawka", IntegerLiteral(1600)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
+    BodyAttribute("Stawka", MoneyLiteral(1600)),
+    BodyAttribute("DataZatrudnienia", DateLiteral("2012-01-01")),
     BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
   )
 
@@ -74,8 +74,8 @@ object Relations {
     BodyAttribute("Nr", IntegerLiteral(3)),
     BodyAttribute("Nazwisko", StringLiteral("Wrona")),
     BodyAttribute("Imie", StringLiteral("Adam")),
-    BodyAttribute("Stawka", IntegerLiteral(1100)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2015-01-01")),
+    BodyAttribute("Stawka", MoneyLiteral(1100)),
+    BodyAttribute("DataZatrudnienia", DateLiteral("2015-01-01")),
     BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
   )
 
@@ -87,8 +87,8 @@ object Relations {
     BodyAttribute("Nr", IntegerLiteral(4)),
     BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
     BodyAttribute("Imie", StringLiteral("Jacek")),
-    BodyAttribute("Stawka", IntegerLiteral(0)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2015-03-07")),
+    BodyAttribute("Stawka", MoneyLiteral(0)),
+    BodyAttribute("DataZatrudnienia", DateLiteral("2015-03-07")),
     BodyAttribute("LiczbaDzieci", IntegerLiteral(1)),
   )
 
@@ -96,8 +96,8 @@ object Relations {
     BodyAttribute("Nr", IntegerLiteral(5)),
     BodyAttribute("Nazwisko", StringLiteral("Grzyb")),
     BodyAttribute("Imie", StringLiteral("Tomasz")),
-    BodyAttribute("Stawka", IntegerLiteral(4567)),
-    BodyAttribute("DataZatrudnienia", StringLiteral("2013-06-10")),
+    BodyAttribute("Stawka", MoneyLiteral(4567)),
+    BodyAttribute("DataZatrudnienia", DateLiteral("2013-06-10")),
     BodyAttribute("LiczbaDzieci", NULLLiteral),
   )
 
@@ -120,7 +120,7 @@ object Relations {
       HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
       HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
       HeadingAttribute("Stawka", MoneyType, Nil),
-      HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
+      HeadingAttribute("DataZatrudnienia", DateType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
     ),
     List(

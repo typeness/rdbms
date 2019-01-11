@@ -81,7 +81,7 @@ object QueryBuilder extends BuilderUtils {
         case Var(name)            => name
         case aggregate: Aggregate => aggregate.toString
       }
-      rows.map(row => Row(row.projectMany(names).attributes ::: literals))
+      rows.map(row => Row(row.projectList(names).attributes ::: literals))
   }
 
   private def filterRows(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] =
@@ -107,23 +107,19 @@ object QueryBuilder extends BuilderUtils {
         Right(rows)
       case _ =>
         order.foldRight[Either[SQLError, List[Row]]](Right(rows))((order, rows) => {
-          rows.flatMap {
-            rowList =>
-              val name = order.name
-              val rowsWithKey = rowList
-                .map(
-                  row =>
-                    Either.fromOption(
-                      row.project(name).map(key => (key.literal, row)),
-                      ColumnDoesNotExists(name)
-                  ))
-                .sequence[EitherSQLError, (Literal, Row)]
-              order match {
-                case Descending(_) =>
-                  rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
-                case Ascending(_) =>
-                  rowsWithKey.map(sortRowsWithKey(_, _ <= 0))
-              }
+          rows.flatMap { rowList =>
+            val name = order.name
+            val rowsWithKey = rowList
+              .map(
+                row => row.projectEither(name).map(key => (key.literal, row)),
+              )
+              .sequence[EitherSQLError, (Literal, Row)]
+            order match {
+              case Descending(_) =>
+                rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
+              case Ascending(_) =>
+                rowsWithKey.map(sortRowsWithKey(_, _ <= 0))
+            }
           }
         })
     }
@@ -214,7 +210,8 @@ object QueryBuilder extends BuilderUtils {
   private def groupBy(names: List[String],
                       rows: List[Row],
                       aggregates: List[Aggregate]): Either[SQLError, List[Row]] = {
-    def select(rows: List[Row], name: String): List[BodyAttribute] = rows.flatMap(_.project(name))
+    def select(rows: List[Row], name: String): List[BodyAttribute] =
+      rows.flatMap(_.projectOption(name))
     def updateGroup(groups: Map[Group, List[Row]],
                     group: Group,
                     values: List[BodyAttribute]): Map[Group, List[Row]] =

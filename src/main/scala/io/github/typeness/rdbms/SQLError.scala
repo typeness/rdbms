@@ -12,4 +12,4 @@ case class MissingColumnName(name: String) extends SQLError
 case object WrongNumberOfAttributes extends SQLError
 case class IdentityViolation(name: String) extends SQLError
 case class SchemaDoesNotExists(name: String) extends SQLError
-case class TypeMismatch(first: AnyType, second: AnyType) extends SQLError
+case class TypeMismatch(first: AnyType, second: AnyType, literal: Literal) extends SQLError

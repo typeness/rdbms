@@ -15,8 +15,8 @@ class ManipulationBuilderTest extends FunSuite {
       IntegerLiteral(1),
       StringLiteral("Kowal"),
       StringLiteral("Piotr"),
-      IntegerLiteral(500),
-      StringLiteral("2010-01-01"),
+      MoneyLiteral(500),
+      DateLiteral("2010-01-01"),
       IntegerLiteral(2),
     )
     val query = AnonymousInsert(
@@ -51,12 +51,9 @@ class ManipulationBuilderTest extends FunSuite {
     assert(
       rows.map(
         _.contains(
-          Row(
-            List(
-              BodyAttribute("Stawka", NULLLiteral),
-              BodyAttribute("DataZatrudnienia", NULLLiteral),
-              BodyAttribute("LiczbaDzieci", NULLLiteral),
-            ) ::: row.attributes))) == Right(true)
+          Row(row.attributes ::: List(BodyAttribute("Stawka", NULLLiteral),
+                                      BodyAttribute("DataZatrudnienia", NULLLiteral),
+                                      BodyAttribute("LiczbaDzieci", NULLLiteral))))) == Right(true)
     )
   }
 
@@ -80,12 +77,11 @@ class ManipulationBuilderTest extends FunSuite {
       HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
       HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
       HeadingAttribute("Stawka", MoneyType, Nil),
-      HeadingAttribute("DataZatrudnienia", IntegerType, Nil),
+      HeadingAttribute("DataZatrudnienia", DateType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
     ),
     Nil
   )
-
 
   test("Anonymous insert into table with defined Identity") {
     /*
@@ -95,8 +91,8 @@ class ManipulationBuilderTest extends FunSuite {
     val row = List(
       StringLiteral("Kowal"),
       StringLiteral("Piotr"),
-      IntegerLiteral(500),
-      StringLiteral("2010-01-01"),
+      MoneyLiteral(500),
+      DateLiteral("2010-01-01"),
       IntegerLiteral(2),
     )
     val rowWithID = IntegerLiteral(1) :: row
@@ -142,8 +138,8 @@ class ManipulationBuilderTest extends FunSuite {
     val row = Row(
       BodyAttribute("Nazwisko", StringLiteral("Anna")),
       BodyAttribute("Imie", StringLiteral("Nowak")),
-      BodyAttribute("Stawka", IntegerLiteral(1600)),
-      BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
+      BodyAttribute("Stawka", MoneyLiteral(1600)),
+      BodyAttribute("DataZatrudnienia", DateLiteral("2012-01-01")),
       BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
     )
     val rowWithId1 =
@@ -172,7 +168,7 @@ class ManipulationBuilderTest extends FunSuite {
     val query = Update(
       "Pracownicy",
       Row(
-        BodyAttribute("Stawka", IntegerLiteral(1234)),
+        BodyAttribute("Stawka", MoneyLiteral(1234)),
         BodyAttribute("LiczbaDzieci", IntegerLiteral(3))
       ),
       Some(Equals("Nr", IntegerLiteral(1)))
@@ -181,8 +177,8 @@ class ManipulationBuilderTest extends FunSuite {
       BodyAttribute("Nr", IntegerLiteral(1)),
       BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
       BodyAttribute("Imie", StringLiteral("Jan")),
-      BodyAttribute("Stawka", IntegerLiteral(1234)),
-      BodyAttribute("DataZatrudnienia", StringLiteral("2010-01-01")),
+      BodyAttribute("Stawka", MoneyLiteral(1234)),
+      BodyAttribute("DataZatrudnienia", DateLiteral("2010-01-01")),
       BodyAttribute("LiczbaDzieci", IntegerLiteral(3))
     )
     val isUpdated = for {

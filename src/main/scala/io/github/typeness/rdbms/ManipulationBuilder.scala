@@ -1,5 +1,10 @@
 package io.github.typeness.rdbms
 
+import cats.instances.list._
+import cats.instances.either._
+import cats.syntax.traverse._
+import cats.syntax.either._
+
 import Relation._
 
 object ManipulationBuilder extends BuilderUtils {
@@ -15,12 +20,10 @@ object ManipulationBuilder extends BuilderUtils {
           checkedIdentity <- checkIdentity(row, relation.identity)
           (rowWithCheckedIdentity, newIdentity) = checkedIdentity
           missing <- getMissingAttributes(rowWithCheckedIdentity, relation.heading)
-          //        _ <- checkTypes(row, relation)
+          filledRow = Row(missing.attributes ::: rowWithCheckedIdentity.attributes)
+          typecheckedRow <- checkTypes(filledRow, relation.heading)
           // _ <- checkUniqueViolation
-        } yield
-          appendRow(Row(missing.attributes ::: rowWithCheckedIdentity.attributes),
-                    relation,
-                    newIdentity)
+        } yield appendRow(typecheckedRow, relation, newIdentity)
       case AnonymousInsert(_, row) =>
         val relationRowSize = relation.heading.size
         val expectedSize =
@@ -43,9 +46,9 @@ object ManipulationBuilder extends BuilderUtils {
           for {
             checkedIdentity <- checkIdentity(newRow, relation.identity)
             (rowWithCheckedIdentity, newIdentity) = checkedIdentity
-          } yield appendRow(rowWithCheckedIdentity, relation, newIdentity)
+            typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
+          } yield appendRow(typeCheckedRow, relation, newIdentity)
           //        for {
-          // _ <- checkTypes(row, relation)
           // <- checkUniqueViolation
           // <- checkConstraints
           //        }
@@ -69,8 +72,10 @@ object ManipulationBuilder extends BuilderUtils {
       case Some(condition) =>
         for {
           matchingRows <- BoolInterpreter.eval(condition, relation.body)
-          updatedRows = matchingRows.map { row =>
-            row.map(attribute => query.updated.project(attribute.name).getOrElse(attribute))
+          updatedRows <- matchingRows.traverse { row =>
+            val newRow =
+              row.map(attrib => query.updated.projectOption(attrib.name).getOrElse(attrib))
+            checkTypes(newRow, relation.heading)
           }
         } yield relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
     }
@@ -86,8 +91,20 @@ object ManipulationBuilder extends BuilderUtils {
     relation.copy(body = values :: currentBody, identity = newIdentity)
   }
 
+  private def checkTypes(row: Row, header: Header): Either[SQLError, Row] = {
+    header
+      .traverse { attrib =>
+        val bodyAttribute = row.projectEither(attrib.name)
+        bodyAttribute.flatMap(
+          body =>
+            if (body.literal.typeOf == attrib.domain || body.literal.typeOf == NullType) Right(body)
+            else Left(TypeMismatch(attrib.domain, body.literal.typeOf, body.literal)))
+      }
+      .map(Row.apply)
+  }
+
   private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
-    val missing = header.filter(attribute => row.project(attribute.name).isEmpty)
+    val missing = header.filter(attribute => row.projectOption(attribute.name).isEmpty)
     val mandatory = missing.filter(_.constraints.exists {
       case _: PrimaryKey.type => true
       case _: NotNULL.type    => true
@@ -123,7 +140,7 @@ object ManipulationBuilder extends BuilderUtils {
     identityOption match {
       case None => Right((row, None))
       case Some(identity) =>
-        if (row.project(identity.name).isDefined) {
+        if (row.projectOption(identity.name).isDefined) {
           Left(IdentityViolation(identity.name))
         } else {
           val primaryKey =

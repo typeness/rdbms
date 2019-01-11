@@ -1,5 +1,7 @@
 package io.github.typeness.rdbms
 
+import cats.syntax.either._
+
 case class Identity(name: String, current: Int, step: Int)
 
 case class Schema(relations: List[Relation]) {
@@ -15,9 +17,11 @@ object Relation {
 }
 
 case class Row(attributes: List[BodyAttribute]) {
-  def project(name: String): Option[BodyAttribute] =
+  def projectOption(name: String): Option[BodyAttribute] =
     attributes.find(_.name == name)
-  def projectMany(names: List[String]): Row =
+  def projectEither(name: String): Either[MissingColumnName, BodyAttribute] =
+    Either.fromOption(projectOption(name), MissingColumnName(name))
+  def projectList(names: List[String]): Row =
     Row(attributes.filter(attrib => names.contains(attrib.name)))
   def getNames: List[String] = attributes.map(_.name)
   def getValues: List[Literal] = attributes.map(_.literal)

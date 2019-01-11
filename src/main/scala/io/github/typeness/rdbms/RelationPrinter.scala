@@ -16,9 +16,14 @@ object RelationPrinter {
     text + pad.toString * (size - text.length)
 
   private def getColumnsSize(names: List[String], rows: List[Row]): Map[String, Int] =
-    names.map(name => name -> (name.length :: rows.flatMap(_.project(name)).map(_.literal.show.length)).max).toMap
+    names
+      .map(name =>
+        name -> (name.length :: rows.flatMap(_.projectOption(name)).map(_.literal.show.length)).max)
+      .toMap
 
   private def showRow(row: Row, sizes: Map[String, Int]): String = {
-    row.attributes.map(attrib => rightPad(attrib.literal.show, sizes(attrib.name), ' ')).mkString(" ")
+    row.attributes
+      .map(attrib => rightPad(attrib.literal.show, sizes(attrib.name), ' '))
+      .mkString(" ")
   }
 }

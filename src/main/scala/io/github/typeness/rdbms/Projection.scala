@@ -24,6 +24,11 @@ case class DateLiteral(value: String) extends Literal {
   override def show: String = value
 }
 
+case class MoneyLiteral(value: Int) extends Literal {
+  override def typeOf: AnyType = MoneyType
+  override def show: String = value.toString
+}
+
 case object NULLLiteral extends Literal {
   override def typeOf: AnyType = NullType
   override def show: String = "NULL"
@@ -32,7 +37,7 @@ case object NULLLiteral extends Literal {
 object Literal {
 
   def compare[A >: Literal](lhs: Literal, rhs: Literal): Either[SQLError, Int] = {
-    if (lhs.typeOf != rhs.typeOf) Left(TypeMismatch(lhs.typeOf, rhs.typeOf))
+    if (lhs.typeOf != rhs.typeOf) Left(TypeMismatch(lhs.typeOf, rhs.typeOf, lhs))
     // find a better way to do this?
     else Right(compareUnsafe(lhs, rhs))
   }
@@ -72,7 +77,7 @@ case class Sum(argument: String) extends Aggregate {
     val (nonInts, ints) = literals.partition {
       case _: IntegerLiteral => false
     }
-    if (nonInts.nonEmpty) Left(TypeMismatch(nonInts.head.typeOf, IntegerType))
+    if (nonInts.nonEmpty) Left(TypeMismatch(nonInts.head.typeOf, IntegerType, nonInts.head))
     // find a way to avoid using isInstanceOf
     else Right(IntegerLiteral(ints.asInstanceOf[List[IntegerLiteral]].map(_.value).sum))
   }
