@@ -1,10 +1,8 @@
 package io.github.typeness.rdbms
 
-import cats.syntax.either._
 import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
-import io.github.typeness.rdbms.SQLError.EitherSQLError
 
 object BoolInterpreter {
   def eval(expression: Bool, rows: List[Row]): Either[SQLError, List[Row]] =
@@ -26,7 +24,7 @@ object BoolInterpreter {
             case false => None
           }
         }
-        filtered.sequence[EitherSQLError, Option[Row]].map(_.flatten)
+        filtered.sequence.map(_.flatten)
       case Between(name, lhs, rhs) =>
         val greaterOrEquals = GreaterOrEquals(name, lhs)
         val lessOrEquals = LessOrEquals(name, rhs)
@@ -54,7 +52,7 @@ object BoolInterpreter {
         conditionResult = Literal.compare(lhs, rhs).map(condition).contains(true)
       } yield if (conditionResult) Some(row) else None
     }
-    filtered.sequence[EitherSQLError, Option[Row]].map(_.flatten)
+    filtered.sequence.map(_.flatten)
   }
 
   private def getLiteral(expression: Projection, row: Row): Either[MissingColumnName, Literal] =

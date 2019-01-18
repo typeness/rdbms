@@ -1,10 +1,6 @@
 package io.github.typeness.rdbms
 
-object SQLError {
-  type EitherSQLError[+A] = Either[SQLError, A]
-}
-
-sealed trait SQLError
+sealed trait SQLError extends Exception
 case object MultiplePrimaryKeys extends SQLError
 case class MultipleColumnNames(name: String) extends SQLError
 case class ColumnDoesNotExists(name: String) extends SQLError
@@ -13,3 +9,5 @@ case object WrongNumberOfAttributes extends SQLError
 case class IdentityViolation(name: String) extends SQLError
 case class SchemaDoesNotExists(name: String) extends SQLError
 case class TypeMismatch(first: AnyType, second: AnyType, literal: Literal) extends SQLError
+case class CheckViolation(headingAttribute: HeadingAttribute, literal: Literal) extends SQLError
+case class UniqueViolation(bodyAttribute: BodyAttribute) extends SQLError

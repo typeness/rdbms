@@ -4,7 +4,6 @@ import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
 import cats.syntax.either._
-import SQLError.EitherSQLError
 
 object QueryBuilder extends BuilderUtils {
 
@@ -127,7 +126,7 @@ object QueryBuilder extends BuilderUtils {
                         schema: Schema): Either[SQLError, List[Row]] = {
     val joinsWithRelation =
       joins.map(join => schema.getRelation(join.name).map(JoinWithRelation(join, _)))
-    joinsWithRelation.sequence[EitherSQLError, JoinWithRelation].flatMap(foldJoins(relation, _))
+    joinsWithRelation.sequence.flatMap(foldJoins(relation, _))
   }
 
   private def foldJoins(left: Relation,
@@ -216,8 +215,8 @@ object QueryBuilder extends BuilderUtils {
         case Some(values1) => groups.updated(group, Row(values) :: values1)
         case None          => groups + (group -> List(Row(values)))
       }
-    def aggregate(groupRow: List[Row]): EitherSQLError[List[BodyAttribute]] =
-      aggregates.traverse[EitherSQLError, BodyAttribute] { function =>
+    def aggregate(groupRow: List[Row]): Either[SQLError, List[BodyAttribute]] =
+      aggregates.traverse { function =>
         val arguments = select(groupRow, function.argument).map(_.literal)
         function.eval(arguments).map(literal => BodyAttribute(function.toString, literal))
       }
@@ -233,7 +232,7 @@ object QueryBuilder extends BuilderUtils {
           }
           updateGroup(groups, Group(group), values)
       }
-      grouped.toList.traverse[EitherSQLError, Row] {
+      grouped.toList.traverse {
         case (group, groupRow) =>
           val aggregateResult = aggregate(groupRow)
           aggregateResult.map { result =>

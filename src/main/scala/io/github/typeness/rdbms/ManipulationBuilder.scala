@@ -3,7 +3,6 @@ package io.github.typeness.rdbms
 import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
-import cats.syntax.either._
 
 import Relation._
 
@@ -22,8 +21,9 @@ object ManipulationBuilder extends BuilderUtils {
           missing <- getMissingAttributes(rowWithCheckedIdentity, relation.heading)
           filledRow = Row(missing.attributes ::: rowWithCheckedIdentity.attributes)
           typecheckedRow <- checkTypes(filledRow, relation.heading)
-          // _ <- checkUniqueViolation
-        } yield appendRow(typecheckedRow, relation, newIdentity)
+          checkedRow <- checkChecks(typecheckedRow, relation.heading)
+          checkedUniqueViolation  <- checkUnique(checkedRow, relation)
+        } yield appendRow(checkedUniqueViolation, relation, newIdentity)
       case AnonymousInsert(_, row) =>
         val relationRowSize = relation.heading.size
         val expectedSize =
@@ -47,12 +47,9 @@ object ManipulationBuilder extends BuilderUtils {
             checkedIdentity <- checkIdentity(newRow, relation.identity)
             (rowWithCheckedIdentity, newIdentity) = checkedIdentity
             typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
-          } yield appendRow(typeCheckedRow, relation, newIdentity)
-          //        for {
-          // <- checkUniqueViolation
-          // <- checkConstraints
-          //        }
-          //      } yield appendRow()
+            checkedRow <- checkChecks(typeCheckedRow, relation.heading)
+            checkedUniqueViolation  <- checkUnique(checkedRow, relation)
+          } yield appendRow(checkedUniqueViolation, relation, newIdentity)
         }
     }
 
@@ -91,17 +88,66 @@ object ManipulationBuilder extends BuilderUtils {
     relation.copy(body = values :: currentBody, identity = newIdentity)
   }
 
-  private def checkTypes(row: Row, header: Header): Either[SQLError, Row] = {
+  private def checkConstraint(
+      row: Row,
+      header: Header,
+      constraint: HeadingAttribute => BodyAttribute => Either[SQLError, BodyAttribute])
+    : Either[SQLError, Row] =
     header
       .traverse { attrib =>
         val bodyAttribute = row.projectEither(attrib.name)
-        bodyAttribute.flatMap(
-          body =>
-            if (body.literal.typeOf == attrib.domain || body.literal.typeOf == NullType) Right(body)
-            else Left(TypeMismatch(attrib.domain, body.literal.typeOf, body.literal)))
+        bodyAttribute.flatMap(constraint(attrib))
       }
       .map(Row.apply)
-  }
+
+  private def checkTypes(row: Row, header: Header): Either[SQLError, Row] =
+    checkConstraint(
+      row,
+      header,
+      attrib =>
+        body =>
+          if (body.literal.typeOf == attrib.domain || body.literal.typeOf == NullType) Right(body)
+          else Left(TypeMismatch(attrib.domain, body.literal.typeOf, body.literal))
+    )
+
+  private def checkChecks(row: Row, header: Header): Either[SQLError, Row] =
+    checkConstraint(
+      row,
+      header,
+      attrib =>
+        body => {
+          val checks = attrib.constraints.collect {
+            case c: Check => c.bool
+          }
+          if (checks.forall(
+                bool => BoolInterpreter.eval(bool, List(Row(body))) == Right(List(Row(body)))))
+            Right(body)
+          else Left(CheckViolation(attrib, body.literal))
+      }
+    )
+
+  private def checkUnique(row: Row, relation: Relation): Either[SQLError, Row] =
+    checkConstraint(
+      row,
+      relation.heading,
+      attrib =>
+        body => {
+          val uniqueDisallowed = attrib.constraints.collect {
+            case unique: Unique.type => unique
+            case pk: PrimaryKey.type => pk
+          }.nonEmpty
+          if (uniqueDisallowed) {
+            val select = Select(List(Var(body.name)), relation.name, Nil, None, Nil, None, Nil)
+            val rowsEither = QueryBuilder.makeQuery(select, Schema(List(relation)))
+            rowsEither.flatMap {row =>
+              val contains = row.flatMap(_.getValues).contains(body.literal)
+              if (contains) Left(UniqueViolation(body))
+              else Right(body)
+            }
+          }
+          else Right(body)
+      }
+    )
 
   private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
     val missing = header.filter(attribute => row.projectOption(attribute.name).isEmpty)

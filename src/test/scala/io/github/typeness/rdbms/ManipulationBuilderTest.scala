@@ -9,10 +9,10 @@ class ManipulationBuilderTest extends FunSuite {
   test("Successful anonymous row insert into table Pracownicy") {
     /*
       INSERT INTO Pracownicy VALUES
-      (1,'Kowal','Piotr', 500, '2010-01-01',2)
+      (6,'Kowal','Piotr', 500, '2010-01-01',2)
      */
     val row = List(
-      IntegerLiteral(1),
+      IntegerLiteral(6),
       StringLiteral("Kowal"),
       StringLiteral("Piotr"),
       MoneyLiteral(500),
@@ -33,10 +33,10 @@ class ManipulationBuilderTest extends FunSuite {
   test("Successful named row insert into table Pracownicy") {
     /*
       INSERT INTO Pracownicy(Nr,Nazwisko,Imie) VALUES
-      (1,'Kowal','Piotr')
+      (6,'Kowal','Piotr')
      */
     val row = Row(
-      BodyAttribute("Nr", IntegerLiteral(1)),
+      BodyAttribute("Nr", IntegerLiteral(6)),
       BodyAttribute("Nazwisko", StringLiteral("Kowal")),
       BodyAttribute("Imie", StringLiteral("Piotr")),
     )
@@ -200,6 +200,30 @@ class ManipulationBuilderTest extends FunSuite {
       newRelation <- ManipulationBuilder.updateRows(query, pracownicyRelation)
     } yield newRelation.body == pracownicyRelation.body
     assert(noEffect == Right(true))
+  }
+
+  test("UNIQUE violation") {
+    /*
+     INSERT INTO Pracownicy VALUES
+     (1,'Kowal','Piotr', 500, '2010-01-01',2)
+    */
+    val row = List(
+      IntegerLiteral(1),
+      StringLiteral("Kowal"),
+      StringLiteral("Piotr"),
+      MoneyLiteral(500),
+      DateLiteral("2010-01-01"),
+      IntegerLiteral(2),
+    )
+    val query = AnonymousInsert(
+      "Pracownicy",
+      row
+    )
+    val containsRow = for {
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation)
+      rows = newRelation.body.map(_.getValues)
+    } yield rows.contains(row)
+    assert(containsRow == Left(UniqueViolation(BodyAttribute("Nr", IntegerLiteral(1)))))
   }
 
 }
