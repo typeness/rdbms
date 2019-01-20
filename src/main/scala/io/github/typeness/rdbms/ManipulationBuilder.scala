@@ -22,7 +22,7 @@ object ManipulationBuilder extends BuilderUtils {
           filledRow = Row(missing.attributes ::: rowWithCheckedIdentity.attributes)
           typecheckedRow <- checkTypes(filledRow, relation.heading)
           checkedRow <- checkChecks(typecheckedRow, relation.heading)
-          checkedUniqueViolation  <- checkUnique(checkedRow, relation)
+          checkedUniqueViolation <- checkUnique(checkedRow, relation)
         } yield appendRow(checkedUniqueViolation, relation, newIdentity)
       case AnonymousInsert(_, row) =>
         val relationRowSize = relation.heading.size
@@ -48,24 +48,28 @@ object ManipulationBuilder extends BuilderUtils {
             (rowWithCheckedIdentity, newIdentity) = checkedIdentity
             typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
             checkedRow <- checkChecks(typeCheckedRow, relation.heading)
-            checkedUniqueViolation  <- checkUnique(checkedRow, relation)
+            checkedUniqueViolation <- checkUnique(checkedRow, relation)
           } yield appendRow(checkedUniqueViolation, relation, newIdentity)
         }
     }
 
-  def deleteRows(query: Delete, relation: Relation): Either[SQLError, Relation] =
+  def deleteRows(query: Delete, relation: Relation, schema: Schema): Either[SQLError, Schema] =
     query.condition match {
-      case None => Right(relation.copy(body = Nil))
+      case None => Right(schema.update(relation.copy(body = Nil)))
       case Some(condition) =>
         for {
           matching <- BoolInterpreter.eval(condition, relation.body)
           rows = relation.body
-        } yield relation.copy(body = rows.diff(matching))
+          newRelation = relation.copy(body = rows.diff(matching))
+          newSchema <- onDeletePrimaryKey(relation.body.zip(newRelation.body),
+                                          newRelation,
+                                          schema.update(newRelation))
+        } yield newSchema
     }
 
-  def updateRows(query: Update, relation: Relation): Either[SQLError, Relation] =
+  def updateRows(query: Update, relation: Relation, schema: Schema): Either[SQLError, Schema] =
     query.condition match {
-      case None => Right(relation)
+      case None => Right(schema.update(relation))
       case Some(condition) =>
         for {
           matchingRows <- BoolInterpreter.eval(condition, relation.body)
@@ -74,7 +78,11 @@ object ManipulationBuilder extends BuilderUtils {
               row.map(attrib => query.updated.projectOption(attrib.name).getOrElse(attrib))
             checkTypes(newRow, relation.heading)
           }
-        } yield relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
+          newRelation = relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
+          newSchema <- onDeletePrimaryKey(relation.body.zip(newRelation.body),
+                                          newRelation,
+                                          schema.update(newRelation))
+        } yield newSchema
     }
 
   private def appendRow(values: Row,
@@ -139,13 +147,12 @@ object ManipulationBuilder extends BuilderUtils {
           if (uniqueDisallowed) {
             val select = Select(List(Var(body.name)), relation.name, Nil, None, Nil, None, Nil)
             val rowsEither = QueryBuilder.makeQuery(select, Schema(List(relation)))
-            rowsEither.flatMap {row =>
+            rowsEither.flatMap { row =>
               val contains = row.flatMap(_.getValues).contains(body.literal)
               if (contains) Left(UniqueViolation(body))
               else Right(body)
             }
-          }
-          else Right(body)
+          } else Right(body)
       }
     )
 
@@ -197,4 +204,188 @@ object ManipulationBuilder extends BuilderUtils {
           )
         }
     }
+
+  type FKeyName = String
+
+  private case class PKeyFKeyRelations(pKeyRelation: Relation,
+                                       fKeyRelation: Relation,
+                                       keyPairs: List[(HeadingAttribute, ForeignKey, FKeyName)])
+
+  private object PKeyFKeyRelations {
+    def apply(pKeyRelation: Relation, fKeyRelation: Relation): PKeyFKeyRelations = {
+      val pKeyRelationName = pKeyRelation.name
+      val primaryKeys = pKeyRelation.getPrimaryKeys
+      val pKeysNames = primaryKeys.map(_.name)
+      val keyPairs = fKeyRelation.heading.flatMap { attribute =>
+        attribute.constraints.collect {
+          case fKey @ ForeignKey(pkName, `pKeyRelationName`, _, _) if pKeysNames.contains(pkName) =>
+            (primaryKeys.find(_.name == pkName).get, fKey, attribute.name)
+        }
+      }
+      PKeyFKeyRelations(pKeyRelation, fKeyRelation, keyPairs)
+    }
+  }
+
+  private sealed trait ModifyTrigger {
+    def getFunction(foreignKey: ForeignKey)
+      : (Relation, FKeyName, ForeignKey, BodyAttribute, BodyAttribute, Schema) => Either[SQLError,
+                                                                                         List[Row]]
+  }
+  private case object DeleteTrigger extends ModifyTrigger {
+    override def getFunction(foreignKey: ForeignKey): (Relation,
+                                                       FKeyName,
+                                                       ForeignKey,
+                                                       BodyAttribute,
+                                                       BodyAttribute,
+                                                       Schema) => Either[SQLError, List[Row]] =
+      foreignKey.onDelete match {
+        case NoAction =>
+          (relation: Relation, foreignKeyName: FKeyName, foreignKey: ForeignKey, _, _, _) =>
+            rollback(relation, foreignKeyName, foreignKey)
+        case Cascade =>
+          onModifyDeleteCascade
+        case SetNULL =>
+          onModifySetNULL
+        case SetDefault =>
+          onModifySetDefault
+      }
+  }
+
+  private case object UpdateTrigger extends ModifyTrigger {
+    override def getFunction(foreignKey: ForeignKey): (Relation,
+                                                       FKeyName,
+                                                       ForeignKey,
+                                                       BodyAttribute,
+                                                       BodyAttribute,
+                                                       Schema) => Either[SQLError, List[Row]] =
+      foreignKey.onUpdate match {
+        case NoAction =>
+          (relation: Relation, foreignKeyName: FKeyName, foreignKey: ForeignKey, _, _, _) =>
+            rollback(relation, foreignKeyName, foreignKey)
+        case Cascade =>
+          onModifyUpdateCascade
+        case SetNULL =>
+          onModifySetNULL
+        case SetDefault =>
+          onModifySetDefault
+      }
+  }
+
+  private def onModifyPrimaryKey(matchingRows: List[(Row, Row)],
+                                 pKeyRelation: Relation,
+                                 schema: Schema,
+                                 trigger: ModifyTrigger): Either[SQLError, Schema] = {
+
+    def updateRow(relationPair: PKeyFKeyRelations,
+                  pKey: HeadingAttribute,
+                  relation: List[Row],
+                  fKey: ForeignKey,
+                  fKeyName: FKeyName): Either[SQLError, List[Row]] = {
+      val eitherPrimaryKeyValues =
+        matchingRows.traverse {
+          case (oldRow, newRow) =>
+            oldRow
+              .projectEither(pKey.name)
+              .flatMap(old => newRow.projectEither(pKey.name).flatMap(`new` => Right((old, `new`))))
+        }
+      eitherPrimaryKeyValues.flatMap { primaryKeyValues =>
+        primaryKeyValues.foldLeft[Either[SQLError, List[Row]]](Right(relation)) {
+          case (Right(relation2), (oldAttributte: BodyAttribute, newAttribute: BodyAttribute)) =>
+            trigger.getFunction(fKey)(relationPair.fKeyRelation.copy(body = relation2),
+                                      fKeyName,
+                                      fKey,
+                                      oldAttributte,
+                                      newAttribute,
+                                      schema)
+          case (left, _) => left
+        }
+      }
+    }
+
+    val relationPairs =
+      schema.relations.values.toList.map(PKeyFKeyRelations(pKeyRelation, _))
+    relationPairs
+      .traverse { relationPair =>
+        relationPair.keyPairs
+          .foldLeft[Either[SQLError, List[Row]]](Right(relationPair.fKeyRelation.body)) {
+            case (Right(relation), (pKey, fKey, fKeyName)) =>
+              updateRow(relationPair, pKey, relation, fKey, fKeyName)
+            case (left, _) =>
+              left
+          }
+          .map(rows => relationPair.fKeyRelation.copy(body = rows))
+      }
+      .map(Schema.apply)
+  }
+
+  private def onUpdatePrimaryKey(modifiedRows: List[(Row, Row)],
+                                 pKeyRelation: Relation,
+                                 schema: Schema): Either[SQLError, Schema] =
+    onModifyPrimaryKey(modifiedRows, pKeyRelation, schema, UpdateTrigger)
+
+  private def onDeletePrimaryKey(modifiedRows: List[(Row, Row)],
+                                 pKeyRelation: Relation,
+                                 schema: Schema): Either[SQLError, Schema] =
+    onModifyPrimaryKey(modifiedRows, pKeyRelation, schema, DeleteTrigger)
+
+  private def onModifyDeleteCascade(fKeyRelation: Relation,
+                                    foreignKeyName: FKeyName,
+                                    foreignKey: ForeignKey,
+                                    oldKey: BodyAttribute,
+                                    newKey: BodyAttribute,
+                                    schema: Schema): Either[SQLError, List[Row]] = {
+    val delete = Delete(fKeyRelation.name, Some(Equals(foreignKeyName, oldKey.literal)))
+    ManipulationBuilder
+      .deleteRows(delete, fKeyRelation, schema)
+      .flatMap(_.getRelation(fKeyRelation.name))
+      .map(_.body)
+  }
+
+  private def onModifyChangeFKey(fKeyRelation: Relation,
+                                 foreignKeyName: FKeyName,
+                                 foreignKey: ForeignKey,
+                                 oldKey: BodyAttribute,
+                                 newKey: Literal,
+                                 schema: Schema): Either[SQLError, List[Row]] = {
+    val update = Update(fKeyRelation.name,
+                        Row(BodyAttribute(foreignKeyName, newKey)),
+                        Some(Equals(foreignKeyName, oldKey.literal)))
+    ManipulationBuilder
+      .updateRows(update, fKeyRelation, schema)
+      .flatMap(_.getRelation(fKeyRelation.name))
+      .map(_.body)
+  }
+
+  private def onModifyUpdateCascade(fKeyRelation: Relation,
+                                    foreignKeyName: FKeyName,
+                                    foreignKey: ForeignKey,
+                                    oldKey: BodyAttribute,
+                                    newKey: BodyAttribute,
+                                    schema: Schema): Either[SQLError, List[Row]] =
+    onModifyChangeFKey(fKeyRelation, foreignKeyName, foreignKey, oldKey, newKey.literal, schema)
+
+  private def onModifySetNULL(fKeyRelation: Relation,
+                              foreignKeyName: FKeyName,
+                              foreignKey: ForeignKey,
+                              oldKey: BodyAttribute,
+                              newKey: BodyAttribute,
+                              schema: Schema): Either[SQLError, List[Row]] =
+    onModifyChangeFKey(fKeyRelation, foreignKeyName, foreignKey, oldKey, NULLLiteral, schema)
+
+  private def onModifySetDefault(fKeyRelation: Relation,
+                                 foreignKeyName: FKeyName,
+                                 foreignKey: ForeignKey,
+                                 oldKey: BodyAttribute,
+                                 newKey: BodyAttribute,
+                                 schema: Schema): Either[SQLError, List[Row]] = {
+    val defaultOrNULL = fKeyRelation.heading
+      .find(_.name == foreignKeyName)
+      .map(_.constraints)
+      .flatMap(_.collectFirst { case d: Default => d.value })
+      .getOrElse(NULLLiteral)
+    onModifyChangeFKey(fKeyRelation, foreignKeyName, foreignKey, oldKey, defaultOrNULL, schema)
+  }
+
+  private def rollback(relation: Relation, foreignKeyName: FKeyName, foreignKey: ForeignKey) =
+    Left(ForeignKeyViolation(relation.name, foreignKeyName))
 }

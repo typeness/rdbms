@@ -4,12 +4,17 @@ import cats.syntax.either._
 
 case class Identity(name: String, current: Int, step: Int)
 
-case class Schema(relations: List[Relation]) {
-  def getRelation(name: String): Either[SchemaDoesNotExists, Relation] =
-    relations.find(_.name == name) match {
-      case Some(value) => Right(value)
-      case _           => Left(SchemaDoesNotExists(name))
-    }
+object Schema {
+  def apply(relations: List[Relation]): Schema =
+    Schema(relations.map(relation => (relation.name, relation)).toMap)
+}
+
+case class Schema(relations: Map[String, Relation]) {
+  def getRelation(name: String): Either[RelationDoesNotExists, Relation] =
+    Either.fromOption(relations.get(name), RelationDoesNotExists(name))
+
+  def update(relation: Relation): Schema =
+    Schema(relations.updated(relation.name, relation))
 }
 
 object Relation {
@@ -40,4 +45,9 @@ case class Relation(name: String,
                     heading: Relation.Header,
                     body: List[Row]) {
 
+  def getPrimaryKeys: List[HeadingAttribute] =
+    heading.filter(_.constraints.exists {
+      case _: PrimaryKey.type => true
+      case _                   => false
+    })
 }

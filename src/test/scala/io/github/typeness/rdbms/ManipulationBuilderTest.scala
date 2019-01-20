@@ -62,7 +62,8 @@ class ManipulationBuilderTest extends FunSuite {
   test("DELETE FROM Pracownicy WHERE Nr=1") {
     val query = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(1))))
     val isDeleted = for {
-      newRelation <- ManipulationBuilder.deleteRows(query, pracownicyRelation)
+      newSchema <- ManipulationBuilder.deleteRows(query, pracownicyRelation, schemaPracownicy)
+      newRelation <- newSchema.getRelation("Pracownicy")
       rows = newRelation.body
     } yield !rows.contains(pracownicyRow1)
     assert(isDeleted.contains(true))
@@ -182,7 +183,8 @@ class ManipulationBuilderTest extends FunSuite {
       BodyAttribute("LiczbaDzieci", IntegerLiteral(3))
     )
     val isUpdated = for {
-      newRelation <- ManipulationBuilder.updateRows(query, pracownicyRelation)
+      newSchema <- ManipulationBuilder.updateRows(query, pracownicyRelation, schemaPracownicy)
+      newRelation <- newSchema.getRelation("Pracownicy")
       rows = newRelation.body
     } yield rows.contains(expectedRow) && !rows.contains(pracownicyRow1)
     assert(isUpdated == Right(true))
@@ -197,7 +199,8 @@ class ManipulationBuilderTest extends FunSuite {
       Some(Equals("Nr", IntegerLiteral(999)))
     )
     val noEffect = for {
-      newRelation <- ManipulationBuilder.updateRows(query, pracownicyRelation)
+      newSchema <- ManipulationBuilder.updateRows(query, pracownicyRelation, schemaPracownicy)
+      newRelation <- newSchema.getRelation("Pracownicy")
     } yield newRelation.body == pracownicyRelation.body
     assert(noEffect == Right(true))
   }

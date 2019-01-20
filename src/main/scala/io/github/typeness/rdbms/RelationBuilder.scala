@@ -11,7 +11,7 @@ object RelationBuilder extends BuilderUtils {
 
   def drop(query: Drop, schema: Schema): Either[SQLError, Schema] =
     Right(
-      Schema(schema.relations.filter(_.name != query.name))
+      Schema(schema.relations.-(query.name))
     )
 
 //  def alterDrop(alter: AlterDrop): Either[SQLError, Relation] = ???

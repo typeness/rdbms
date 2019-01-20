@@ -7,7 +7,8 @@ case class ColumnDoesNotExists(name: String) extends SQLError
 case class MissingColumnName(name: String) extends SQLError
 case object WrongNumberOfAttributes extends SQLError
 case class IdentityViolation(name: String) extends SQLError
-case class SchemaDoesNotExists(name: String) extends SQLError
+case class RelationDoesNotExists(name: String) extends SQLError
 case class TypeMismatch(first: AnyType, second: AnyType, literal: Literal) extends SQLError
 case class CheckViolation(headingAttribute: HeadingAttribute, literal: Literal) extends SQLError
 case class UniqueViolation(bodyAttribute: BodyAttribute) extends SQLError
+case class ForeignKeyViolation(relationName: String, fKeyName: String) extends SQLError

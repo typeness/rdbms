@@ -239,6 +239,14 @@ object SQLParser {
         IgnoreCase("TINYINT").!.map(_ => TinyIntType)
     )
 
+  def primaryKeyTrigger[_: P]: P[PrimaryKeyTrigger] =
+    P(
+      IgnoreCase("NO ACTION").!.map(_ => NoAction) |
+        IgnoreCase("CASCADE").!.map(_ => Cascade) |
+        IgnoreCase("SET NULL").!.map(_ => SetNULL) |
+        IgnoreCase("SET DEFAULT").!.map(_ => SetDefault)
+    )
+
   private def constraint[_: P]: P[Constraint] =
     P(
       IgnoreCase("UNIQUE").map(_ => Unique) |
@@ -247,9 +255,13 @@ object SQLParser {
         IgnoreCase("PRIMARY KEY").map(_ => PrimaryKey) |
         (IgnoreCase("DEFAULT") ~ space ~ literal).map(Default) |
         (IgnoreCase("CHECK") ~ space ~ or).map(Check) |
-        (IgnoreCase("FOREIGN KEY REFERENCES") ~ space ~ id ~ "(" ~ id ~ ")").map {
-          case (name, schema) => ForeignKey(name, schema)
-        }
+        (IgnoreCase("FOREIGN KEY REFERENCES") ~ space ~ id ~ "(" ~ id ~ ")" ~
+          (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).? ~
+          (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?)
+          .map {
+            case (relation, name, onUpdate, onDelete) =>
+              ForeignKey(name, relation, onUpdate.getOrElse(NoAction), onDelete.getOrElse(NoAction))
+          }
     )
 
   private def aggregate[_: P]: P[Aggregate] =
