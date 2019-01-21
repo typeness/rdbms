@@ -12,3 +12,9 @@ case class TypeMismatch(first: AnyType, second: AnyType, literal: Literal) exten
 case class CheckViolation(headingAttribute: HeadingAttribute, literal: Literal) extends SQLError
 case class UniqueViolation(bodyAttribute: BodyAttribute) extends SQLError
 case class ForeignKeyViolation(relationName: String, fKeyName: String) extends SQLError
+case class PrimaryKeyDoesNotExist(fKeyRelationName: String,
+                                  fKeyName: String,
+                                  pKeyRelationName: String,
+                                  pKeyName: String,
+                                  value: Literal)
+    extends SQLError

@@ -8,7 +8,7 @@ import Relation._
 
 object ManipulationBuilder extends BuilderUtils {
 
-  def insertRow(query: Insert, relation: Relation): Either[SQLError, Relation] =
+  def insertRow(query: Insert, relation: Relation, schema: Schema): Either[SQLError, Relation] =
     query match {
       case NamedInsert(_, row) =>
         val queryNames = row.getNames
@@ -23,7 +23,8 @@ object ManipulationBuilder extends BuilderUtils {
           typecheckedRow <- checkTypes(filledRow, relation.heading)
           checkedRow <- checkChecks(typecheckedRow, relation.heading)
           checkedUniqueViolation <- checkUnique(checkedRow, relation)
-        } yield appendRow(checkedUniqueViolation, relation, newIdentity)
+          checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation, relation, schema)
+        } yield appendRow(checkedForeignKeysReferences, relation, newIdentity)
       case AnonymousInsert(_, row) =>
         val relationRowSize = relation.heading.size
         val expectedSize =
@@ -49,7 +50,8 @@ object ManipulationBuilder extends BuilderUtils {
             typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
             checkedRow <- checkChecks(typeCheckedRow, relation.heading)
             checkedUniqueViolation <- checkUnique(checkedRow, relation)
-          } yield appendRow(checkedUniqueViolation, relation, newIdentity)
+            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation, relation, schema)
+          } yield appendRow(checkedForeignKeysReferences, relation, newIdentity)
         }
     }
 
@@ -94,6 +96,48 @@ object ManipulationBuilder extends BuilderUtils {
     //    assert(sameAttributes)
     val currentBody = relation.body
     relation.copy(body = values :: currentBody, identity = newIdentity)
+  }
+
+  private def checkForeignKeysReferences(row: Row,
+                                         relation: Relation,
+                                         schema: Schema): Either[SQLError, Row] = {
+
+    def pKeyRelationContainsFKey(value: BodyAttribute,
+                                 key: ForeignKey): Either[SQLError, BodyAttribute] = {
+      val select = Select(List(Var(key.primaryKeyName)),
+                          key.pKeyRelationName,
+                          Nil,
+                          Some(Equals(key.primaryKeyName, value.literal)),
+                          Nil,
+                          None,
+                          Nil)
+      val contains = QueryBuilder.makeQuery(select, schema).map(_.nonEmpty)
+      contains match {
+        case Right(true) => Right(value)
+        case Right(false) =>
+          Left(
+            PrimaryKeyDoesNotExist(relation.name,
+                                   value.name,
+                                   key.pKeyRelationName,
+                                   key.primaryKeyName,
+                                   value.literal))
+        case Left(error) => Left(error)
+      }
+    }
+
+    val foreignKeysEither = relation.getForeignKeys.traverse {
+      case (name, key) =>
+        for {
+          value <- row.projectEither(name)
+        } yield (value, key)
+    }
+
+    for {
+      foreignKeys <- foreignKeysEither
+      _ <- foreignKeys.traverse {
+        case (value, key) => pKeyRelationContainsFKey(value, key)
+      }
+    } yield row
   }
 
   private def checkConstraint(

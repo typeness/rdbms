@@ -48,6 +48,12 @@ case class Relation(name: String,
   def getPrimaryKeys: List[HeadingAttribute] =
     heading.filter(_.constraints.exists {
       case _: PrimaryKey.type => true
-      case _                   => false
+      case _                  => false
     })
+  def getForeignKeys: List[(String, ForeignKey)] =
+    heading.collect {
+      case attribute: Attribute
+          if attribute.constraints.collect { case key: ForeignKey => key }.nonEmpty =>
+        (attribute.name, attribute.constraints.collect { case key: ForeignKey => key }.head)
+    }
 }

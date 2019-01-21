@@ -24,7 +24,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val containsRow = for {
-      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation, schemaPracownicy)
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(row)
     assert(containsRow == Right(true))
@@ -45,7 +45,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val rows = for {
-      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation, schemaPracownicy)
       rows = newRelation.body
     } yield rows
     assert(
@@ -102,7 +102,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val containsRow = for {
-      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelationWithIdentity)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelationWithIdentity, schemaPracownicy)
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(rowWithID)
     assert(containsRow == Right(true))
@@ -126,7 +126,7 @@ class ManipulationBuilderTest extends FunSuite {
     )
 
     val violation = for {
-      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelationWithIdentity)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelationWithIdentity, schemaPracownicy)
     } yield newRelation
     assert(violation == Left(IdentityViolation("Nr")))
   }
@@ -156,8 +156,8 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val hasRow = for {
-      newRelation1 <- ManipulationBuilder.insertRow(query1, pracownicyRelationWithIdentity)
-      newRelation2 <- ManipulationBuilder.insertRow(query2, newRelation1)
+      newRelation1 <- ManipulationBuilder.insertRow(query1, pracownicyRelationWithIdentity, schemaPracownicy)
+      newRelation2 <- ManipulationBuilder.insertRow(query2, newRelation1, schemaPracownicy)
       rows = newRelation2.body
     } yield
       rows.contains(rowWithId1) &&
@@ -223,7 +223,7 @@ class ManipulationBuilderTest extends FunSuite {
       row
     )
     val containsRow = for {
-      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation)
+      newRelation <- ManipulationBuilder.insertRow(query, pracownicyRelation, schemaPracownicy)
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(row)
     assert(containsRow == Left(UniqueViolation(BodyAttribute("Nr", IntegerLiteral(1)))))
