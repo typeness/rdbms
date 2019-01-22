@@ -224,7 +224,6 @@ class ManipulationBuilderTest extends FunSuite {
       "Urlopy",
       List(IntegerLiteral(123456), DateLiteral("2010-11-11"), DateLiteral("2010-11-12")))
     val error = ManipulationBuilder.run(insert, schemaPracownicyUrlopy)
-    println(error)
     assert(
       error == Left(
         PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(123456))))

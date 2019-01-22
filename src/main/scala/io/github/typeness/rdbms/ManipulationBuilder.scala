@@ -315,26 +315,7 @@ object ManipulationBuilder extends BuilderUtils {
                                                        Schema) => Either[SQLError, List[Row]] =
       foreignKey.onDelete match {
         case NoAction =>
-          (fkRelation: Relation,
-           foreignKeyName: FKeyName,
-           foreignKey: ForeignKey,
-           oldKey,
-           _,
-           schema) =>
-            {
-              val select = Select(List(Var(foreignKeyName)),
-                                  fkRelation.name,
-                                  Nil,
-                                  Some(Equals(foreignKeyName, oldKey.literal)),
-                                  Nil,
-                                  None,
-                                  Nil)
-              QueryBuilder.run(select, schema) match {
-                case Right(Nil)  => Right(fkRelation.body)
-                case Right(_)    => rollback(fkRelation, foreignKeyName, foreignKey)
-                case Left(error) => Left(error)
-              }
-            }
+          onModifyNoAction
         case Cascade =>
           onModifyDeleteCascade
         case SetNULL =>
@@ -353,8 +334,7 @@ object ManipulationBuilder extends BuilderUtils {
                                                        Schema) => Either[SQLError, List[Row]] =
       foreignKey.onUpdate match {
         case NoAction =>
-          (relation: Relation, foreignKeyName: FKeyName, foreignKey: ForeignKey, _, _, _) =>
-            rollback(relation, foreignKeyName, foreignKey)
+          onModifyNoAction
         case Cascade =>
           onModifyUpdateCascade
         case SetNULL =>
@@ -481,6 +461,23 @@ object ManipulationBuilder extends BuilderUtils {
     onModifyChangeFKey(fKeyRelation, foreignKeyName, foreignKey, oldKey, defaultOrNULL, schema)
   }
 
-  private def rollback(relation: Relation, foreignKeyName: FKeyName, foreignKey: ForeignKey) =
-    Left(ForeignKeyViolation(relation.name, foreignKeyName))
+  private def onModifyNoAction(fKeyRelation: Relation,
+                         foreignKeyName: FKeyName,
+                         foreignKey: ForeignKey,
+                         oldKey: BodyAttribute,
+                         newKey: BodyAttribute,
+                         schema: Schema): Either[SQLError, List[Row]] =  {
+    val select = Select(List(Var(foreignKeyName)),
+      fKeyRelation.name,
+      Nil,
+      Some(Equals(foreignKeyName, oldKey.literal)),
+      Nil,
+      None,
+      Nil)
+    QueryBuilder.run(select, schema) match {
+      case Right(Nil)  => Right(fKeyRelation.body)
+      case Right(_)    => Left(ForeignKeyViolation(fKeyRelation.name, foreignKeyName))
+      case Left(error) => Left(error)
+    }
+  }
 }
