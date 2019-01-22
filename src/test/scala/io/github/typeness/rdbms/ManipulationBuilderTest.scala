@@ -237,4 +237,10 @@ class ManipulationBuilderTest extends FunSuite {
     assert(newUrlopy.map(_.map(_.attributes.map(_.literal)).contains(row)) == Right(true))
   }
 
+  test("ForeignKeyViolation when deleting primary key") {
+    val delete = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(5))))
+    val error = ManipulationBuilder.run(delete, schemaPracownicyUrlopy)
+    assert(error == Left(ForeignKeyViolation("Urlopy", "NrPrac")))
+  }
+
 }
