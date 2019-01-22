@@ -198,7 +198,7 @@ class ManipulationBuilderTest extends FunSuite {
     /*
      INSERT INTO Pracownicy VALUES
      (1,'Kowal','Piotr', 500, '2010-01-01',2)
-    */
+     */
     val row = List(
       IntegerLiteral(1),
       StringLiteral("Kowal"),
@@ -217,6 +217,25 @@ class ManipulationBuilderTest extends FunSuite {
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(row)
     assert(containsRow == Left(UniqueViolation(BodyAttribute("Nr", IntegerLiteral(1)))))
+  }
+
+  test("PrimaryKeyDoesNotExist when inserting new row to relation with foreign key") {
+    val insert = AnonymousInsert(
+      "Urlopy",
+      List(IntegerLiteral(123456), DateLiteral("2010-11-11"), DateLiteral("2010-11-12")))
+    val error = ManipulationBuilder.run(insert, schemaPracownicyUrlopy)
+    println(error)
+    assert(
+      error == Left(
+        PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(123456))))
+  }
+
+  test("No PrimaryKeyDoesNotExist when inserting new row to relation with foreign key") {
+    val row = List(IntegerLiteral(1), DateLiteral("2010-11-11"), DateLiteral("2010-11-12"))
+    val insert = AnonymousInsert("Urlopy", row)
+    val newUrlopy =
+      ManipulationBuilder.run(insert, schemaPracownicyUrlopy).flatMap(_.getRelation("Urlopy")).map(_.body)
+    assert(newUrlopy.map(_.map(_.attributes.map(_.literal)).contains(row)) == Right(true))
   }
 
 }
