@@ -5,13 +5,14 @@ import Relation._
 sealed trait SQL
 
 sealed trait Manipulation extends SQL
-
 // Data Manipulation Language
-sealed trait Insert extends SQL
-case class NamedInsert(name: String, row: Row) extends Insert
+sealed trait Insert extends Manipulation {
+  def to: String
+}
+case class NamedInsert(to: String, row: Row) extends Insert
 case class AnonymousInsert(to: String, values: List[Literal]) extends Insert
-case class Delete(name: String, condition: Option[Bool]) extends SQL
-case class Update(name: String, updated: Row, condition: Option[Bool]) extends SQL
+case class Delete(name: String, condition: Option[Bool]) extends Manipulation
+case class Update(name: String, updated: Row, condition: Option[Bool]) extends Manipulation
 
 // Data Definition Language
 sealed trait Definition extends SQL

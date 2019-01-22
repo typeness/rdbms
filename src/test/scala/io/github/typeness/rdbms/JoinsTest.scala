@@ -27,7 +27,7 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)))
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -124,7 +124,7 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", IntegerLiteral(4)),
           BodyAttribute("c", IntegerLiteral(5))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -142,7 +142,7 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -164,7 +164,7 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", IntegerLiteral(3)),
           BodyAttribute("c", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -183,7 +183,7 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -211,7 +211,7 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", IntegerLiteral(3)),
           BodyAttribute("c", IntegerLiteral(3))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -230,7 +230,7 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -258,7 +258,7 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", NULLLiteral),
           BodyAttribute("c", IntegerLiteral(5))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -278,7 +278,7 @@ class JoinsTest extends FunSuite {
       Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -315,7 +315,7 @@ class JoinsTest extends FunSuite {
           BodyAttribute("b", NULLLiteral),
           BodyAttribute("c", IntegerLiteral(5))),
     )
-    val result = QueryBuilder.makeQuery(join, schemaABC)
+    val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
   }
 }

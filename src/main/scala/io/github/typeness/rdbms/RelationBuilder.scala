@@ -2,14 +2,22 @@ package io.github.typeness.rdbms
 
 object RelationBuilder extends BuilderUtils {
 
-  def build(query: Create): Either[SQLError, Relation] =
+  def run(definition: Definition, schema: Schema): Either[SQLError, Schema] = definition match {
+    case c: Create     => build(c, schema)
+    case _: AlterAdd  => ???
+    case _: AlterDrop => ???
+    case d: Drop       => drop(d, schema)
+  }
+
+  private def build(query: Create, schema: Schema): Either[SQLError, Schema] =
     for {
       primaryKey <- getPrimaryKey(query)
       names = query.attributes.map(_.name)
       _ <- checkNonUniqueNames(names)
-    } yield Relation(query.name, primaryKey, query.identity, query.attributes, Nil)
+      relation = Relation(query.name, primaryKey, query.identity, query.attributes, Nil)
+    } yield schema.update(relation)
 
-  def drop(query: Drop, schema: Schema): Either[SQLError, Schema] =
+  private def drop(query: Drop, schema: Schema): Either[SQLError, Schema] =
     Right(
       Schema(schema.relations.-(query.name))
     )

@@ -8,7 +8,28 @@ import Relation._
 
 object ManipulationBuilder extends BuilderUtils {
 
-  def insertRow(query: Insert, relation: Relation, schema: Schema): Either[SQLError, Relation] =
+  def run(manipulation: Manipulation, schema: Schema): Either[SQLError, Schema] =
+    manipulation match {
+      case insert: Insert =>
+        for {
+          relation <- schema.getRelation(insert.to)
+          newSchema <- insertRow(insert, relation, schema)
+        } yield newSchema
+      case delete: Delete =>
+        for {
+          relation <- schema.getRelation(delete.name)
+          newSchema <- deleteRows(delete, relation, schema)
+        } yield newSchema
+      case update: Update =>
+        for {
+          relation <- schema.getRelation(update.name)
+          newSchema <- updateRows(update, relation, schema)
+        } yield newSchema
+    }
+
+  private def insertRow(query: Insert,
+                        relation: Relation,
+                        schema: Schema): Either[SQLError, Schema] =
     query match {
       case NamedInsert(_, row) =>
         val queryNames = row.getNames
@@ -23,8 +44,11 @@ object ManipulationBuilder extends BuilderUtils {
           typecheckedRow <- checkTypes(filledRow, relation.heading)
           checkedRow <- checkChecks(typecheckedRow, relation.heading)
           checkedUniqueViolation <- checkUnique(checkedRow, relation)
-          checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation, relation, schema)
-        } yield appendRow(checkedForeignKeysReferences, relation, newIdentity)
+          checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation,
+                                                                     relation,
+                                                                     schema)
+          updatedRelation = appendRow(checkedForeignKeysReferences, relation, newIdentity)
+        } yield schema.update(updatedRelation)
       case AnonymousInsert(_, row) =>
         val relationRowSize = relation.heading.size
         val expectedSize =
@@ -50,12 +74,17 @@ object ManipulationBuilder extends BuilderUtils {
             typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
             checkedRow <- checkChecks(typeCheckedRow, relation.heading)
             checkedUniqueViolation <- checkUnique(checkedRow, relation)
-            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation, relation, schema)
-          } yield appendRow(checkedForeignKeysReferences, relation, newIdentity)
+            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation,
+                                                                       relation,
+                                                                       schema)
+            updatedRelation = appendRow(checkedForeignKeysReferences, relation, newIdentity)
+          } yield schema.update(updatedRelation)
         }
     }
 
-  def deleteRows(query: Delete, relation: Relation, schema: Schema): Either[SQLError, Schema] =
+  private def deleteRows(query: Delete,
+                         relation: Relation,
+                         schema: Schema): Either[SQLError, Schema] =
     query.condition match {
       case None => Right(schema.update(relation.copy(body = Nil)))
       case Some(condition) =>
@@ -69,7 +98,9 @@ object ManipulationBuilder extends BuilderUtils {
         } yield newSchema
     }
 
-  def updateRows(query: Update, relation: Relation, schema: Schema): Either[SQLError, Schema] =
+  private def updateRows(query: Update,
+                         relation: Relation,
+                         schema: Schema): Either[SQLError, Schema] =
     query.condition match {
       case None => Right(schema.update(relation))
       case Some(condition) =>
@@ -111,7 +142,7 @@ object ManipulationBuilder extends BuilderUtils {
                           Nil,
                           None,
                           Nil)
-      val contains = QueryBuilder.makeQuery(select, schema).map(_.nonEmpty)
+      val contains = QueryBuilder.run(select, schema).map(_.nonEmpty)
       contains match {
         case Right(true) => Right(value)
         case Right(false) =>
@@ -190,7 +221,7 @@ object ManipulationBuilder extends BuilderUtils {
           }.nonEmpty
           if (uniqueDisallowed) {
             val select = Select(List(Var(body.name)), relation.name, Nil, None, Nil, None, Nil)
-            val rowsEither = QueryBuilder.makeQuery(select, Schema(List(relation)))
+            val rowsEither = QueryBuilder.run(select, Schema(List(relation)))
             rowsEither.flatMap { row =>
               val contains = row.flatMap(_.getValues).contains(body.literal)
               if (contains) Left(UniqueViolation(body))
@@ -284,8 +315,26 @@ object ManipulationBuilder extends BuilderUtils {
                                                        Schema) => Either[SQLError, List[Row]] =
       foreignKey.onDelete match {
         case NoAction =>
-          (relation: Relation, foreignKeyName: FKeyName, foreignKey: ForeignKey, _, _, _) =>
-            rollback(relation, foreignKeyName, foreignKey)
+          (fkRelation: Relation,
+           foreignKeyName: FKeyName,
+           foreignKey: ForeignKey,
+           oldKey,
+           _,
+           schema) =>
+            {
+              val select = Select(List(Var(foreignKeyName)),
+                                  fkRelation.name,
+                                  Nil,
+                                  Some(Equals(foreignKeyName, oldKey.literal)),
+                                  Nil,
+                                  None,
+                                  Nil)
+              QueryBuilder.run(select, schema) match {
+                case Right(Nil)  => Right(fkRelation.body)
+                case Right(_)    => rollback(fkRelation, foreignKeyName, foreignKey)
+                case Left(error) => Left(error)
+              }
+            }
         case Cascade =>
           onModifyDeleteCascade
         case SetNULL =>
@@ -347,7 +396,9 @@ object ManipulationBuilder extends BuilderUtils {
     }
 
     val relationPairs =
-      schema.relations.values.toList.map(PKeyFKeyRelations(pKeyRelation, _))
+      schema.relations.values.toList
+        .filterNot(_.name == pKeyRelation.name)
+        .map(PKeyFKeyRelations(pKeyRelation, _))
     relationPairs
       .traverse { relationPair =>
         relationPair.keyPairs
@@ -359,7 +410,7 @@ object ManipulationBuilder extends BuilderUtils {
           }
           .map(rows => relationPair.fKeyRelation.copy(body = rows))
       }
-      .map(Schema.apply)
+      .map(_.foldLeft(schema)(_.update(_)))
   }
 
   private def onUpdatePrimaryKey(modifiedRows: List[(Row, Row)],

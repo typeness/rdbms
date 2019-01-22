@@ -21,7 +21,7 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None
     )
-    assert(RelationBuilder.build(query) == Left(MultiplePrimaryKeys))
+    assert(RelationBuilder.run(query, Schema(Nil)) == Left(MultiplePrimaryKeys))
   }
   test("Non-unique names in table definition") {
     /*
@@ -39,7 +39,7 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None
     )
-    assert(RelationBuilder.build(query) == Left(MultipleColumnNames("name")))
+    assert(RelationBuilder.run(query, Schema(Nil)) == Left(MultipleColumnNames("name")))
   }
   test("Primary key referencing non-existing column name") {
     /*
@@ -56,7 +56,7 @@ class RelationBuilderTest extends FunSuite {
       List("id"),
       None
     )
-    assert(RelationBuilder.build(query) == Left(ColumnDoesNotExists("id")))
+    assert(RelationBuilder.run(query, Schema(Nil)) == Left(ColumnDoesNotExists("id")))
   }
 
   test("DROP TABLE Pracownicy1") {
@@ -88,7 +88,7 @@ class RelationBuilderTest extends FunSuite {
     )
     val query = Drop("Pracownicy1")
     val isDeleted = for {
-      newSchema <- RelationBuilder.drop(query, schema)
+      newSchema <- RelationBuilder.run(query, schema)
     } yield !newSchema.relations.contains(relation1.name) && newSchema.relations.contains(relation2.name)
     assert(isDeleted == Right(true))
   }

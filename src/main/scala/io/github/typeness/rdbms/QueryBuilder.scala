@@ -9,7 +9,7 @@ object QueryBuilder extends BuilderUtils {
 
   private case class JoinWithRelation(join: Join, relation: Relation)
 
-  def makeQuery(query: Query, schema: Schema): Either[SQLError, List[Row]] = query match {
+  def run(query: Query, schema: Schema): Either[SQLError, List[Row]] = query match {
     case sel: Select          => select(sel, schema)
     case union: Union         => unionSelect(union, schema)
     case unionAll: UnionAll   => unionAllSelect(unionAll, schema)
@@ -18,8 +18,8 @@ object QueryBuilder extends BuilderUtils {
   }
 
   private def unionSelect(union: Union, schema: Schema): Either[SQLError, List[Row]] = {
-    val leftEither = makeQuery(union.left, schema)
-    val rightEither = makeQuery(union.right, schema)
+    val leftEither = run(union.left, schema)
+    val rightEither = run(union.right, schema)
     for {
       left <- leftEither
       right <- rightEither
@@ -27,8 +27,8 @@ object QueryBuilder extends BuilderUtils {
   }
 
   private def unionAllSelect(unionAll: UnionAll, schema: Schema): Either[SQLError, List[Row]] = {
-    val leftEither = makeQuery(unionAll.left, schema)
-    val rightEither = makeQuery(unionAll.right, schema)
+    val leftEither = run(unionAll.left, schema)
+    val rightEither = run(unionAll.right, schema)
     for {
       left <- leftEither
       right <- rightEither
@@ -36,8 +36,8 @@ object QueryBuilder extends BuilderUtils {
   }
 
   private def intersectSelect(intersect: Intersect, schema: Schema): Either[SQLError, List[Row]] = {
-    val leftEither = makeQuery(intersect.left, schema)
-    val rightEither = makeQuery(intersect.right, schema)
+    val leftEither = run(intersect.left, schema)
+    val rightEither = run(intersect.right, schema)
     for {
       left <- leftEither
       right <- rightEither
@@ -45,8 +45,8 @@ object QueryBuilder extends BuilderUtils {
   }
 
   private def exceptSelect(except: Except, schema: Schema): Either[SQLError, List[Row]] = {
-    val leftEither = makeQuery(except.left, schema)
-    val rightEither = makeQuery(except.right, schema)
+    val leftEither = run(except.left, schema)
+    val rightEither = run(except.right, schema)
 
     for {
       left <- leftEither

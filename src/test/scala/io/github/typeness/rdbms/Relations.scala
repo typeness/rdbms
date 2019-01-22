@@ -111,7 +111,7 @@ object Relations {
     LiczbaDzieci TINYINT
   )
    */
-  val pracownicyRelation = Relation(
+  val pracownicy = Relation(
     "Pracownicy",
     Nil,
     None,
@@ -131,6 +131,47 @@ object Relations {
       pracownicyRow5
     )
   )
-  val schemaPracownicy = Schema(List(pracownicyRelation))
+
+  /*
+  CREATE TABLE Urlopy(
+    NrPrac INT REFERENCES Pracownicy(Nr),
+    OdKiedy DATE,
+    DoKiedy DATE,
+    PRIMARY KEY(NrPrac, OdKiedy)
+  )
+   */
+
+  val urlopy = Relation(
+    "Urlopy",
+    Nil,
+    None,
+    List(
+      HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey, ForeignKey("Nr", "Pracownicy", NoAction, NoAction))),
+      HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+      HeadingAttribute("DoKiedy", DateType, Nil),
+    ),
+    List(
+
+    )
+  )
+
+  val schemaPracownicyUrlopy = Schema(List(pracownicy, urlopy))
+
+  val pracownicy2 = Relation(
+    "Pracownicy2",
+    List("Nr"),
+    Some(Identity("Nr", 1, 1)),
+    List(
+      HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
+      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
+      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
+      HeadingAttribute("Stawka", MoneyType, Nil),
+      HeadingAttribute("DataZatrudnienia", DateType, Nil),
+      HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
+    ),
+    Nil
+  )
+
+  val schemaPracownicy2 = Schema(List(pracownicy2))
 
 }

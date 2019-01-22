@@ -14,7 +14,7 @@ class QueryBuilderTest extends FunSuite {
     val query =
       Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), Nil, None, Nil)
     val hasRow1 = for {
-      rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      rows <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield rows == List(pracownicyRow1)
     assert(hasRow1.contains(true))
   }
@@ -27,7 +27,7 @@ class QueryBuilderTest extends FunSuite {
     val query =
       Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(9999))), Nil, None, Nil)
     val isEmpty = for {
-      rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      rows <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield rows == Nil
     assert(isEmpty.contains(true))
   }
@@ -67,7 +67,7 @@ class QueryBuilderTest extends FunSuite {
       )
     )
     val result = for {
-      rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      rows <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield rows
     assert(result == Right(expected))
   }
@@ -91,7 +91,7 @@ class QueryBuilderTest extends FunSuite {
       Nil,
     )
     val haveRows = for {
-      rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      rows <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield rows == List(pracownicyRow1, pracownicyRow4, pracownicyRow2)
     assert(haveRows.contains(true))
   }
@@ -115,7 +115,7 @@ class QueryBuilderTest extends FunSuite {
       Nil
     )
     val haveRows = for {
-      rows <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      rows <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield rows == List(pracownicyRow4)
     assert(haveRows.contains(true))
   }
@@ -145,7 +145,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(2)))
     )
     val hasRows = for {
-      result <- QueryBuilder.makeQuery(union, schemaPracownicy)
+      result <- QueryBuilder.run(union, schemaPracownicyUrlopy)
     } yield result == expected
     assert(hasRows == Right(true))
   }
@@ -168,7 +168,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nazwisko", StringLiteral("Grzyb"))),
     )
     val isDistinct = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isDistinct == Right(true))
   }
@@ -190,7 +190,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
     )
     val isFiltered = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -210,7 +210,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(2))),
     )
     val isFiltered = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -230,7 +230,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(3))),
     )
     val isFiltered = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -249,7 +249,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
     )
     val isFiltered = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isFiltered == Right(true))
   }
@@ -272,7 +272,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(1))),
     )
     val isSorted = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isSorted == Right(true))
   }
@@ -294,7 +294,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5))),
     )
     val isSorted = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result == expected
     assert(isSorted == Right(true))
   }
@@ -317,7 +317,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(5)), BodyAttribute("LiczbaDzieci", NULLLiteral)),
     )
     val isSorted = for {
-      result <- QueryBuilder.makeQuery(query, schemaPracownicy)
+      result <- QueryBuilder.run(query, schemaPracownicyUrlopy)
     } yield result
     assert(isSorted == Right(expected))
   }
@@ -345,7 +345,7 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(BodyAttribute("a", IntegerLiteral(3)))
     )
-    val result = QueryBuilder.makeQuery(intersect, schemaABC)
+    val result = QueryBuilder.run(intersect, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -362,7 +362,7 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(BodyAttribute("Max(a)", IntegerLiteral(3)))
     )
-    val result = QueryBuilder.makeQuery(query, schemaABC)
+    val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -379,7 +379,7 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(BodyAttribute("Min(a)", IntegerLiteral(1)))
     )
-    val result = QueryBuilder.makeQuery(query, schemaABC)
+    val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -396,7 +396,7 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(BodyAttribute("Count(a)", IntegerLiteral(3)))
     )
-    val result = QueryBuilder.makeQuery(query, schemaABC)
+    val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -413,7 +413,7 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(BodyAttribute("Sum(a)", IntegerLiteral(1 + 2 + 3)))
     )
-    val result = QueryBuilder.makeQuery(query, schemaABC)
+    val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -430,7 +430,7 @@ class QueryBuilderTest extends FunSuite {
     val expected = List(
       Row(BodyAttribute("Avg(a)", IntegerLiteral(2)))
     )
-    val result = QueryBuilder.makeQuery(query, schemaABC)
+    val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
   }
 
@@ -451,7 +451,7 @@ class QueryBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(4))),
       Row(BodyAttribute("Nr", IntegerLiteral(5)))
     )
-    val resullt = QueryBuilder.makeQuery(query, schemaPracownicy)
+    val resullt = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(resullt == Right(expected))
   }
 
@@ -480,7 +480,7 @@ class QueryBuilderTest extends FunSuite {
              BodyAttribute("Count(Nr)", IntegerLiteral(1))))
     )
 
-    val result = QueryBuilder.makeQuery(query, schemaPracownicy)
+    val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
   }
 
@@ -502,7 +502,7 @@ class QueryBuilderTest extends FunSuite {
              BodyAttribute("Count(Nr)", IntegerLiteral(2)))
       )
     )
-    val result = QueryBuilder.makeQuery(query, schemaPracownicy)
+    val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
   }
 
