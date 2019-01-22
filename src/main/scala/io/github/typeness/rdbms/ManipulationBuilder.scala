@@ -89,11 +89,7 @@ object ManipulationBuilder extends BuilderUtils {
     def delete(matchingRows: List[Row]): Either[SQLError, Schema] = {
       val rows = relation.body
       val newRelation = relation.copy(body = rows.diff(matchingRows))
-      for {
-        newSchema <- onDeletePrimaryKey(matchingRows.zip(matchingRows),
-                                        newRelation,
-                                        schema.update(newRelation))
-      } yield newSchema
+      onDeletePrimaryKey(matchingRows.zip(matchingRows), newRelation, schema.update(newRelation))
     }
     query.condition match {
       case None =>
