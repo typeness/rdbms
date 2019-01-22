@@ -84,39 +84,49 @@ object ManipulationBuilder extends BuilderUtils {
 
   private def deleteRows(query: Delete,
                          relation: Relation,
-                         schema: Schema): Either[SQLError, Schema] =
-    query.condition match {
-      case None => Right(schema.update(relation.copy(body = Nil)))
-      case Some(condition) =>
-        for {
-          matching <- BoolInterpreter.eval(condition, relation.body)
-          rows = relation.body
-          newRelation = relation.copy(body = rows.diff(matching))
-          newSchema <- onDeletePrimaryKey(relation.body.zip(newRelation.body),
-                                          newRelation,
-                                          schema.update(newRelation))
-        } yield newSchema
+                         schema: Schema): Either[SQLError, Schema] = {
+
+    def delete(matchingRows: List[Row]): Either[SQLError, Schema] = {
+      val rows = relation.body
+      val newRelation = relation.copy(body = rows.diff(matchingRows))
+      for {
+        newSchema <- onDeletePrimaryKey(matchingRows.zip(matchingRows),
+                                        newRelation,
+                                        schema.update(newRelation))
+      } yield newSchema
     }
+    query.condition match {
+      case None =>
+        delete(relation.body)
+      case Some(condition) =>
+        BoolInterpreter.eval(condition, relation.body).flatMap(delete)
+    }
+  }
 
   private def updateRows(query: Update,
                          relation: Relation,
-                         schema: Schema): Either[SQLError, Schema] =
-    query.condition match {
-      case None => Right(schema.update(relation))
-      case Some(condition) =>
-        for {
-          matchingRows <- BoolInterpreter.eval(condition, relation.body)
-          updatedRows <- matchingRows.traverse { row =>
-            val newRow =
-              row.map(attrib => query.updated.projectOption(attrib.name).getOrElse(attrib))
-            checkTypes(newRow, relation.heading)
-          }
-          newRelation = relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
-          newSchema <- onDeletePrimaryKey(relation.body.zip(newRelation.body),
-                                          newRelation,
-                                          schema.update(newRelation))
-        } yield newSchema
+                         schema: Schema): Either[SQLError, Schema] = {
+    def update(matchingRows: List[Row]): Either[SQLError, Schema] = {
+      for {
+        updatedRows <- matchingRows.traverse { row =>
+          val newRow =
+            row.map(attrib => query.updated.projectOption(attrib.name).getOrElse(attrib))
+          checkTypes(newRow, relation.heading)
+        }
+        newRelation = relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
+        newSchema <- onUpdatePrimaryKey(matchingRows.zip(updatedRows),
+                                        newRelation,
+                                        schema.update(newRelation))
+      } yield newSchema
     }
+    query.condition match {
+      case None =>
+        update(relation.body)
+        Right(schema.update(relation))
+      case Some(condition) =>
+        BoolInterpreter.eval(condition, relation.body).flatMap(update)
+    }
+  }
 
   private def appendRow(values: Row,
                         relation: Relation,
@@ -462,18 +472,18 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def onModifyNoAction(fKeyRelation: Relation,
-                         foreignKeyName: FKeyName,
-                         foreignKey: ForeignKey,
-                         oldKey: BodyAttribute,
-                         newKey: BodyAttribute,
-                         schema: Schema): Either[SQLError, List[Row]] =  {
+                               foreignKeyName: FKeyName,
+                               foreignKey: ForeignKey,
+                               oldKey: BodyAttribute,
+                               newKey: BodyAttribute,
+                               schema: Schema): Either[SQLError, List[Row]] = {
     val select = Select(List(Var(foreignKeyName)),
-      fKeyRelation.name,
-      Nil,
-      Some(Equals(foreignKeyName, oldKey.literal)),
-      Nil,
-      None,
-      Nil)
+                        fKeyRelation.name,
+                        Nil,
+                        Some(Equals(foreignKeyName, oldKey.literal)),
+                        Nil,
+                        None,
+                        Nil)
     QueryBuilder.run(select, schema) match {
       case Right(Nil)  => Right(fKeyRelation.body)
       case Right(_)    => Left(ForeignKeyViolation(fKeyRelation.name, foreignKeyName))

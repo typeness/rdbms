@@ -146,12 +146,16 @@ object Relations {
     Nil,
     None,
     List(
-      HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey, ForeignKey("Nr", "Pracownicy", NoAction, NoAction))),
+      HeadingAttribute("NrPrac",
+                       IntegerType,
+                       List(PrimaryKey, ForeignKey("Nr", "Pracownicy", NoAction, NoAction))),
       HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
       HeadingAttribute("DoKiedy", DateType, Nil),
     ),
     List(
-
+      Row(BodyAttribute("NrPrac", IntegerLiteral(5)),
+          BodyAttribute("OdKiedy", DateLiteral("2010-01-01")),
+          BodyAttribute("DoKiedy", DateLiteral("2010-02-01")))
     )
   )
 
