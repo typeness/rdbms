@@ -3,19 +3,21 @@ import org.scalatest.FunSuite
 
 import fastparse._
 
+import cats.instances.list._
+import cats.instances.either._
+import cats.syntax.foldable._
+
 class IntegrationTest extends FunSuite {
 
   private def createSchema(source: String): Either[SQLError, Schema] = {
     val code = scala.io.Source.fromResource(source).mkString
     val Parsed.Success(trees, _) = SQLParser.parseMany(code)
-    trees.foldLeft[Either[SQLError, Schema]](Right(Schema(Nil))) {
-      case (Right(schema), tree) =>
-        SQLInterpreter.run(tree, schema) match {
-          case Right(SchemaResult(newSchema)) => Right(newSchema)
-          case Right(RowsResult(_)) => Right(schema)
-          case Left(error) => Left(error)
+    trees.foldLeftM(Schema(Nil)) {
+      case (schema, tree) =>
+        SQLInterpreter.run(tree, schema).map {
+          case SchemaResult(newSchema) => newSchema
+          case RowsResult(_) => schema
         }
-      case (Left(error), _) => Left(error)
     }
   }
 

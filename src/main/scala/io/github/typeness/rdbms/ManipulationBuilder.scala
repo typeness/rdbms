@@ -3,6 +3,7 @@ package io.github.typeness.rdbms
 import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
+import cats.syntax.foldable._
 
 import Relation._
 
@@ -149,16 +150,16 @@ object ManipulationBuilder extends BuilderUtils {
                           None,
                           Nil)
       val contains = QueryBuilder.run(select, schema).map(_.nonEmpty)
-      contains match {
-        case Right(true) => Right(value)
-        case Right(false) =>
+      contains.flatMap {
+        case true =>
+          Right(value)
+        case false =>
           Left(
             PrimaryKeyDoesNotExist(relation.name,
                                    value.name,
                                    key.pKeyRelationName,
                                    key.primaryKeyName,
                                    value.literal))
-        case Left(error) => Left(error)
       }
     }
 
@@ -388,11 +389,9 @@ object ManipulationBuilder extends BuilderUtils {
     relationPairs
       .traverse { relationPair =>
         relationPair.keyPairs
-          .foldLeft[Either[SQLError, List[Row]]](Right(relationPair.fKeyRelation.body)) {
-            case (Right(relation), (pKey, fKey, fKeyName)) =>
+          .foldLeftM(relationPair.fKeyRelation.body) {
+            case (relation, (pKey, fKey, fKeyName)) =>
               updateRow(relationPair, pKey, relation, fKey, fKeyName)
-            case (left, _) =>
-              left
           }
           .map(rows => relationPair.fKeyRelation.copy(body = rows))
       }
@@ -480,10 +479,9 @@ object ManipulationBuilder extends BuilderUtils {
                         Nil,
                         None,
                         Nil)
-    QueryBuilder.run(select, schema) match {
-      case Right(Nil)  => Right(fKeyRelation.body)
-      case Right(_)    => Left(ForeignKeyViolation(fKeyRelation.name, foreignKeyName))
-      case Left(error) => Left(error)
+    QueryBuilder.run(select, schema).flatMap {
+      case Nil => Right(fKeyRelation.body)
+      case _   => Left(ForeignKeyViolation(fKeyRelation.name, foreignKeyName))
     }
   }
 }
