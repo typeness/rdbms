@@ -7,6 +7,10 @@ object SQLParser {
 
   def parse(source: String): Parsed[SQL] = fastparse.parse(source, sql(_))
 
+  def parseMany(source: String): Parsed[List[SQL]] = fastparse.parse(source, sqlMany(_))
+
+  private def sqlMany[_: P]: P[List[SQL]] = sql.rep(1).map(_.toList)
+
   private def sql[_: P]: P[SQL] =
     P((insert | delete | update | query | create) ~ End)
 
@@ -60,7 +64,7 @@ object SQLParser {
     }
 
   private def create[_: P]: P[Create] =
-    P(IgnoreCase("CREATE TABLE") ~ space ~ id ~ space ~ "(" ~ space ~ headingAttribute.rep(sep = ", ") ~ space ~ ")").map {
+    P(IgnoreCase("CREATE TABLE") ~ space ~ id ~ space ~ "(" ~ space ~ headingAttribute.rep(sep = commaSeperator ) ~ space ~ ")").map {
       case (name, attributes) => Create(name, attributes.toList, Nil, None)
     }
 
@@ -72,7 +76,7 @@ object SQLParser {
   private def order[_: P]: P[List[Order]] =
     P(
       IgnoreCase("ORDER BY") ~ space ~
-        (id ~ space ~ (IgnoreCase("ASC") | IgnoreCase("DESC")).!).rep(min = 1, sep = ", ")
+        (id ~ space ~ (IgnoreCase("ASC") | IgnoreCase("DESC")).!).rep(min = 1, sep = commaSeperator)
     ).map { x =>
       x.map {
         case (name, "ASC") => Ascending(name)
@@ -87,7 +91,7 @@ object SQLParser {
     P(IgnoreCase("HAVING") ~ space ~ or)
 
   private def groupBy[_: P]: P[List[String]] =
-    P(IgnoreCase("GROUP BY") ~ space ~ id.rep(min = 1, sep = ", ").map(_.toList))
+    P(IgnoreCase("GROUP BY") ~ space ~ id.rep(min = 1, sep = commaSeperator).map(_.toList))
 
   private def join[_: P]: P[List[Join]] =
     P(crossJoin | innerJoin | leftOuterJoin | rightOuterJoin | fullOuterJoin)
@@ -123,14 +127,14 @@ object SQLParser {
   private def selectList[_: P]: P[List[Projection]] =
     P(
       "*".!.map(_ => List.empty) |
-        (aggregate | id.map(Var) | literal).rep(1, sep = ", ").map(_.toList)
+        (aggregate | id.map(Var) | literal).rep(1, sep = commaSeperator).map(_.toList)
     )
 
   private def ids[_: P]: P[List[String]] =
-    P("(" ~ id.rep(1, sep = ", ").map(_.toList) ~ ") ")
+    P("(" ~ id.rep(1, sep = commaSeperator).map(_.toList) ~ ") ")
 
   private def row[_: P]: P[List[Literal]] =
-    P("(" ~ literal.rep(1, sep = ", ").map(_.toList) ~ ")")
+    P("(" ~ literal.rep(1, sep = commaSeperator).map(_.toList) ~ ")")
 
   private def literal[_: P]: P[Literal] =
     P(integer | `null` | date | string)
@@ -219,7 +223,7 @@ object SQLParser {
     }
 
   private def updateList[_: P]: P[Row] =
-    P((id ~ space ~ "=" ~ space ~ literal).rep(1, sep = ", ").map { x =>
+    P((id ~ space ~ "=" ~ space ~ literal).rep(1, sep = commaSeperator).map { x =>
       x.map {
         case (name, lit) => BodyAttribute(name, lit)
       }
@@ -239,7 +243,7 @@ object SQLParser {
         IgnoreCase("TINYINT").!.map(_ => TinyIntType)
     )
 
-  def primaryKeyTrigger[_: P]: P[PrimaryKeyTrigger] =
+  private def primaryKeyTrigger[_: P]: P[PrimaryKeyTrigger] =
     P(
       IgnoreCase("NO ACTION").!.map(_ => NoAction) |
         IgnoreCase("CASCADE").!.map(_ => Cascade) |
@@ -272,4 +276,7 @@ object SQLParser {
         (IgnoreCase("MAX") ~ "(" ~ id ~ ")").map(Max) |
         (IgnoreCase("MIN") ~ "(" ~ id ~ ")").map(Min)
     )
+
+  private def commaSeperator[_: P]: P[Unit] =
+    P("," ~ space)
 }

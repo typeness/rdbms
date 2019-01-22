@@ -18,7 +18,7 @@ object SQLInterpreter {
     run(tree, schema)
   }
 
-  private def run(tree: SQL, schema: Schema): Either[SQLError, InterpreterResult] = tree match {
+  def run(tree: SQL, schema: Schema): Either[SQLError, InterpreterResult] = tree match {
     case manipulation: Manipulation => ManipulationBuilder.run(manipulation, schema).map(SchemaResult)
     case definition: Definition   => RelationBuilder.run(definition, schema).map(SchemaResult)
     case _: Control      => ???
