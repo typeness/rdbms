@@ -29,7 +29,7 @@ object SQLParser {
         }
     }
 
-  private def insert[_: P] =
+  private def insert[_: P]: P[Insert] =
     P(IgnoreCase("INSERT INTO") ~ space ~ id ~ space ~ ids.? ~ IgnoreCase("VALUES") ~ space ~ row ~ End)
       .map {
         case (name, None, row) =>
