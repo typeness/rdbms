@@ -1,1 +1,1 @@
-SELECT * FROM Test
+SELECT * FROM Empty

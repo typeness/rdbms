@@ -60,7 +60,7 @@ object SQLParser {
     }
 
   private def create[_: P]: P[Create] =
-    P(IgnoreCase("CREATE TABLE") ~ space ~ id ~ "(" ~ headingAttribute.rep(sep = ", ") ~ ")").map {
+    P(IgnoreCase("CREATE TABLE") ~ space ~ id ~ space ~ "(" ~ space ~ headingAttribute.rep(sep = ", ") ~ space ~ ")").map {
       case (name, attributes) => Create(name, attributes.toList, Nil, None)
     }
 
