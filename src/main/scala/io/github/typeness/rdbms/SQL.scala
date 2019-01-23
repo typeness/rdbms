@@ -18,7 +18,7 @@ case class Update(name: String, updated: Row, condition: Option[Bool]) extends M
 sealed trait Definition extends SQL
 case class Create(name: String,
                   attributes: Header,
-                  primaryKeys: List[String],
+                  relationConstraints: List[RelationConstraint],
                   identity: Option[Identity])
     extends Definition
 case class AlterAdd(name: String) extends Definition

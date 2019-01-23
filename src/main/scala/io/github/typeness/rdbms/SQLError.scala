@@ -1,7 +1,7 @@
 package io.github.typeness.rdbms
 
 sealed trait SQLError extends Exception
-case object MultiplePrimaryKeys extends SQLError
+case class MultiplePrimaryKeys(first: String, second: String) extends SQLError
 case class MultipleColumnNames(name: String) extends SQLError
 case class ColumnDoesNotExists(name: String) extends SQLError
 case class MissingColumnName(name: String) extends SQLError

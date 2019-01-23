@@ -21,13 +21,13 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None
     )
-    assert(RelationBuilder.run(query, Schema(Nil)) == Left(MultiplePrimaryKeys))
+    assert(RelationBuilder.run(query, Schema(Nil)) == Left(MultiplePrimaryKeys("NrPrac", "OdKiedy")))
   }
   test("Non-unique names in table definition") {
     /*
     CREATE TABLE Test(
-      name INT PRIMARY KEY
-      name DATE
+      name INT PRIMARY KEY,
+      name DATE,
     )
      */
     val query = Create(
@@ -44,7 +44,7 @@ class RelationBuilderTest extends FunSuite {
   test("Primary key referencing non-existing column name") {
     /*
     CREATE TABLE Test(
-      name NVARCHAR(50)
+      name NVARCHAR(50),
       PRIMARY KEY(id)
     )
      */
@@ -53,7 +53,7 @@ class RelationBuilderTest extends FunSuite {
       List(
         HeadingAttribute("name", NVarCharType(50), Nil)
       ),
-      List("id"),
+      List(PKeyRelationConstraint(List("id"))),
       None
     )
     assert(RelationBuilder.run(query, Schema(Nil)) == Left(ColumnDoesNotExists("id")))

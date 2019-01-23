@@ -16,7 +16,7 @@ class IntegrationTest extends FunSuite {
       case (schema, tree) =>
         SQLInterpreter.run(tree, schema).map {
           case SchemaResult(newSchema) => newSchema
-          case RowsResult(_) => schema
+          case RowsResult(_)           => schema
         }
     }
   }
@@ -29,5 +29,35 @@ class IntegrationTest extends FunSuite {
 
   test("Create PracownicyUrlopySchema") {
     val schema = createSchema("pracownicyUrlopySchema.sql")
+    schema == Right(
+      Schema(Map(
+        "Pracownicy" -> Relation(
+          "Pracownicy",
+          List("Nr"),
+          None,
+          List(
+            HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
+            HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
+            HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
+            HeadingAttribute("Stawka", MoneyType, List()),
+            HeadingAttribute("DataZatrudnienia", DateType, List()),
+            HeadingAttribute("LiczbaDzieci", IntegerType, List())
+          ),
+          List()
+        ),
+        "Urlopy" -> Relation(
+          "Urlopy",
+          List("NrPrac", "OdKiedy"),
+          None,
+          List(
+            HeadingAttribute("NrPrac",
+                             IntegerType,
+                             List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction), PrimaryKey)),
+            HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+            HeadingAttribute("DoKiedy", DateType, List())
+          ),
+          List()
+        )
+      )))
   }
 }

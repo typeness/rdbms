@@ -18,3 +18,14 @@ case object NoAction extends PrimaryKeyTrigger
 case object Cascade extends PrimaryKeyTrigger
 case object SetNULL extends PrimaryKeyTrigger
 case object SetDefault extends PrimaryKeyTrigger
+
+sealed trait RelationConstraint {
+  def names: List[String]
+}
+case class PKeyRelationConstraint(names: List[String]) extends RelationConstraint
+case class FKeyRelationConstraint(names: List[String],
+                                pKeyRelationName: String,
+                                pKeyColumnName: String,
+                                onDelete: PrimaryKeyTrigger,
+                                onUpdate: PrimaryKeyTrigger)
+    extends RelationConstraint
