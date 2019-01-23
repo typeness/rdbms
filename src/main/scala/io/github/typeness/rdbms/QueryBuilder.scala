@@ -124,20 +124,16 @@ object QueryBuilder extends BuilderUtils {
 
   private def makeJoins(relation: Relation,
                         joins: List[Join],
-                        schema: Schema): Either[SQLError, List[Row]] = {
-    val joinsWithRelation =
-      joins.traverse(join => schema.getRelation(join.name).map(JoinWithRelation(join, _)))
-    joinsWithRelation
-      .flatMap(_.foldLeftM(relation) {
-        case (relation0, join) =>
-          makeJoin(relation0, join.relation, join.join)
-            .map(result =>
-              Relation("", Nil, None, relation0.heading ::: join.relation.heading, result))
-      })
-      .map(_.body)
-  }
+                        schema: Schema): Either[SQLError, List[Row]] =
+    for {
+      joinsWithRelation <- joins.traverse(join =>
+        schema.getRelation(join.name).map(JoinWithRelation(join, _)))
+      rows <- joinsWithRelation.foldLeftM(relation) {
+        case (relation0, join) => makeJoin(relation0, join.relation, join.join)
+      }
+    } yield rows.body
 
-  private def makeJoin(left: Relation, right: Relation, join: Join): Either[SQLError, List[Row]] = {
+  private def makeJoin(left: Relation, right: Relation, join: Join): Either[SQLError, Relation] = {
     val pairs = for {
       first <- left.body
       second <- right.body
@@ -145,7 +141,7 @@ object QueryBuilder extends BuilderUtils {
     val crossProduct = pairs.map {
       case (first, second) => Row(first.attributes ::: second.attributes)
     }
-    join match {
+    val joined = join match {
       case CrossJoin(_) =>
         Right(crossProduct)
       case InnerJoin(_, on) =>
@@ -160,6 +156,7 @@ object QueryBuilder extends BuilderUtils {
         val inner = BoolInterpreter.eval(on, crossProduct)
         makeOuterJoin(left.heading, left.body, inner, right.heading, right.body)
     }
+    joined.map(rows => Relation("", Nil, None, left.heading ::: right.heading, rows))
   }
 
   private def makeOuterJoin(leftHeading: List[HeadingAttribute],
