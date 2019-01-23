@@ -4,6 +4,7 @@ import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
 import cats.syntax.either._
+import cats.syntax.foldable._
 
 object QueryBuilder extends BuilderUtils {
 
@@ -125,20 +126,16 @@ object QueryBuilder extends BuilderUtils {
                         joins: List[Join],
                         schema: Schema): Either[SQLError, List[Row]] = {
     val joinsWithRelation =
-      joins.map(join => schema.getRelation(join.name).map(JoinWithRelation(join, _)))
-    joinsWithRelation.sequence.flatMap(foldJoins(relation, _))
+      joins.traverse(join => schema.getRelation(join.name).map(JoinWithRelation(join, _)))
+    joinsWithRelation
+      .flatMap(_.foldLeftM(relation) {
+        case (relation0, join) =>
+          makeJoin(relation0, join.relation, join.join)
+            .map(result =>
+              Relation("", Nil, None, relation0.heading ::: join.relation.heading, result))
+      })
+      .map(_.body)
   }
-
-  private def foldJoins(left: Relation,
-                        joins: List[JoinWithRelation]): Either[SQLError, List[Row]] =
-    joins match {
-      case Nil => Right(left.body)
-      case JoinWithRelation(join, relation) :: Nil =>
-        makeJoin(left, relation, join)
-      case JoinWithRelation(join, relation) :: tail =>
-        makeJoin(left, relation, join).flatMap(result =>
-          foldJoins(Relation("", Nil, None, left.heading ::: relation.heading, result), tail))
-    }
 
   private def makeJoin(left: Relation, right: Relation, join: Join): Either[SQLError, List[Row]] = {
     val pairs = for {
