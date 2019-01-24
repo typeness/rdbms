@@ -1,0 +1,1 @@
+SELECT * FROM Pracownicy WHERE Nazwisko = 'Kowal'

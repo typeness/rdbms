@@ -21,6 +21,8 @@ class IntegrationTest extends FunSuite {
     }
   }
 
+  private lazy val pracownicyUrlopy = createSchema("pracownicyUrlopySchema.sql")
+
   test("Create empty schema") {
     val Right(SchemaResult(schema)) = SQLInterpreter.runFromResource("empty.sql")
     val Right(RowsResult(rows)) = SQLInterpreter.runFromResource("t1.sql", schema)
@@ -28,9 +30,8 @@ class IntegrationTest extends FunSuite {
   }
 
   test("Create PracownicyUrlopySchema") {
-    val schema = createSchema("pracownicyUrlopySchema.sql")
     assert(
-      schema == Right(
+      pracownicyUrlopy == Right(
         Schema(Map(
           "Pracownicy" -> Relation(
             "Pracownicy",
@@ -88,4 +89,46 @@ class IntegrationTest extends FunSuite {
         )))
     )
   }
+
+  test("SELECT * FROM Pracownicy WHERE Nazwisko = 'Kowal'") {
+    val result = for {
+      schema <- pracownicyUrlopy
+      rows <- SQLInterpreter.runFromResource("t2.sql", schema)
+    } yield rows
+    assert(
+      result == Right(
+        RowsResult(List(Row(List(
+          BodyAttribute("Nr", IntegerLiteral(1)),
+          BodyAttribute("Nazwisko", StringLiteral("Kowal")),
+          BodyAttribute("Imie", StringLiteral("Piotr")),
+          BodyAttribute("Stawka", IntegerLiteral(1500)),
+          BodyAttribute("DataZatrudnienia", DateLiteral("'2010-01-01'")),
+          BodyAttribute("LiczbaDzieci", IntegerLiteral(2))
+        )))))
+    )
+  }
+
+  test("Failure when inserting non-existing primary key as foreign key") {
+    val result = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t3.sql", schema)
+    } yield newSchema
+    assert(
+      result == Left(
+        PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(23416))))
+  }
+
+  test("Success when inserting existing primary key as foreign key") {
+    val Right(SchemaResult(result)) = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val urlopy = result.getRelation("Urlopy").map(_.body)
+    assert(
+      urlopy == Right(
+        List(Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
+                      BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'")),
+                      BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'")))))))
+  }
+
 }
