@@ -214,7 +214,18 @@ class IntegrationTest extends FunSuite {
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t10.sql", newSchema)
     val urlopyBody =
       result.getRelation("Urlopy").flatMap(_.body.traverse(_.projectEither("NrPrac")))
-    assert(urlopyBody == Right(List(BodyAttribute("NrPrac", IntegerLiteral(333)))) )
+    assert(urlopyBody == Right(List(BodyAttribute("NrPrac", IntegerLiteral(333)))))
+  }
+
+  test("Failure when setting non-existing primary key as foreign key") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val result = SQLInterpreter.runFromResource("t11.sql", newSchema)
+    assert(
+      result == Left(
+        PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(2512))))
   }
 
 }

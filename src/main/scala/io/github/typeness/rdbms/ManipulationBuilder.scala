@@ -76,7 +76,8 @@ object ManipulationBuilder extends BuilderUtils {
             checkedRow <- checkChecks(typeCheckedRow, relation.heading)
             checkedUniqueViolation <- checkUnique(checkedRow, relation)
             checkedPrimaryKeyDuplicates <- checkPrimaryKeyDuplicate(checkedUniqueViolation,
-                                                                    relation, schema)
+                                                                    relation,
+                                                                    schema)
             checkedForeignKeysReferences <- checkForeignKeysReferences(checkedPrimaryKeyDuplicates,
                                                                        relation,
                                                                        schema)
@@ -112,7 +113,10 @@ object ManipulationBuilder extends BuilderUtils {
             row.map(attrib => query.updated.projectOption(attrib.name).getOrElse(attrib))
           checkTypes(newRow, relation.heading)
         }
-        newRelation = relation.copy(body = updatedRows ::: relation.body.diff(matchingRows))
+        checkedForeignKeysReferences <- updatedRows.traverse(
+          checkForeignKeysReferences(_, relation, schema))
+        newRelation = relation.copy(
+          body = checkedForeignKeysReferences ::: relation.body.diff(matchingRows))
         newSchema <- onUpdatePrimaryKey(matchingRows.zip(updatedRows),
                                         newRelation,
                                         schema.update(newRelation))
@@ -218,7 +222,9 @@ object ManipulationBuilder extends BuilderUtils {
       }
     )
 
-  private def checkPrimaryKeyDuplicate(row: Row, relation: Relation, schema: Schema): Either[SQLError, Row] = {
+  private def checkPrimaryKeyDuplicate(row: Row,
+                                       relation: Relation,
+                                       schema: Schema): Either[SQLError, Row] = {
 //    val pKeys = relation.primaryKeys.traverse(row.projectEither)
     val pKeys = relation.getPrimaryKeys.traverse(key => row.projectEither(key.name))
     pKeys.flatMap {
@@ -229,7 +235,7 @@ object ManipulationBuilder extends BuilderUtils {
         }
         val select = Select(Nil, relation.name, Nil, Some(condition), Nil, None, Nil)
         QueryBuilder.run(select, schema).map(_.isEmpty).flatMap {
-          case true => Right(row)
+          case true  => Right(row)
           case false => Left(PrimaryKeyDuplicate(key :: keys))
         }
     }
