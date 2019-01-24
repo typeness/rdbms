@@ -40,7 +40,8 @@ case class Select(
     groupBy: List[String],
     having: Option[Bool],
     order: List[Order],
-    distinct: Boolean = false
+    distinct: Boolean = false,
+    alias: Option[String] = None
 ) extends Query {
   def getAggregates: List[Aggregate] =
     projection

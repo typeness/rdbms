@@ -57,31 +57,52 @@ object QueryBuilder extends BuilderUtils {
 
   private def select(query: Select, schema: Schema): Either[SQLError, List[Row]] =
     for {
-      relation <- schema.getRelation(query.from)
+      schema0 <- applyRelationAlias(query, schema)
+      relation <- schema0.getRelation(query.from)
       //    _ <- checkUndefinedNames(query.projection, relation.heading.map(_.name))
-      joined <- makeJoins(relation, query.joins, schema)
+      joined <- makeJoins(relation, query.joins, schema0)
       filteredRows <- filterRows(joined, query.where)
       groupedRows <- groupBy(query.groupBy, filteredRows, query.getAggregates)
       havingResult <- having(groupedRows, query.having)
       sortedRows <- sortRows(havingResult, query.order)
-      selectedColumns = project(query.projection, sortedRows)
+      selectedColumns <- project(query.projection, sortedRows)
       projections = if (query.projection.nonEmpty) query.projection
       else relation.heading.map(a => Var(a.name))
       withCorrectedColumnsOrder <- reorderColumns(projections, selectedColumns)
     } yield if (query.distinct) withCorrectedColumnsOrder.distinct else withCorrectedColumnsOrder
 
-  private def project(exprs: List[Projection], rows: List[Row]): List[Row] = exprs match {
+  private def applyRelationAlias(query: Select, schema: Schema): Either[SQLError, Schema] =
+    query.alias match {
+      case Some(alias) =>
+        val relation = schema.getRelation(query.from).map(_.copy(name = alias))
+        relation.map(schema.update)
+      case None =>
+        Right(schema)
+    }
+
+  private def project(exprs: List[Projection],
+                      rows: List[Row]): Either[MissingColumnName, List[Row]] = exprs match {
     case Nil =>
-      rows
+      Right(rows)
     case _ =>
-      val literals = exprs.collect {
-        case lit: Literal => BodyAttribute(lit.show, lit)
-      }
-      val names = exprs.collect {
-        case Var(name)            => name
-        case aggregate: Aggregate => aggregate.toString
-      }
-      rows.map(row => Row(row.projectList(names).attributes ::: literals))
+      rows
+        .traverse { row =>
+          exprs.collect {
+            case Var(name) =>
+              row.projectEither(name)
+            case aggregate: Aggregate =>
+              row.projectEither(aggregate.toString)
+            case Alias(v: Var, alias) =>
+              row.projectEither(v.name).map(_.copy(name = alias))
+            case Alias(v: Aggregate, alias) =>
+              row.projectEither(v.toString).map(_.copy(name = alias))
+            case lit: Literal =>
+              Right(BodyAttribute(lit.show, lit))
+            case Alias(lit: Literal, alias) =>
+              Right(BodyAttribute(alias, lit))
+          }.sequence
+        }
+        .map(_.map(Row.apply))
   }
 
   private def filterRows(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] =
@@ -241,6 +262,7 @@ object QueryBuilder extends BuilderUtils {
     val names = projections
       .map {
         case Var(name)            => name
+        case Alias(_, alias)      => alias
         case literal: Literal     => literal.show
         case aggregate: Aggregate => aggregate.toString
       }

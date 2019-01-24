@@ -228,4 +228,19 @@ class IntegrationTest extends FunSuite {
         PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(2512))))
   }
 
+  test("Column alias") {
+    val Right(RowsResult(rows)) = for {
+      schema <- pracownicyUrlopy
+      result <- SQLInterpreter.runFromResource("t12.sql", schema)
+    } yield result
+    assert(
+      rows == List(
+        Row(List(BodyAttribute("Alias", StringLiteral("Wrona")),
+                 BodyAttribute("Imie", StringLiteral("Adam")))),
+        Row(List(BodyAttribute("Alias", StringLiteral("Nowak")),
+                 BodyAttribute("Imie", StringLiteral("Anna")))),
+        Row(List(BodyAttribute("Alias", StringLiteral("Kowal")),
+                 BodyAttribute("Imie", StringLiteral("Piotr"))))
+      ))
+  }
 }

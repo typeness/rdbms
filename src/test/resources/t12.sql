@@ -1,0 +1,1 @@
+SELECT Nazwisko AS Alias, Imie FROM Pracownicy AS P

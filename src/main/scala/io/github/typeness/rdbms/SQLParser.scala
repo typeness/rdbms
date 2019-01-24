@@ -13,7 +13,8 @@ object SQLParser {
 
   private def sqlSingle[_: P]: P[SQL] = sql ~ End
 
-  private def sqlMany[_: P]: P[List[SQL]] = space ~ sql.rep(1, sep = space).map(_.toList) ~ space ~ End
+  private def sqlMany[_: P]: P[List[SQL]] =
+    space ~ sql.rep(1, sep = space).map(_.toList) ~ space ~ End
 
   private def sql[_: P]: P[SQL] =
     P(space ~ (insert | delete | update | query | create) ~ space)
@@ -53,10 +54,10 @@ object SQLParser {
   private def select[_: P]: P[Select] =
     P(
       IgnoreCase("SELECT") ~ space ~ IgnoreCase("DISTINCT").!.? ~ space ~ selectList ~ space ~
-        IgnoreCase("FROM") ~ space ~ id ~ space ~ join ~ (space ~ where).? ~
+        IgnoreCase("FROM") ~ space ~ id ~ space ~ (IgnoreCase("AS") ~ space ~ id ~ space).? ~ join ~ (space ~ where).? ~
         (space ~ groupBy).? ~ (space ~ having).? ~ (space ~ order).?
     ).map {
-      case (distinct, proj, name, join, cond, group, having, order) =>
+      case (distinct, proj, name, alias, join, cond, group, having, order) =>
         Select(proj,
                name,
                join,
@@ -64,7 +65,8 @@ object SQLParser {
                group.getOrElse(Nil),
                having,
                order.getOrElse(Nil),
-               distinct.isDefined)
+               distinct.isDefined,
+               alias)
     }
 
   private def create[_: P]: P[Create] =
@@ -137,8 +139,14 @@ object SQLParser {
   private def selectList[_: P]: P[List[Projection]] =
     P(
       "*".!.map(_ => List.empty) |
-        (aggregate | id.map(Var) | literal).rep(1, sep = commaSeparator).map(_.toList)
+        selection.rep(1, sep = commaSeparator).map(_.toList)
     )
+
+  private def selection[_: P]: P[Projection] =
+    P((aggregate | id.map(Var) | literal) ~ (space ~ IgnoreCase("AS") ~ space ~ id).?).map {
+      case (proj, Some(alias)) => Alias(proj, alias)
+      case (proj, None)        => proj
+    }
 
   private def ids[_: P]: P[List[String]] =
     P("(" ~ space ~ id.rep(1, sep = commaSeparator).map(_.toList) ~ space ~ ")" ~ space)

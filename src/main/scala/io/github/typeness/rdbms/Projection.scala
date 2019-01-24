@@ -4,6 +4,8 @@ sealed trait Projection
 
 case class Var(name: String) extends Projection
 
+case class Alias(original: Projection, alias: String) extends Projection
+
 sealed trait Literal extends Projection {
   def typeOf: AnyType
   def show: String
