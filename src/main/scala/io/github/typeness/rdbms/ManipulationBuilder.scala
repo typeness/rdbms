@@ -75,7 +75,9 @@ object ManipulationBuilder extends BuilderUtils {
             typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
             checkedRow <- checkChecks(typeCheckedRow, relation.heading)
             checkedUniqueViolation <- checkUnique(checkedRow, relation)
-            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation,
+            checkedPrimaryKeyDuplicates <- checkPrimaryKeyDuplicate(checkedUniqueViolation,
+                                                                    relation, schema)
+            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedPrimaryKeyDuplicates,
                                                                        relation,
                                                                        schema)
             updatedRelation = appendRow(checkedForeignKeysReferences, relation, newIdentity)
@@ -216,6 +218,23 @@ object ManipulationBuilder extends BuilderUtils {
       }
     )
 
+  private def checkPrimaryKeyDuplicate(row: Row, relation: Relation, schema: Schema): Either[SQLError, Row] = {
+//    val pKeys = relation.primaryKeys.traverse(row.projectEither)
+    val pKeys = relation.getPrimaryKeys.traverse(key => row.projectEither(key.name))
+    pKeys.flatMap {
+      case Nil => Right(row)
+      case key :: keys =>
+        val condition = keys.foldLeft[Bool](Equals(key.name, key.literal)) {
+          case (equals, key0) => And(equals, Equals(key0.name, key0.literal))
+        }
+        val select = Select(Nil, relation.name, Nil, Some(condition), Nil, None, Nil)
+        QueryBuilder.run(select, schema).map(_.isEmpty).flatMap {
+          case true => Right(row)
+          case false => Left(PrimaryKeyDuplicate(key :: keys))
+        }
+    }
+  }
+
   private def checkUnique(row: Row, relation: Relation): Either[SQLError, Row] =
     checkConstraint(
       row,
@@ -224,15 +243,19 @@ object ManipulationBuilder extends BuilderUtils {
         body => {
           val uniqueDisallowed = attrib.constraints.collect {
             case unique: Unique.type => unique
-            case pk: PrimaryKey.type => pk
           }.nonEmpty
           if (uniqueDisallowed) {
-            val select = Select(List(Var(body.name)), relation.name, Nil, None, Nil, None, Nil)
-            val rowsEither = QueryBuilder.run(select, Schema(List(relation)))
-            rowsEither.flatMap { row =>
-              val contains = row.flatMap(_.getValues).contains(body.literal)
-              if (contains) Left(UniqueViolation(body))
-              else Right(body)
+            val select = Select(List(Var(body.name)),
+                                relation.name,
+                                Nil,
+                                Some(Equals(body.name, body.literal)),
+                                Nil,
+                                None,
+                                Nil)
+            val notFound = QueryBuilder.run(select, Schema(List(relation))).map(_.isEmpty)
+            notFound.flatMap {
+              case true  => Right(body)
+              case false => Left(UniqueViolation(body))
             }
           } else Right(body)
       }

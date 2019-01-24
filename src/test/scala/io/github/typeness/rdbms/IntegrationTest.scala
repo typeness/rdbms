@@ -131,4 +131,46 @@ class IntegrationTest extends FunSuite {
                       BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'")))))))
   }
 
+  test("Failure when inserting duplicate primary key") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val result = SQLInterpreter.runFromResource("t5.sql", newSchema)
+    assert(
+      result == Left(
+        PrimaryKeyDuplicate(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
+                                 BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'"))))))
+  }
+
+  test("Success when inserting unique primary key") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t6.sql", newSchema)
+    val urlopy = result.getRelation("Urlopy")
+    assert(
+      urlopy == Right(Relation(
+        "Urlopy",
+        List("NrPrac", "OdKiedy"),
+        None,
+        List(
+          HeadingAttribute("NrPrac",
+                           IntegerType,
+                           List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction), PrimaryKey)),
+          HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+          HeadingAttribute("DoKiedy", DateType, List())
+        ),
+        List(
+          Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
+                   BodyAttribute("OdKiedy", DateLiteral("'2015-02-01'")),
+                   BodyAttribute("DoKiedy", DateLiteral("'2015-02-07'")))),
+          Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
+                   BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'")),
+                   BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'"))))
+        )
+      )))
+  }
+
 }

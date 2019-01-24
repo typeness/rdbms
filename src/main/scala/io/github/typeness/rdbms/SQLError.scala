@@ -11,6 +11,7 @@ case class RelationDoesNotExists(name: String) extends SQLError
 case class TypeMismatch(first: AnyType, second: AnyType, literal: Literal) extends SQLError
 case class CheckViolation(headingAttribute: HeadingAttribute, literal: Literal) extends SQLError
 case class UniqueViolation(bodyAttribute: BodyAttribute) extends SQLError
+case class PrimaryKeyDuplicate(values: List[BodyAttribute]) extends SQLError
 case class ForeignKeyViolation(relationName: String, fKeyName: String) extends SQLError
 case class PrimaryKeyDoesNotExist(fKeyRelationName: String,
                                   fKeyName: String,

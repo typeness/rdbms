@@ -40,7 +40,7 @@ object Row {
 }
 
 case class Relation(name: String,
-                    primaryKey: List[String],
+                    primaryKeys: List[String],
                     identity: Option[Identity],
                     heading: Relation.Header,
                     body: List[Row]) {

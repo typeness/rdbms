@@ -47,12 +47,13 @@ object Literal {
       case IntegerType =>
         comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
       case DateType =>
-        comparison(lhs.asInstanceOf[StringLiteral], rhs.asInstanceOf[StringLiteral])
+        comparison(StringLiteral(lhs.asInstanceOf[DateLiteral].value),
+                   StringLiteral(rhs.asInstanceOf[DateLiteral].value))
       case NVarCharType(_) =>
         comparison(lhs.asInstanceOf[StringLiteral], rhs.asInstanceOf[StringLiteral])
       case NullType => -1
       case MoneyType =>
-        comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
+        comparison(IntegerLiteral(lhs.asInstanceOf[MoneyLiteral].value), IntegerLiteral(rhs.asInstanceOf[MoneyLiteral].value))
       case BitType =>
         comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
     }

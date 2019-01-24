@@ -216,7 +216,7 @@ class ManipulationBuilderTest extends FunSuite {
       newRelation <- newSchema.getRelation("Pracownicy")
       rows = newRelation.body.map(_.getValues)
     } yield rows.contains(row)
-    assert(containsRow == Left(UniqueViolation(BodyAttribute("Nr", IntegerLiteral(1)))))
+    assert(containsRow == Left(PrimaryKeyDuplicate(List(BodyAttribute("Nr", IntegerLiteral(1))))))
   }
 
   test("PrimaryKeyDoesNotExist when inserting new row to relation with foreign key") {
