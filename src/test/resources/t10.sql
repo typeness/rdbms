@@ -1,0 +1,3 @@
+UPDATE Pracownicy
+SET Nr=333
+WHERE Nr=1

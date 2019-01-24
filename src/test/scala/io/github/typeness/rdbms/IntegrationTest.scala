@@ -6,6 +6,7 @@ import fastparse._
 import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.foldable._
+import cats.syntax.traverse._
 
 class IntegrationTest extends FunSuite {
 
@@ -22,6 +23,7 @@ class IntegrationTest extends FunSuite {
   }
 
   private lazy val pracownicyUrlopy = createSchema("pracownicyUrlopySchema.sql")
+  private lazy val pracownicyUrlopy2 = createSchema("pracownicyUrlopySchema2.sql")
 
   test("Create empty schema") {
     val Right(SchemaResult(schema)) = SQLInterpreter.runFromResource("empty.sql")
@@ -171,6 +173,48 @@ class IntegrationTest extends FunSuite {
                    BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'"))))
         )
       )))
+  }
+
+  test("Failure when deleting row with primary key referenced in other relation") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val result = SQLInterpreter.runFromResource("t7.sql", newSchema)
+    assert(result == Left(ForeignKeyViolation("Urlopy", "NrPrac")))
+  }
+
+  test("Success when deleting row with primary key not referenced in other relation") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t8.sql", newSchema)
+    val isDeleted = result
+      .getRelation("Pracownicy")
+      .flatMap(_.body.traverse(_.projectEither("Nr").map(_.literal.show)))
+    assert(isDeleted.map(_.contains("2")) == Right(false))
+  }
+
+  test("Cascade trigger when deleting row with primary key referenced in other relation") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy2
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t7.sql", newSchema)
+    val urlopyBody = result.getRelation("Urlopy").map(_.body)
+    assert(urlopyBody == Right(Nil))
+  }
+
+  test("Cascade trigger when updating row with primary key referenced in other relation") {
+    val Right(SchemaResult(newSchema)) = for {
+      schema <- pracownicyUrlopy2
+      newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
+    } yield newSchema
+    val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t10.sql", newSchema)
+    val urlopyBody =
+      result.getRelation("Urlopy").flatMap(_.body.traverse(_.projectEither("NrPrac")))
+    assert(urlopyBody == Right(List(BodyAttribute("NrPrac", IntegerLiteral(333)))) )
   }
 
 }

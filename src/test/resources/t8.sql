@@ -1,0 +1,1 @@
+DELETE FROM Pracownicy WHERE Nr=2
