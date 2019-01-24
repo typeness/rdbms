@@ -34,7 +34,7 @@ object SQLParser {
     }
 
   private def insert[_: P]: P[Insert] =
-    P(IgnoreCase("INSERT INTO") ~ space ~ id ~ space ~ ids.? ~ IgnoreCase("VALUES") ~ space ~ row ~ End)
+    P(IgnoreCase("INSERT INTO") ~ space ~ id ~ space ~ ids.? ~ IgnoreCase("VALUES") ~ space ~ row)
       .map {
         case (name, None, row) =>
           AnonymousInsert(name, row)
