@@ -46,7 +46,7 @@ case class Select(
   def getAggregates: List[Aggregate] =
     projection
       .filter {
-        case d: Aggregate => true
+        case _: Aggregate => true
         case _            => false
       }
       .asInstanceOf[List[Aggregate]]

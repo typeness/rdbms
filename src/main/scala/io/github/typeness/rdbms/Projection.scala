@@ -58,6 +58,9 @@ object Literal {
         comparison(IntegerLiteral(lhs.asInstanceOf[MoneyLiteral].value), IntegerLiteral(rhs.asInstanceOf[MoneyLiteral].value))
       case BitType =>
         comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
+      case CharType(_) => ???
+      case DecimalType(_, _) => ???
+      case TinyIntType => ???
     }
   }
   def reverseCompare(lhs: Literal, rhs: Literal): Either[SQLError, Int] = compare(lhs, rhs).map(-_)
@@ -79,6 +82,7 @@ case class Sum(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] = {
     val (nonInts, ints) = literals.partition {
       case _: IntegerLiteral => false
+      case _ => true
     }
     if (nonInts.nonEmpty) Left(TypeMismatch(nonInts.head.typeOf, IntegerType, nonInts.head))
     // find a way to avoid using isInstanceOf

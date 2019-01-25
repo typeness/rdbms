@@ -276,7 +276,7 @@ class SQLParserTest extends FunSuite {
     "CREATE TABLE PRacoWniCy(NrPrac INT pRiMaRY KeY, PESEL CHAR(11) UNIQUE NOT NULL, Nazwisko NVARCHAR(50) NOT NULL, Imie NVARCHAR(50) NOT NULL, Stawka MONEY NULL, [Data urodzenia] DATE, LiczbaDzieci TINYINT, Premia DECIMAL(5,3))") {
     val sql =
       "CREATE TABLE PRacoWniCy(NrPrac INT pRiMaRY KeY, PESEL CHAR(11) UNIQUE NOT NULL, Nazwisko NVARCHAR(50) NOT NULL, Imie NVARCHAR(50) NOT NULL, Stawka MONEY NULL, [Data urodzenia] DATE, LiczbaDzieci TINYINT, Premia DECIMAL(5,3))"
-    val Parsed.Success(result, _) = SQLParser.parse(sql)
+    val Parsed.Success(_, _) = SQLParser.parse(sql)
   }
 
   test("SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko ORDER BY Count(Nr) DESC") {

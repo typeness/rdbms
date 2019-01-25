@@ -1,5 +1,5 @@
 package io.github.typeness.rdbms
-import io.github.typeness.rdbms.Relations.{pracownicyRow1, schemaPracownicyUrlopy}
+import io.github.typeness.rdbms.Relations.schemaPracownicyUrlopy
 import org.scalatest.FunSuite
 
 class RelationPrinterTest extends FunSuite {

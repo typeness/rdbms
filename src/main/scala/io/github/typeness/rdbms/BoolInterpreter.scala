@@ -57,6 +57,8 @@ object BoolInterpreter {
 
   private def getLiteral(expression: Projection, row: Row): Either[MissingColumnName, Literal] =
     expression match {
+      case Alias(_, _) => ???
+      case _: Aggregate   => ???
       case Var(name) =>
         row.projectEither(name).map(_.literal)
       case literal: Literal =>
