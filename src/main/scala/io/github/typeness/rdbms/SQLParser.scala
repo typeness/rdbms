@@ -162,7 +162,7 @@ object SQLParser {
     P(integer | `null` | date | string)
 
   private def string[_: P]: P[StringLiteral] =
-    P("'" ~ CharIn("a-zA-Z").rep.! ~ "'").map(StringLiteral)
+    P("'" ~ CharIn("a-zA-Z!@#$%^&*()_+=-0987654321").rep.! ~ "'").map(StringLiteral)
 
   private def integer[_: P]: P[IntegerLiteral] =
     P(CharPred(c => '0' <= c && c <= '9').rep(1).!).map(x => IntegerLiteral(x.toInt))
@@ -189,7 +189,7 @@ object SQLParser {
     P(id.map(Var) | literal)
 
   private def booleanOperator[_: P]: P[Bool] =
-    P(equals | greaterOrEquals | lessOrEquals | less | greater | isNull | between)
+    P(equals | greaterOrEquals | lessOrEquals | less | greater | isNull | between | like)
 
   private def equals[_: P]: P[Equals] =
     P(id ~ space ~ "=" ~ space ~ expression).map {
@@ -218,6 +218,11 @@ object SQLParser {
 
   private def isNull[_: P]: P[IsNULL] =
     P(id ~ space ~ IgnoreCase("IS NULL")).map(IsNULL)
+
+  private def like[_: P]: P[Like] =
+    P(id ~ space ~ IgnoreCase("LIKE") ~ space ~ string).map {
+      case (name, text) => Like(name, text.value)
+    }
 
   private def between[_: P]: P[Between] =
     P(id ~ space ~ IgnoreCase("BETWEEN") ~ space ~ expression ~ space ~ IgnoreCase("AND") ~ space ~ expression)

@@ -17,14 +17,14 @@ object BoolInterpreter {
           case BodyAttribute(_, NULLLiteral) => true
           case _                             => false
         }
-        val filtered: List[Either[SQLError, Option[Row]]] = rows.map { row =>
+        val filtered = rows.traverse { row =>
           val attribute = row.projectEither(name)
           attribute.map(isNull).map {
             case true  => Some(row)
             case false => None
           }
         }
-        filtered.sequence.map(_.flatten)
+        filtered.map(_.flatten)
       case Between(name, lhs, rhs) =>
         val greaterOrEquals = GreaterOrEquals(name, lhs)
         val lessOrEquals = LessOrEquals(name, rhs)
@@ -39,12 +39,33 @@ object BoolInterpreter {
           left <- eval(lhs, rows)
           right <- eval(rhs, rows)
         } yield left.toSet.union(right.toSet).toList
+      case Like(id, text) =>
+        val regex = sqlLikeToRegex(text)
+        def rowMatches(row: Row): Either[SQLError, Option[Row]] =
+          row.projectEither(id).flatMap { attribute =>
+            attribute.literal match {
+              case StringLiteral(value) =>
+                if (value.toLowerCase.matches(regex.toLowerCase)) Right(Some(row))
+                else Right(None)
+              case lit =>
+                Left(TypeMismatch(lit.typeOf, NVarCharType(256), lit))
+            }
+          }
+        rows
+          .traverse(rowMatches)
+          .map(_.flatten)
     }
 
-  def filter(left: Projection,
-             right: Projection,
-             condition: Int => Boolean,
-             rows: List[Row]): Either[SQLError, List[Row]] = {
+  private def sqlLikeToRegex(like: String): String = like.flatMap {
+    case '_' => '.' :: Nil
+    case '%' => '.' :: '*' :: Nil
+    case a   => a :: Nil
+  }
+
+  private def filter(left: Projection,
+                     right: Projection,
+                     condition: Int => Boolean,
+                     rows: List[Row]): Either[SQLError, List[Row]] = {
     val filtered: List[Either[SQLError, Option[Row]]] = rows.map { row =>
       for {
         lhs <- getLiteral(left, row)
@@ -57,8 +78,8 @@ object BoolInterpreter {
 
   private def getLiteral(expression: Projection, row: Row): Either[MissingColumnName, Literal] =
     expression match {
-      case Alias(_, _) => ???
-      case _: Aggregate   => ???
+      case Alias(_, _)  => ???
+      case _: Aggregate => ???
       case Var(name) =>
         row.projectEither(name).map(_.literal)
       case literal: Literal =>

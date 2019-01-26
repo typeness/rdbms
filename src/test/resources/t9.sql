@@ -1,0 +1,1 @@
+SELECT Imie, Nazwisko FROM Pracownicy WHERE Nazwisko LIKE '%wak' OR Imie LIKE 'A__m'

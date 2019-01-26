@@ -243,4 +243,18 @@ class IntegrationTest extends FunSuite {
                  BodyAttribute("Imie", StringLiteral("Piotr"))))
       ))
   }
+
+  test("LIKE operator") {
+    val Right(RowsResult(rows)) = for {
+      schema <- pracownicyUrlopy
+      result <- SQLInterpreter.runFromResource("t9.sql", schema)
+    } yield result
+    assert(
+      rows == List(
+        Row(List(BodyAttribute("Imie", StringLiteral("Anna")),
+                 BodyAttribute("Nazwisko", StringLiteral("Nowak")))),
+        Row(List(BodyAttribute("Imie", StringLiteral("Adam")),
+                 BodyAttribute("Nazwisko", StringLiteral("Wrona"))))
+      ))
+  }
 }
