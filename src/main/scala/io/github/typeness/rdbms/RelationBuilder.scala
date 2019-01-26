@@ -58,17 +58,17 @@ object RelationBuilder extends BuilderUtils {
         Left(ColumnDoesNotExists(name))
       case Nil =>
         Right(create.relationConstraints.foldLeft(create.attributes) {
-          case (attributes, PKeyRelationConstraint(names)) =>
-            updateHeader(names, attributes, PrimaryKey)
+          case (attributes, PKeyRelationConstraint(names, name)) =>
+            updateHeader(names, attributes, PrimaryKey(name))
           case (attributes,
                 FKeyRelationConstraint(names,
                                        pKeyRelationName,
                                        pKeyColumnName,
                                        onDelete,
-                                       onUpdate)) =>
+                                       onUpdate, name)) =>
             updateHeader(names,
                          attributes,
-                         ForeignKey(pKeyColumnName, pKeyRelationName, onUpdate, onDelete))
+                         ForeignKey(pKeyColumnName, pKeyRelationName, onUpdate, onDelete, name))
         })
     }
     for {
@@ -88,7 +88,7 @@ object RelationBuilder extends BuilderUtils {
 
     val attributes = query.attributes
     def isPrimaryKey(property: Constraint): Boolean = property match {
-      case PrimaryKey => true
+      case PrimaryKey(_) => true
       case _          => false
     }
 

@@ -6,7 +6,7 @@ object Relations {
     "RelationA",
     List("a"),
     None,
-    List(HeadingAttribute("a", IntegerType, List(PrimaryKey))),
+    List(HeadingAttribute("a", IntegerType, List(PrimaryKey()))),
     List(
       Row(BodyAttribute("a", IntegerLiteral(1))),
       Row(BodyAttribute("a", IntegerLiteral(2))),
@@ -18,7 +18,7 @@ object Relations {
     "RelationB",
     List("b"),
     None,
-    List(HeadingAttribute("b", IntegerType, List(PrimaryKey))),
+    List(HeadingAttribute("b", IntegerType, List(PrimaryKey()))),
     List(
       Row(BodyAttribute("b", IntegerLiteral(2))),
       Row(BodyAttribute("b", IntegerLiteral(3))),
@@ -30,7 +30,7 @@ object Relations {
     "RelationC",
     List("c"),
     None,
-    List(HeadingAttribute("c", IntegerType, List(PrimaryKey))),
+    List(HeadingAttribute("c", IntegerType, List(PrimaryKey()))),
     List(
       Row(BodyAttribute("c", IntegerLiteral(3))),
       Row(BodyAttribute("c", IntegerLiteral(4))),
@@ -116,9 +116,9 @@ object Relations {
     Nil,
     None,
     List(
-      HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
-      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
+      HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
+      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
+      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
       HeadingAttribute("Stawka", MoneyType, Nil),
       HeadingAttribute("DataZatrudnienia", DateType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
@@ -148,8 +148,8 @@ object Relations {
     List(
       HeadingAttribute("NrPrac",
                        IntegerType,
-                       List(PrimaryKey, ForeignKey("Nr", "Pracownicy", NoAction, NoAction))),
-      HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+                       List(PrimaryKey(), ForeignKey("Nr", "Pracownicy", NoAction, NoAction))),
+      HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
       HeadingAttribute("DoKiedy", DateType, Nil),
     ),
     List(
@@ -166,9 +166,9 @@ object Relations {
     List("Nr"),
     Some(Identity("Nr", 1, 1)),
     List(
-      HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
-      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
+      HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
+      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
+      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
       HeadingAttribute("Stawka", MoneyType, Nil),
       HeadingAttribute("DataZatrudnienia", DateType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),

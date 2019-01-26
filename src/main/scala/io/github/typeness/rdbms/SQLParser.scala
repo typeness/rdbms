@@ -279,39 +279,43 @@ object SQLParser {
     )
 
   private def columnConstraint[_: P]: P[Constraint] =
-    P(
-      IgnoreCase("UNIQUE").map(_ => Unique) |
-        IgnoreCase("NOT NULL").map(_ => NotNULL) |
-        IgnoreCase("NULL").map(_ => NULL) |
-        IgnoreCase("PRIMARY KEY").map(_ => PrimaryKey) |
-        (IgnoreCase("DEFAULT") ~ space ~ literal).map(Default) |
-        (IgnoreCase("CHECK") ~ space ~ or).map(Check) |
-        (IgnoreCase("FOREIGN KEY REFERENCES") ~ space ~ id ~ "(" ~ id ~ ")" ~
-          (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).? ~
-          (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?)
-          .map {
-            case (relation, name, onUpdate, onDelete) =>
-              ForeignKey(name, relation, onUpdate.getOrElse(NoAction), onDelete.getOrElse(NoAction))
-          }
-    )
+    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
+        .map(PrimaryKey) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT") ~ space ~ literal))
+        .map(a => Default(a._2, a._1)) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("CHECK") ~ space ~ or))
+        .map(a => Check(a._2, a._1)) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY REFERENCES")
+        ~ space ~ id ~ "(" ~ id ~ ")" ~ (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).?
+        ~ (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?))
+        .map {
+          case (constraintName, (relation, name, onUpdate, onDelete)) =>
+            ForeignKey(name,
+                       relation,
+                       onUpdate.getOrElse(NoAction),
+                       onDelete.getOrElse(NoAction),
+                       constraintName)
+        })
 
   private def relationConstraint[_: P]: P[Right[Nothing, RelationConstraint]] =
-    P(
-      (IgnoreCase("PRIMARY KEY") ~ space ~ ids)
-        .map(PKeyRelationConstraint) |
-        (IgnoreCase("FOREIGN KEY") ~ space ~ ids ~ space ~
-          IgnoreCase("REFERENCES") ~ space ~ id ~ space ~ "(" ~ space ~ id ~ space ~ ")" ~
-          (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).? ~
-          (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?)
-          .map {
-            case (names, pKeyRelation, pKey, onUpdate, onDelete) =>
-              FKeyRelationConstraint(names,
-                                     pKeyRelation,
-                                     pKey,
-                                     onDelete.getOrElse(NoAction),
-                                     onUpdate.getOrElse(NoAction))
-          }
-    ).map(Right(_))
+    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("PRIMARY KEY") ~ space ~ ids))
+      .map(a => PKeyRelationConstraint(a._2, a._1)) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY") ~ space ~ ids ~ space ~
+        IgnoreCase("REFERENCES") ~ space ~ id ~ space ~ "(" ~ space ~ id ~ space ~ ")" ~
+        (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).? ~
+        (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?))
+        .map {
+          case (name, (names, pKeyRelation, pKey, onUpdate, onDelete)) =>
+            FKeyRelationConstraint(names,
+                                   pKeyRelation,
+                                   pKey,
+                                   onDelete.getOrElse(NoAction),
+                                   onUpdate.getOrElse(NoAction),
+                                   name)
+        }).map(Right(_))
 
   private def aggregate[_: P]: P[Aggregate] =
     P(

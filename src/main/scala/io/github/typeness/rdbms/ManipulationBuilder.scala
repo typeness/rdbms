@@ -68,7 +68,7 @@ object ManipulationBuilder extends BuilderUtils {
                 if (relation.identity.isEmpty) relation.heading
                 else
                   relation.heading.filter(_.constraints.collect {
-                    case PrimaryKey => true
+                    case PrimaryKey(_) => true
                   }.isEmpty)
               val newRow = Row(
                 row.zip(header).map {
@@ -261,7 +261,7 @@ object ManipulationBuilder extends BuilderUtils {
       attrib =>
         body => {
           val uniqueDisallowed = attrib.constraints.collect {
-            case unique: Unique.type => unique
+            case unique: Unique => unique
           }.nonEmpty
           if (uniqueDisallowed) {
             val select = Select(List(Var(body.name)),
@@ -283,8 +283,8 @@ object ManipulationBuilder extends BuilderUtils {
   private def getMissingAttributes(row: Row, header: Header): Either[MissingColumnName, Row] = {
     val missing = header.filter(attribute => row.projectOption(attribute.name).isEmpty)
     val mandatory = missing.filter(_.constraints.exists {
-      case _: PrimaryKey.type => true
-      case _: NotNULL.type    => true
+      case _: PrimaryKey => true
+      case _: NotNULL    => true
       case _                  => false
     })
     mandatory match {
@@ -300,7 +300,7 @@ object ManipulationBuilder extends BuilderUtils {
         case _          => false
       }
       haveDefault match {
-        case Default(value) :: _ => value
+        case Default(value,_) :: _ => value
         case _                   => NULLLiteral
       }
     }
@@ -342,7 +342,7 @@ object ManipulationBuilder extends BuilderUtils {
       val pKeysNames = primaryKeys.map(_.name)
       val keyPairs = fKeyRelation.heading.flatMap { attribute =>
         attribute.constraints.collect {
-          case fKey @ ForeignKey(pkName, `pKeyRelationName`, _, _) if pKeysNames.contains(pkName) =>
+          case fKey @ ForeignKey(pkName, `pKeyRelationName`, _, _, _) if pKeysNames.contains(pkName) =>
             (primaryKeys.find(_.name == pkName).get, fKey, attribute.name)
         }
       }

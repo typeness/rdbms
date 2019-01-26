@@ -14,8 +14,8 @@ class RelationBuilderTest extends FunSuite {
     val query = Create(
       "Urlopy",
       List(
-        HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+        HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey())),
+        HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
         HeadingAttribute("DoKiedy", DateType, Nil)
       ),
       Nil,
@@ -33,7 +33,7 @@ class RelationBuilderTest extends FunSuite {
     val query = Create(
       "Test",
       List(
-        HeadingAttribute("name", IntegerType, List(PrimaryKey)),
+        HeadingAttribute("name", IntegerType, List(PrimaryKey())),
         HeadingAttribute("name", DateType, Nil)
       ),
       Nil,
@@ -65,8 +65,8 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None,
       List(
-        HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
+        HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
+        HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
       ),
       Nil
     )
@@ -75,8 +75,8 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None,
       List(
-        HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
+        HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
+        HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
       ),
       Nil
     )

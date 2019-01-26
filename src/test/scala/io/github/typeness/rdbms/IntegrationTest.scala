@@ -40,9 +40,9 @@ class IntegrationTest extends FunSuite {
             List("Nr"),
             None,
             List(
-              HeadingAttribute("Nr", IntegerType, List(PrimaryKey)),
-              HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL)),
-              HeadingAttribute("Imie", NVarCharType(50), List(NotNULL)),
+              HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
+              HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
+              HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
               HeadingAttribute("Stawka", IntegerType, List()),
               HeadingAttribute("DataZatrudnienia", DateType, List()),
               HeadingAttribute("LiczbaDzieci", IntegerType, List())
@@ -82,8 +82,8 @@ class IntegrationTest extends FunSuite {
               HeadingAttribute("NrPrac",
                                IntegerType,
                                List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction),
-                                    PrimaryKey)),
-              HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+                                    PrimaryKey())),
+              HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
               HeadingAttribute("DoKiedy", DateType, List())
             ),
             List()
@@ -160,8 +160,8 @@ class IntegrationTest extends FunSuite {
         List(
           HeadingAttribute("NrPrac",
                            IntegerType,
-                           List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction), PrimaryKey)),
-          HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+                           List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction), PrimaryKey())),
+          HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
           HeadingAttribute("DoKiedy", DateType, List())
         ),
         List(
@@ -256,5 +256,24 @@ class IntegrationTest extends FunSuite {
         Row(List(BodyAttribute("Imie", StringLiteral("Adam")),
                  BodyAttribute("Nazwisko", StringLiteral("Wrona"))))
       ))
+  }
+
+  test("Named constraints") {
+    val Right(schema) = createSchema("t13.sql")
+    assert(
+      schema == Schema(
+        Map("Dbo" -> Relation(
+          "Dbo",
+          List("ColumnA"),
+          None,
+          List(
+            HeadingAttribute("ColumnA",
+                             IntegerType,
+                             List(ForeignKey("B", "TAB", NoAction, NoAction, Some("FKey")),
+                                  PrimaryKey(Some("Test")),
+                                  Unique(Some("ColumnAUnique"))))),
+          List()
+        )))
+    )
   }
 }

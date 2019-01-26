@@ -261,8 +261,8 @@ class SQLParserTest extends FunSuite {
     val expected = Create(
       "Urlopy",
       List(
-        HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey)),
-        HeadingAttribute("OdKiedy", DateType, List(PrimaryKey)),
+        HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey())),
+        HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
         HeadingAttribute("DoKiedy", DateType, Nil)
       ),
       Nil,
