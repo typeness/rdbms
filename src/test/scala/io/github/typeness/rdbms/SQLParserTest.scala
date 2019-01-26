@@ -7,7 +7,7 @@ class SQLParserTest extends FunSuite {
     val sql = "INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')"
     val expected = AnonymousInsert(
       "Abc",
-      List(IntegerLiteral(1), IntegerLiteral(123), NULLLiteral, DateLiteral("'2010-01-01'"))
+      List(List(IntegerLiteral(1), IntegerLiteral(123), NULLLiteral, DateLiteral("'2010-01-01'")))
     )
     val Parsed.Success(value, _) = SQLParser.parse(sql)
     assert(value == expected)
@@ -17,11 +17,11 @@ class SQLParserTest extends FunSuite {
     val sql = "INSERT INTO Pracownicy (Nr, Nazwisko, Imie) VALUES (1, 'Kowal', 'Piotr')"
     val expected = NamedInsert(
       "Pracownicy",
-      Row(
+      List(Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
         BodyAttribute("Nazwisko", StringLiteral("Kowal")),
         BodyAttribute("Imie", StringLiteral("Piotr")),
-      )
+      ))
     )
     val Parsed.Success(value, _) = SQLParser.parse(sql)
     assert(value == expected)

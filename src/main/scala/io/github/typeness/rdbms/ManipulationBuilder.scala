@@ -32,58 +32,71 @@ object ManipulationBuilder extends BuilderUtils {
                         relation: Relation,
                         schema: Schema): Either[SQLError, Schema] =
     query match {
-      case NamedInsert(_, row) =>
-        val queryNames = row.getNames
-        val relationNames = relation.heading.map(_.name)
-        for {
-          _ <- checkUndefinedNames(queryNames, relationNames)
-          _ <- checkNonUniqueNames(queryNames)
-          checkedIdentity <- checkIdentity(row, relation.identity)
-          (rowWithCheckedIdentity, newIdentity) = checkedIdentity
-          missing <- getMissingAttributes(rowWithCheckedIdentity, relation.heading)
-          filledRow = Row(missing.attributes ::: rowWithCheckedIdentity.attributes)
-          typecheckedRow <- checkTypes(filledRow, relation.heading)
-          checkedRow <- checkChecks(typecheckedRow, relation.heading)
-          checkedUniqueViolation <- checkUnique(checkedRow, relation)
-          checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation,
-                                                                     relation,
-                                                                     schema)
-          updatedRelation = appendRow(checkedForeignKeysReferences, relation, newIdentity)
-        } yield schema.update(updatedRelation)
-      case AnonymousInsert(_, row) =>
-        val relationRowSize = relation.heading.size
-        val expectedSize =
-          if (relation.identity.isEmpty) relationRowSize
-          else relationRowSize - 1
-        if (row.size != expectedSize) Left(WrongNumberOfAttributes)
-        else {
-          val header =
-            if (relation.identity.isEmpty) relation.heading
-            else
-              relation.heading.filter(_.constraints.collect {
-                case PrimaryKey => true
-              }.isEmpty)
-          val newRow = Row(
-            row.zip(header).map {
-              case (value, HeadingAttribute(name, _, _)) =>
-                BodyAttribute(name, value)
-            }
-          )
+      case NamedInsert(to, rows) =>
+        def insertNamedRow(row: Row, schema: Schema): Either[SQLError, Schema] =
           for {
-            checkedIdentity <- checkIdentity(newRow, relation.identity)
+            relation <- schema.getRelation(to)
+            relationNames = relation.heading.map(_.name)
+            queryNames = row.getNames
+            _ <- checkUndefinedNames(queryNames, relationNames)
+            _ <- checkNonUniqueNames(queryNames)
+            checkedIdentity <- checkIdentity(row, relation.identity)
             (rowWithCheckedIdentity, newIdentity) = checkedIdentity
-            typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
-            checkedRow <- checkChecks(typeCheckedRow, relation.heading)
+            missing <- getMissingAttributes(rowWithCheckedIdentity, relation.heading)
+            filledRow = Row(missing.attributes ::: rowWithCheckedIdentity.attributes)
+            typecheckedRow <- checkTypes(filledRow, relation.heading)
+            checkedRow <- checkChecks(typecheckedRow, relation.heading)
             checkedUniqueViolation <- checkUnique(checkedRow, relation)
-            checkedPrimaryKeyDuplicates <- checkPrimaryKeyDuplicate(checkedUniqueViolation,
-                                                                    relation,
-                                                                    schema)
-            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedPrimaryKeyDuplicates,
+            checkedForeignKeysReferences <- checkForeignKeysReferences(checkedUniqueViolation,
                                                                        relation,
                                                                        schema)
             updatedRelation = appendRow(checkedForeignKeysReferences, relation, newIdentity)
           } yield schema.update(updatedRelation)
+        rows.foldLeftM(schema) {
+          case (schema0, row) => insertNamedRow(row, schema0)
         }
+      case AnonymousInsert(to, rows) =>
+        def insertAnonymousRow(row: List[Literal], schema: Schema): Either[SQLError, Schema] =
+          schema.getRelation(to).flatMap { relation =>
+            val relationRowSize = relation.heading.size
+            val expectedSize =
+              if (relation.identity.isEmpty) relationRowSize
+              else relationRowSize - 1
+            if (row.size != expectedSize) Left(WrongNumberOfAttributes)
+            else {
+              val header =
+                if (relation.identity.isEmpty) relation.heading
+                else
+                  relation.heading.filter(_.constraints.collect {
+                    case PrimaryKey => true
+                  }.isEmpty)
+              val newRow = Row(
+                row.zip(header).map {
+                  case (value, HeadingAttribute(name, _, _)) =>
+                    BodyAttribute(name, value)
+                }
+              )
+              for {
+                checkedIdentity <- checkIdentity(newRow, relation.identity)
+                (rowWithCheckedIdentity, newIdentity) = checkedIdentity
+                typeCheckedRow <- checkTypes(rowWithCheckedIdentity, relation.heading)
+                checkedRow <- checkChecks(typeCheckedRow, relation.heading)
+                checkedUniqueViolation <- checkUnique(checkedRow, relation)
+                checkedPrimaryKeyDuplicates <- checkPrimaryKeyDuplicate(checkedUniqueViolation,
+                                                                        relation,
+                                                                        schema)
+                checkedForeignKeysReferences <- checkForeignKeysReferences(
+                  checkedPrimaryKeyDuplicates,
+                  relation,
+                  schema)
+                updatedRelation = appendRow(checkedForeignKeysReferences, relation, newIdentity)
+              } yield schema.update(updatedRelation)
+            }
+          }
+        rows.foldLeftM(schema) {
+          case (schema0, row) => insertAnonymousRow(row, schema0)
+        }
+
     }
 
   private def deleteRows(query: Delete,

@@ -9,8 +9,8 @@ sealed trait Manipulation extends SQL
 sealed trait Insert extends Manipulation {
   def to: String
 }
-case class NamedInsert(to: String, row: Row) extends Insert
-case class AnonymousInsert(to: String, values: List[Literal]) extends Insert
+case class NamedInsert(to: String, rows: List[Row]) extends Insert
+case class AnonymousInsert(to: String, rows: List[List[Literal]]) extends Insert
 case class Delete(name: String, condition: Option[Bool]) extends Manipulation
 case class Update(name: String, updated: Row, condition: Option[Bool]) extends Manipulation
 

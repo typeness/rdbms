@@ -35,15 +35,19 @@ object SQLParser {
     }
 
   private def insert[_: P]: P[Insert] =
-    P(IgnoreCase("INSERT INTO") ~ space ~ id ~ space ~ ids.? ~ IgnoreCase("VALUES") ~ space ~ row)
+    P(
+      IgnoreCase("INSERT INTO") ~ space ~ id ~ space ~ ids.? ~ IgnoreCase("VALUES") ~ space ~ row
+        .rep(min = 1, sep = commaSeparator))
       .map {
-        case (name, None, row) =>
-          AnonymousInsert(name, row)
-        case (name, Some(ids), row) =>
+        case (name, None, rows) =>
+          AnonymousInsert(name, rows.toList)
+        case (name, Some(ids), rows) =>
 ////        if (ids.size != row.size)
 ////          Fail("Number of identifiers do not match number of attributes")
 ////        else
-          NamedInsert(name, Row(ids.zip(row).map(attr => BodyAttribute(attr._1, attr._2))))
+          NamedInsert(name,
+                      rows.toList.map(literals =>
+                        Row(ids.zip(literals).map(attr => BodyAttribute(attr._1, attr._2)))))
       }
 
   private def delete[_: P]: P[Delete] =

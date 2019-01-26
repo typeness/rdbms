@@ -21,7 +21,7 @@ class ManipulationBuilderTest extends FunSuite {
     )
     val query = AnonymousInsert(
       "Pracownicy",
-      row
+      List(row)
     )
     val containsRow = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
@@ -43,7 +43,7 @@ class ManipulationBuilderTest extends FunSuite {
     )
     val query = NamedInsert(
       "Pracownicy",
-      row
+      List(row)
     )
     val rows = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
@@ -86,7 +86,7 @@ class ManipulationBuilderTest extends FunSuite {
     val rowWithID = IntegerLiteral(1) :: row
     val query = AnonymousInsert(
       "Pracownicy2",
-      row
+      List(row)
     )
     val containsRow = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicy2)
@@ -103,14 +103,14 @@ class ManipulationBuilderTest extends FunSuite {
      */
     val query = NamedInsert(
       "Pracownicy2",
-      Row(
+      List(Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
         BodyAttribute("Nazwisko", StringLiteral("Anna")),
         BodyAttribute("Imie", StringLiteral("Nowak")),
         BodyAttribute("Stawka", IntegerLiteral(1600)),
         BodyAttribute("DataZatrudnienia", StringLiteral("2012-01-01")),
         BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
-      )
+      ))
     )
 
     val violation = for {
@@ -137,11 +137,11 @@ class ManipulationBuilderTest extends FunSuite {
       Row(BodyAttribute("Nr", IntegerLiteral(2)) :: row.attributes)
     val query1 = NamedInsert(
       "Pracownicy2",
-      row
+      List(row)
     )
     val query2 = NamedInsert(
       "Pracownicy2",
-      row
+      List(row)
     )
     val hasRow = for {
       newSchema1 <- ManipulationBuilder.run(query1, schemaPracownicy2)
@@ -209,7 +209,7 @@ class ManipulationBuilderTest extends FunSuite {
     )
     val query = AnonymousInsert(
       "Pracownicy",
-      row
+      List(row)
     )
     val containsRow = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
@@ -222,7 +222,7 @@ class ManipulationBuilderTest extends FunSuite {
   test("PrimaryKeyDoesNotExist when inserting new row to relation with foreign key") {
     val insert = AnonymousInsert(
       "Urlopy",
-      List(IntegerLiteral(123456), DateLiteral("2010-11-11"), DateLiteral("2010-11-12")))
+      List(List(IntegerLiteral(123456), DateLiteral("2010-11-11"), DateLiteral("2010-11-12"))))
     val error = ManipulationBuilder.run(insert, schemaPracownicyUrlopy)
     assert(
       error == Left(
@@ -231,7 +231,7 @@ class ManipulationBuilderTest extends FunSuite {
 
   test("No PrimaryKeyDoesNotExist when inserting new row to relation with foreign key") {
     val row = List(IntegerLiteral(1), DateLiteral("2010-11-11"), DateLiteral("2010-11-12"))
-    val insert = AnonymousInsert("Urlopy", row)
+    val insert = AnonymousInsert("Urlopy", List(row))
     val newUrlopy =
       ManipulationBuilder.run(insert, schemaPracownicyUrlopy).flatMap(_.getRelation("Urlopy")).map(_.body)
     assert(newUrlopy.map(_.map(_.attributes.map(_.literal)).contains(row)) == Right(true))
