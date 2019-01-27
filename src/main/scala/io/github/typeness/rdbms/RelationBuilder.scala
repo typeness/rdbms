@@ -3,10 +3,59 @@ package io.github.typeness.rdbms
 object RelationBuilder extends BuilderUtils {
 
   def run(definition: Definition, schema: Schema): Either[SQLError, Schema] = definition match {
-    case c: Create    => build(c, schema)
-    case _: AlterAdd  => ???
-    case _: AlterDrop => ???
-    case d: Drop      => drop(d, schema)
+    case c: Create         => build(c, schema)
+    case alter: AlterTable => alterTable(alter, schema)
+    case d: DropTable      => drop(d, schema)
+  }
+
+  private def alterTable(alter: AlterTable, schema: Schema): Either[SQLError, Schema] =
+    for {
+      relation <- schema.getRelation(alter.relation)
+      newRelation <- alter match {
+        case add @ AlterAddColumn(_, _)       => addColumn(add, relation)
+        case drop @ AlterDropColumn(_, _)     => dropColumn(drop, relation)
+        case add @ AlterAddConstraint(_, _)   => addConstraint(add, relation)
+        case drop @ AlterDropConstraint(_, _) => dropConstraint(drop, relation)
+      }
+    } yield schema.update(newRelation)
+
+  private def dropColumn(dropColumn: AlterDropColumn,
+                         relation: Relation): Either[SQLError, Relation] = {
+    val newHeader = relation.heading.filter(_.name != dropColumn.column)
+    val newBody = relation.body.map(_.filter(_.name != dropColumn.column))
+    Right(relation.copy(heading = newHeader, body = newBody))
+  }
+
+  private def dropConstraint(dropConstraint: AlterDropConstraint,
+                             relation: Relation): Either[SQLError, Relation] = {
+    val newHeader = relation.heading.map { attrib =>
+      val newConstraints = attrib.constraints.filterNot(_.name.contains(dropConstraint.constraint))
+      attrib.copy(constraints = newConstraints)
+    }
+    Right(relation.copy(heading = newHeader))
+  }
+
+  private def addColumn(alterAddColumn: AlterAddColumn,
+                        relation: Relation): Either[SQLError, Relation] = {
+    val newHeading = alterAddColumn.headingAttribute :: relation.heading
+    val newBody = relation.body.map(row =>
+      Row(BodyAttribute(alterAddColumn.headingAttribute.name, NULLLiteral) :: row.attributes))
+    Right(relation.copy(heading = newHeading, body = newBody))
+  }
+
+  private def addConstraint(alterAddConstraint: AlterAddConstraint,
+                            relation: Relation): Either[SQLError, Relation] = {
+    val newHeading = alterAddConstraint.constraint.names.foldLeft(relation.heading) {
+      case (heading0, name) =>
+        heading0.map { attrib =>
+          val constraints = attrib.constraints
+          if (attrib.name == name)
+            attrib.copy(
+              constraints = alterAddConstraint.constraint.toColumnConstraint :: constraints)
+          else attrib
+        }
+    }
+    Right(relation.copy(heading = newHeading))
   }
 
   private def build(query: Create, schema: Schema): Either[SQLError, Schema] =
@@ -23,7 +72,7 @@ object RelationBuilder extends BuilderUtils {
                           Nil)
     } yield schema.update(relation)
 
-  private def drop(query: Drop, schema: Schema): Either[SQLError, Schema] =
+  private def drop(query: DropTable, schema: Schema): Either[SQLError, Schema] =
     Right(
       Schema(schema.relations.-(query.name))
     )
@@ -34,7 +83,7 @@ object RelationBuilder extends BuilderUtils {
 
     def updateAttributeWithConstraint(attributes: Relation.Header,
                                       name: String,
-                                      constraint: Constraint): List[HeadingAttribute] = {
+                                      constraint: ColumnConstraint): List[HeadingAttribute] = {
       attributes.map {
         case attribute @ HeadingAttribute(`name`, _, constraints) =>
           val newConstraints = (constraint :: constraints).distinct
@@ -45,7 +94,7 @@ object RelationBuilder extends BuilderUtils {
 
     def updateHeader(names: List[String],
                      attributes: Relation.Header,
-                     constraint: Constraint): List[HeadingAttribute] = {
+                     constraint: ColumnConstraint): List[HeadingAttribute] = {
       names.foldLeft(attributes) {
         case (attributes0, name) => updateAttributeWithConstraint(attributes0, name, constraint)
       }
@@ -58,17 +107,10 @@ object RelationBuilder extends BuilderUtils {
         Left(ColumnDoesNotExists(name))
       case Nil =>
         Right(create.relationConstraints.foldLeft(create.attributes) {
-          case (attributes, PKeyRelationConstraint(names, name)) =>
-            updateHeader(names, attributes, PrimaryKey(name))
-          case (attributes,
-                FKeyRelationConstraint(names,
-                                       pKeyRelationName,
-                                       pKeyColumnName,
-                                       onDelete,
-                                       onUpdate, name)) =>
-            updateHeader(names,
-                         attributes,
-                         ForeignKey(pKeyColumnName, pKeyRelationName, onUpdate, onDelete, name))
+          case (attributes, pKey @ PKeyRelationConstraint(names, _)) =>
+            updateHeader(names, attributes, pKey.toColumnConstraint)
+          case (attributes, fKey @ FKeyRelationConstraint(names, _, _, _, _, _)) =>
+            updateHeader(names, attributes, fKey.toColumnConstraint)
         })
     }
     for {
@@ -79,7 +121,7 @@ object RelationBuilder extends BuilderUtils {
   def checkMultiplePrimaryKeys(query: Create): Either[SQLError, Unit] = {
     getPrimaryKeys(query) match {
       case a :: b :: _ => Left(MultiplePrimaryKeys(a, b))
-      case _            => Right(())
+      case _           => Right(())
     }
 
   }
@@ -87,9 +129,9 @@ object RelationBuilder extends BuilderUtils {
   private def getPrimaryKeys(query: Create): List[String] = {
 
     val attributes = query.attributes
-    def isPrimaryKey(property: Constraint): Boolean = property match {
+    def isPrimaryKey(property: ColumnConstraint): Boolean = property match {
       case PrimaryKey(_) => true
-      case _          => false
+      case _             => false
     }
 
     attributes.collect {

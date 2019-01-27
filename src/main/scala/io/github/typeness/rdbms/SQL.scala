@@ -21,9 +21,16 @@ case class Create(name: String,
                   relationConstraints: List[RelationConstraint],
                   identity: Option[Identity])
     extends Definition
-case class AlterAdd(name: String) extends Definition
-case class AlterDrop(name: String) extends Definition
-case class Drop(name: String) extends Definition
+
+sealed trait AlterTable extends Definition {
+  def relation: String
+}
+case class AlterAddColumn(relation: String, headingAttribute: HeadingAttribute) extends AlterTable
+case class AlterDropColumn(relation: String, column: String) extends AlterTable
+case class AlterAddConstraint(relation: String, constraint: RelationConstraint) extends AlterTable
+case class AlterDropConstraint(relation: String, constraint: String) extends AlterTable
+
+case class DropTable(name: String) extends Definition
 
 // Data Access Language
 sealed trait Control extends SQL

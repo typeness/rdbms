@@ -86,7 +86,7 @@ class RelationBuilderTest extends FunSuite {
         relation2
       )
     )
-    val query = Drop("Pracownicy1")
+    val query = DropTable("Pracownicy1")
     val isDeleted = for {
       newSchema <- RelationBuilder.run(query, schema)
     } yield !newSchema.relations.contains(relation1.name) && newSchema.relations.contains(relation2.name)

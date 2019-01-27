@@ -276,4 +276,25 @@ class IntegrationTest extends FunSuite {
         )))
     )
   }
+
+  test("ALTER TABLE") {
+    val Right(schema) = createSchema("t14.sql")
+    assert(
+      schema == Schema(
+        Map("Test" -> Relation(
+          "Test",
+          List("PKey"),
+          None,
+          List(
+            HeadingAttribute("D", IntegerType, List(NULL(None))),
+            HeadingAttribute("PKey", IntegerType, List(PrimaryKey(None))),
+            HeadingAttribute("B", DateType, List()),
+            HeadingAttribute("C",
+                             IntegerType,
+                             List(ForeignKey("X", "TestB", NoAction, Cascade, Some("FKey"))))
+          ),
+          List()
+        )))
+    )
+  }
 }

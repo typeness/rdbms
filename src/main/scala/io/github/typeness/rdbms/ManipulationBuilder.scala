@@ -294,7 +294,7 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def fillMissingAttributes(attributes: List[HeadingAttribute]): Row = {
-    def getDefaultValue(properties: List[Constraint]): Literal = {
+    def getDefaultValue(properties: List[ColumnConstraint]): Literal = {
       val haveDefault = properties.filter {
         case _: Default => true
         case _          => false

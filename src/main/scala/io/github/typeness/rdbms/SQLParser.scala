@@ -17,7 +17,7 @@ object SQLParser {
     space ~ sql.rep(1, sep = space).map(_.toList) ~ space ~ End
 
   private def sql[_: P]: P[SQL] =
-    P(space ~ (insert | delete | update | query | create) ~ space)
+    P(space ~ (insert | delete | update | query | create | alterTable) ~ space)
 
   private def query[_: P]: P[Query] =
     P(
@@ -81,6 +81,26 @@ object SQLParser {
         val (headingAttributes, relationConstraints) = attributes.toList.partitionEither(identity)
         Create(name, headingAttributes, relationConstraints, None)
     }
+
+  private def alterTable[_: P]: P[AlterTable] =
+    P(
+      (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ headingAttribute)
+        .map {
+          case (name, Left(attrib)) => AlterAddColumn(name, attrib)
+        } |
+        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~ space ~ id)
+          .map {
+            case (name, column) => AlterDropColumn(name, column)
+          } |
+        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ relationConstraint)
+          .map {
+            case (name, Right(constraint)) => AlterAddConstraint(name, constraint)
+          } |
+        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP CONSTRAINT") ~ space ~ id)
+          .map {
+            case (name, constraint) => AlterDropConstraint(name, constraint)
+          }
+    )
 
   private def headingAttribute[_: P]: P[Left[HeadingAttribute, Nothing]] =
     P(id ~ space ~ typeOfAttribute ~ (space ~ columnConstraint).rep)
@@ -278,7 +298,7 @@ object SQLParser {
         IgnoreCase("SET DEFAULT").!.map(_ => SetDefault)
     )
 
-  private def columnConstraint[_: P]: P[Constraint] =
+  private def columnConstraint[_: P]: P[ColumnConstraint] =
     P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
