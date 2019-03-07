@@ -297,4 +297,8 @@ class IntegrationTest extends FunSuite {
         )))
     )
   }
+
+  test("Northwind database schema") {
+    val schema = createSchema("northwind.sql")
+  }
 }

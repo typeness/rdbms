@@ -36,7 +36,8 @@ object SQLParser {
 
   private def insert[_: P]: P[Insert] =
     P(
-      IgnoreCase("INSERT INTO") ~ space ~ id ~ space ~ ids.? ~ IgnoreCase("VALUES") ~ space ~ row
+      IgnoreCase("INSERT") ~ space ~ IgnoreCase("INTO").? ~ space ~ id ~ space ~ ids.? ~ IgnoreCase(
+        "VALUES") ~ space ~ row
         .rep(min = 1, sep = commaSeparator))
       .map {
         case (name, None, rows) =>
@@ -179,13 +180,23 @@ object SQLParser {
     P("(" ~ literal.rep(1, sep = commaSeparator).map(_.toList) ~ ")")
 
   private def literal[_: P]: P[Literal] =
-    P(integer | `null` | date | string)
+    P(double | integer | `null` | date | string)
 
   private def string[_: P]: P[StringLiteral] =
-    P("'" ~ CharIn("a-zA-Z!@#$%^&*()_+=-0987654321").rep.! ~ "'").map(StringLiteral)
+    P(IgnoreCase("N").? ~ "'" ~ CharIn("a-zA-Z!@#$%^&*()_+=0-9 /.:\",\\-").rep.! ~ "'")
+      .map(StringLiteral)
 
   private def integer[_: P]: P[IntegerLiteral] =
     P(CharPred(c => '0' <= c && c <= '9').rep(1).!).map(x => IntegerLiteral(x.toInt))
+
+  private def double[_: P]: P[RealLiteral] =
+    P(
+      CharPred(c => '0' <= c && c <= '9').rep(1).! ~
+        ("." ~ CharPred(c => '0' <= c && c <= '9').rep(1).!)).map {
+      case (int, float) =>
+        val str = s"$int.$float"
+        RealLiteral(str.toDouble)
+    }
 
   private def date[_: P]: P[DateLiteral] =
     P(
@@ -196,14 +207,14 @@ object SQLParser {
   private def id[_: P]: P[String] =
     P(
       aggregate.! |
-        CharIn("a-zA-Z").rep(1).! |
-        ("[" ~ CharIn("a-zA-Z ").rep(1) ~ "]").!
+        ("[" ~ CharIn("a-zA-Z _").rep(1).! ~ "]") |
+        CharIn("a-zA-Z_").rep(1).!
     )
 
   private def `null`[_: P]: P[NULLLiteral.type] =
     P(IgnoreCase("NULL")).map(_ => NULLLiteral)
 
-  private def space[_: P]: P[Unit] = P(CharsWhileIn(" \r\n", 0))
+  private def space[_: P]: P[Unit] = P(CharsWhileIn(" \r\n\t", 0))
 
   private def expression[_: P]: P[Projection] =
     P(id.map(Var) | literal)
@@ -287,7 +298,10 @@ object SQLParser {
         (IgnoreCase("DECIMAL") ~ "(" ~ integer ~ "," ~ space ~ integer ~ ")").map {
           case (prec, scale) => DecimalType(prec.value, scale.value)
         } |
-        IgnoreCase("TINYINT").!.map(_ => TinyIntType)
+        IgnoreCase("TINYINT").!.map(_ => TinyIntType) |
+        IgnoreCase("REAL").!.map(_ => RealType) |
+        IgnoreCase("IMAGE").!.map(_ => ImageType) |
+        IgnoreCase("NTEXT").!.map(_ => NVarCharType(1))
     )
 
   private def primaryKeyTrigger[_: P]: P[PrimaryKeyTrigger] =
@@ -300,6 +314,11 @@ object SQLParser {
 
   private def columnConstraint[_: P]: P[ColumnConstraint] =
     P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("IDENTITY(") ~ space ~ integer ~ space ~ "," ~ space ~ integer ~ space ~ ")")
+        .map {
+          case (name, IntegerLiteral(int1), IntegerLiteral(int2)) =>
+            AttributeIdentity(name, int1, int2)
+        } |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
@@ -321,8 +340,8 @@ object SQLParser {
         })
 
   private def relationConstraint[_: P]: P[Right[Nothing, RelationConstraint]] =
-    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("PRIMARY KEY") ~ space ~ ids))
-      .map(a => PKeyRelationConstraint(a._2, a._1)) |
+    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~
+      (IgnoreCase("PRIMARY KEY") ~ space ~ ids)).map(a => PKeyRelationConstraint(a._2, a._1)) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY") ~ space ~ ids ~ space ~
         IgnoreCase("REFERENCES") ~ space ~ id ~ space ~ "(" ~ space ~ id ~ space ~ ")" ~
         (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).? ~
@@ -335,7 +354,15 @@ object SQLParser {
                                    onDelete.getOrElse(NoAction),
                                    onUpdate.getOrElse(NoAction),
                                    name)
-        }).map(Right(_))
+        } |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("DEFAULT") ~ space ~ "(" ~ literal ~ ")" ~ space ~ IgnoreCase(
+        "FOR") ~ space ~ id).map {
+        case (constraintName, value, name) => DefaultRelationConstraint(name, value, constraintName)
+      } |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~ space ~ "(" ~ or ~ ")").map {
+        case (constraintName, condition) => CheckRelationConstraint(condition, constraintName)
+      }
+    ).map(Right(_))
 
   private def aggregate[_: P]: P[Aggregate] =
     P(

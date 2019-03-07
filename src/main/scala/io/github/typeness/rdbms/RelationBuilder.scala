@@ -1,5 +1,9 @@
 package io.github.typeness.rdbms
 
+import cats.instances.list._
+import cats.instances.either._
+import cats.syntax.traverse._
+
 object RelationBuilder extends BuilderUtils {
 
   def run(definition: Definition, schema: Schema): Either[SQLError, Schema] = definition match {
@@ -79,7 +83,7 @@ object RelationBuilder extends BuilderUtils {
 
 //  def alterDrop(alter: AlterDrop): Either[SQLError, Relation] = ???
 
-  private def rewriteRelationConstrains(create: Create): Either[ColumnDoesNotExists, Create] = {
+  private def rewriteRelationConstrains(create: Create): Either[SQLError, Create] = {
 
     def updateAttributeWithConstraint(attributes: Relation.Header,
                                       name: String,
@@ -113,9 +117,31 @@ object RelationBuilder extends BuilderUtils {
             updateHeader(names, attributes, fKey.toColumnConstraint)
         })
     }
+    def getIdentity(attribute: HeadingAttribute): Either[MultipleIdentity, Option[Identity]] = {
+      val identity = attribute.constraints.collect {
+        case id: AttributeIdentity => id
+      }
+      identity match {
+        case Nil =>
+          Right(None)
+        case id :: Nil =>
+          Right(Some(id.toIdentity(attribute.name)))
+        case id1 :: id2 :: _ =>
+          Left(MultipleIdentity(id1.toIdentity(attribute.name), id2.toIdentity(attribute.name)))
+      }
+    }
+    val newIdentity = create.attributes
+      .traverse(getIdentity)
+      .map(_.flatten)
+      .flatMap {
+        case Nil             => Right(None)
+        case id :: Nil       => Right(Some(id))
+        case id1 :: id2 :: _ => Left(MultipleIdentity(id1, id2))
+      }
     for {
       header <- newHeader
-    } yield create.copy(attributes = header)
+      identity <- newIdentity
+    } yield create.copy(attributes = header, identity = identity)
   }
 
   def checkMultiplePrimaryKeys(query: Create): Either[SQLError, Unit] = {

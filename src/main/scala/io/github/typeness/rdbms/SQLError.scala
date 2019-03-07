@@ -13,6 +13,7 @@ case class CheckViolation(headingAttribute: HeadingAttribute, literal: Literal) 
 case class UniqueViolation(bodyAttribute: BodyAttribute) extends SQLError
 case class PrimaryKeyDuplicate(values: List[BodyAttribute]) extends SQLError
 case class ForeignKeyViolation(relationName: String, fKeyName: String) extends SQLError
+case class MultipleIdentity(first: Identity, second: Identity) extends SQLError
 case class PrimaryKeyDoesNotExist(fKeyRelationName: String,
                                   fKeyName: String,
                                   pKeyRelationName: String,

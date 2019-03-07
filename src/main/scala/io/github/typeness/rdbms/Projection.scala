@@ -16,6 +16,11 @@ case class IntegerLiteral(value: Int) extends Literal {
   override def show: String = value.toString
 }
 
+case class RealLiteral(value: Double) extends Literal {
+  override def typeOf: AnyType = RealType
+  override def show: String = value.toString
+}
+
 case class StringLiteral(value: String) extends Literal {
   override def typeOf: AnyType = NVarCharType(1)
   override def show: String = value
@@ -61,6 +66,8 @@ object Literal {
       case CharType(_) => ???
       case DecimalType(_, _) => ???
       case TinyIntType => ???
+      case ImageType => ???
+      case NTextType => ???
     }
   }
   def reverseCompare(lhs: Literal, rhs: Literal): Either[SQLError, Int] = compare(lhs, rhs).map(-_)
