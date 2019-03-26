@@ -77,10 +77,12 @@ case class Greater(name: String, value: Projection) extends Bool
 case class LessOrEquals(name: String, value: Projection) extends Bool
 case class Less(name: String, value: Projection) extends Bool
 case class IsNULL(name: String) extends Bool
+case class IsNotNULL(name: String) extends Bool
 case class Between(name: String, lhs: Projection, rhs: Projection) extends Bool
 case class And(lhs: Bool, rhs: Bool) extends Bool
 case class Or(lhs: Bool, rhs: Bool) extends Bool
 case class Like(name: String, text: String) extends Bool
+case class Not(value: Bool) extends Bool
 
 case class Where(condition: Bool)
 

@@ -113,11 +113,12 @@ object SQLParser {
   private def order[_: P]: P[List[Order]] =
     P(
       IgnoreCase("ORDER BY") ~ space ~
-        (id ~ space ~ (IgnoreCase("ASC") | IgnoreCase("DESC")).!).rep(min = 1, sep = commaSeparator)
+        (id ~ space ~ (IgnoreCase("ASC").! | IgnoreCase("DESC").!).?).rep(min = 1, sep = commaSeparator)
     ).map { x =>
       x.map {
-        case (name, "ASC") => Ascending(name)
-        case (name, _)     => Descending(name)
+        case (name, Some("ASC")) => Ascending(name)
+        case (name, None) => Ascending(name)
+        case (name, _) => Descending(name)
       }.toList
     }
 
@@ -220,7 +221,10 @@ object SQLParser {
     P(id.map(Var) | literal)
 
   private def booleanOperator[_: P]: P[Bool] =
-    P(equals | greaterOrEquals | lessOrEquals | less | greater | isNull | between | like)
+    P(equals | greaterOrEquals | lessOrEquals | less | greater | isNull | between | like | isNotNull | not)
+
+  private def not[_: P]: P[Not] =
+    P(IgnoreCase("NOT") ~ space ~ booleanOperator).map(Not)
 
   private def equals[_: P]: P[Equals] =
     P(id ~ space ~ "=" ~ space ~ expression).map {
@@ -249,6 +253,9 @@ object SQLParser {
 
   private def isNull[_: P]: P[IsNULL] =
     P(id ~ space ~ IgnoreCase("IS NULL")).map(IsNULL)
+
+  private def isNotNull[_: P]: P[IsNotNULL] =
+    P(id ~ space ~ IgnoreCase("IS NOT NULL")).map(IsNotNULL)
 
   private def like[_: P]: P[Like] =
     P(id ~ space ~ IgnoreCase("LIKE") ~ space ~ string).map {

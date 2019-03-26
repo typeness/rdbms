@@ -1,0 +1,2 @@
+SELECT * FROM Customers
+WHERE Region IS NOT NULL

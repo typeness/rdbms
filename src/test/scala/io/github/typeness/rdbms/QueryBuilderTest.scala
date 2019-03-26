@@ -428,7 +428,7 @@ class QueryBuilderTest extends FunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Avg(a)", IntegerLiteral(2)))
+      Row(BodyAttribute("Avg(a)", RealLiteral(2.0)))
     )
     val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))

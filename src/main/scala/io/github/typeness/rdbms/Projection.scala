@@ -11,12 +11,14 @@ sealed trait Literal extends Projection {
   def show: String
 }
 
-case class IntegerLiteral(value: Int) extends Literal {
+sealed trait NumericLiteral extends Literal
+
+case class IntegerLiteral(value: Int) extends NumericLiteral {
   override def typeOf: AnyType = IntegerType
   override def show: String = value.toString
 }
 
-case class RealLiteral(value: Double) extends Literal {
+case class RealLiteral(value: Double ) extends NumericLiteral {
   override def typeOf: AnyType = RealType
   override def show: String = value.toString
 }
@@ -53,6 +55,8 @@ object Literal {
     lhs.typeOf match {
       case IntegerType =>
         comparison(lhs.asInstanceOf[IntegerLiteral], rhs.asInstanceOf[IntegerLiteral])
+      case RealType =>
+        comparison(lhs.asInstanceOf[RealLiteral], rhs.asInstanceOf[RealLiteral])
       case DateType =>
         comparison(StringLiteral(lhs.asInstanceOf[DateLiteral].value),
                    StringLiteral(rhs.asInstanceOf[DateLiteral].value))
@@ -79,6 +83,8 @@ object Literal {
   def comparison(lhs: DateLiteral, rhs: DateLiteral): Int =
     implicitly[Ordering[String]].compare(lhs.value, rhs.value)
   def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
+  def comparison(lhs: RealLiteral, rhs: RealLiteral): Int =
+    implicitly[Ordering[Double]].compare(lhs.value, rhs.value)
 }
 
 sealed trait Aggregate extends Projection {
@@ -86,22 +92,33 @@ sealed trait Aggregate extends Projection {
   def argument: String
 }
 case class Sum(argument: String) extends Aggregate {
-  override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] = {
-    val (nonInts, ints) = literals.partition {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, NumericLiteral] = {
+    val (nonNumerics, numerics) = literals.partition {
       case _: IntegerLiteral => false
+      case _: RealLiteral => false
       case _ => true
     }
-    if (nonInts.nonEmpty) Left(TypeMismatch(nonInts.head.typeOf, IntegerType, nonInts.head))
-    // find a way to avoid using isInstanceOf
-    else Right(IntegerLiteral(ints.asInstanceOf[List[IntegerLiteral]].map(_.value).sum))
+    val ints = numerics.collect {
+      case d: IntegerLiteral => d
+    }
+    val reals = numerics.collect {
+      case d: RealLiteral => d
+    }
+    if (nonNumerics.nonEmpty) Left(TypeMismatch(nonNumerics.head.typeOf, IntegerType, nonNumerics.head))
+    else if (ints.nonEmpty && reals.nonEmpty) Left(TypeMismatch(RealType, IntegerType, ints.head))
+    else if (ints.nonEmpty) Right(IntegerLiteral(ints.map(_.value).sum))
+    else Right(RealLiteral(reals.map(_.value).sum))
   }
 }
 case class Avg(argument: String) extends Aggregate {
-  override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] = {
+  override def eval(literals: List[Literal]): Either[TypeMismatch, RealLiteral] = {
     for {
       sum <- Sum(argument).eval(literals)
       count <- Count(argument).eval(literals)
-    } yield IntegerLiteral(sum.value / count.value)
+    } yield sum match {
+      case IntegerLiteral(value) => RealLiteral(value/ count.value)
+      case RealLiteral(value)    => RealLiteral(value / count.value)
+    }
   }
 }
 case class Count(argument: String) extends Aggregate {

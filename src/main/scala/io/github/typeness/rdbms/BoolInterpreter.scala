@@ -7,11 +7,15 @@ import cats.syntax.traverse._
 object BoolInterpreter {
   def eval(expression: Bool, rows: List[Row]): Either[SQLError, List[Row]] =
     expression match {
+      case Not(value) =>
+        val complement = eval(value, rows)
+        complement.map(rows.diff(_))
       case Equals(name, rhs)          => filter(Var(name), rhs, x => x == 0, rows)
       case Greater(name, rhs)         => filter(Var(name), rhs, x => x > 0, rows)
       case GreaterOrEquals(name, rhs) => filter(Var(name), rhs, x => x >= 0, rows)
       case Less(name, rhs)            => filter(Var(name), rhs, x => x < 0, rows)
       case LessOrEquals(name, rhs)    => filter(Var(name), rhs, x => x <= 0, rows)
+      case IsNotNULL(name) => eval(Not(IsNULL(name)), rows)
       case IsNULL(name) =>
         def isNull(attribute: BodyAttribute) = attribute match {
           case BodyAttribute(_, NULLLiteral) => true

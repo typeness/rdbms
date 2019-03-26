@@ -24,6 +24,7 @@ class IntegrationTest extends FunSuite {
 
   private lazy val pracownicyUrlopy = createSchema("pracownicyUrlopySchema.sql")
   private lazy val pracownicyUrlopy2 = createSchema("pracownicyUrlopySchema2.sql")
+  private lazy val northwind = createSchema("northwind.sql")
 
   test("Create empty schema") {
     val Right(SchemaResult(schema)) = SQLInterpreter.runFromResource("empty.sql")
@@ -298,7 +299,110 @@ class IntegrationTest extends FunSuite {
     )
   }
 
-  test("Northwind database schema") {
-    val schema = createSchema("northwind.sql")
+  test("SELECT * FROM Products") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t15.sql", schema)
+    } yield result
+    assert(rows.size == 77)
+  }
+
+  test("SELECT CustomerID, CompanyName, Region FROM Customers") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t16.sql", schema)
+    } yield result
+    assert(rows.size == 91)
+  }
+
+  test("SELECT CustomerID, CompanyName, Region FROM Customers WHERE Country = 'Poland'") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t17.sql", schema)
+    } yield result
+    assert(
+      rows == List(
+        Row(List(BodyAttribute("CustomerID", StringLiteral("WOLZA")),
+                 BodyAttribute("CompanyName", StringLiteral("Wolski  Zajazd")),
+                 BodyAttribute("Region", NULLLiteral)))))
+  }
+
+  test("SELECT * FROM Products WHERE UnitPrice >= 20.0 AND UnitPrice < 30.0") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t18.sql", schema)
+    } yield result
+    assert(rows.size == 13)
+  }
+
+  test("SELECT * FROM Products WHERE UnitPrice <= 20.0 AND UnitPrice >= 30.0") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t19.sql", schema)
+    } yield result
+    assert(rows.isEmpty)
+  }
+
+  test("SELECT * FROM Customers WHERE Region IS NULL") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t20.sql", schema)
+    } yield result
+    assert(rows.size == 60)
+  }
+
+  test("SELECT * FROM Customers WHERE Region IS NOT NULL") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t21.sql", schema)
+    } yield result
+    assert(rows.size == 31)
+  }
+
+  test("SELECT * FROM Customers WHERE NOT Region IS NULL ORDER BY Country, City") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t22.sql", schema)
+    } yield result
+    assert(
+      rows.head
+        .projectOption("Country")
+        .contains(BodyAttribute("Country", StringLiteral("Brazil"))))
+  }
+
+  test("SELECT AVG(UnitPrice) FROM Products") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t23.sql", schema)
+    } yield result
+    assert(
+      rows == List(Row(List(BodyAttribute("Avg(UnitPrice)", RealLiteral(28.866363636363637))))))
+  }
+
+  test("SELECT CategoryID, AVG(UnitPrice) FROM Products GROUP BY CategoryID") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t24.sql", schema)
+    } yield result
+    assert(
+      rows ==
+        List(
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(8)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(20.6825)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(1)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(37.979166666666664)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(4)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(28.73)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(3)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(25.16)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(5)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(20.25)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(6)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(54.00666666666667)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(2)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(23.0625)))),
+          Row(List(BodyAttribute("CategoryID", IntegerLiteral(7)),
+                   BodyAttribute("Avg(UnitPrice)", RealLiteral(32.37))))
+        ))
   }
 }
