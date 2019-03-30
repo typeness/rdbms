@@ -113,12 +113,13 @@ object SQLParser {
   private def order[_: P]: P[List[Order]] =
     P(
       IgnoreCase("ORDER BY") ~ space ~
-        (id ~ space ~ (IgnoreCase("ASC").! | IgnoreCase("DESC").!).?).rep(min = 1, sep = commaSeparator)
+        (id ~ space ~ (IgnoreCase("ASC").! | IgnoreCase("DESC").!).?)
+          .rep(min = 1, sep = commaSeparator)
     ).map { x =>
       x.map {
         case (name, Some("ASC")) => Ascending(name)
-        case (name, None) => Ascending(name)
-        case (name, _) => Descending(name)
+        case (name, None)        => Ascending(name)
+        case (name, _)           => Descending(name)
       }.toList
     }
 
@@ -129,7 +130,10 @@ object SQLParser {
     P(IgnoreCase("HAVING") ~ space ~ or)
 
   private def groupBy[_: P]: P[List[String]] =
-    P(IgnoreCase("GROUP BY") ~ space ~ id.rep(min = 1, sep = commaSeparator).map(_.toList))
+    P(
+      IgnoreCase("GROUP BY") ~ space ~ varAccessor
+        .rep(min = 1, sep = commaSeparator)
+        .map(_.map(_.show).toList))
 
   private def join[_: P]: P[List[Join]] =
     P(crossJoin | innerJoin | leftOuterJoin | rightOuterJoin | fullOuterJoin)
@@ -137,28 +141,28 @@ object SQLParser {
       .map(_.toList)
 
   private def crossJoin[_: P]: P[CrossJoin] =
-    P(IgnoreCase("CROSS JOIN") ~ space ~ id).map(CrossJoin)
+    P(IgnoreCase("CROSS JOIN") ~ space ~ varAccessor.map(_.show)).map(CrossJoin)
 
   private def innerJoin[_: P]: P[InnerJoin] =
     P(
-      (IgnoreCase("INNER") ~ space).? ~ IgnoreCase("JOIN") ~ space ~ id ~ space
+      (IgnoreCase("INNER") ~ space).? ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space
         ~ IgnoreCase("ON") ~ space ~ or)
       .map {
         case (name, on) => InnerJoin(name, on)
       }
 
   private def leftOuterJoin[_: P]: P[LeftOuterJoin] =
-    P(IgnoreCase("LEFT OUTER JOIN") ~ space ~ id ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("LEFT OUTER JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
       case (name, on) => LeftOuterJoin(name, on)
     }
 
   private def rightOuterJoin[_: P]: P[RightOuterJoin] =
-    P(IgnoreCase("RIGHT OUTER JOIN") ~ space ~ id ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("RIGHT OUTER JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
       case (name, on) => RightOuterJoin(name, on)
     }
 
   private def fullOuterJoin[_: P]: P[FullOuterJoin] =
-    P(IgnoreCase("FULL OUTER JOIN") ~ space ~ id ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("FULL OUTER JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
       case (name, on) => FullOuterJoin(name, on)
     }
 
@@ -217,16 +221,24 @@ object SQLParser {
 
   private def space[_: P]: P[Unit] = P(CharsWhileIn(" \r\n\t", 0))
 
+  private def varAccessor[_: P]: P[Projection] =
+    P(accessor | id.map(Var))
+
   private def expression[_: P]: P[Projection] =
-    P(id.map(Var) | literal)
+    P(varAccessor | literal)
+
+  private def accessor[_: P]: P[Accessor] =
+    P(id ~ "." ~ id).map {
+      case (a, b) => Accessor(a, b)
+    }
 
   private def additive[_: P]: P[Projection] =
     P(multiplicative ~ space ~ (CharIn("+\\-").! ~ space ~ multiplicative).rep(sep = space)).map {
       case (head, tail) =>
-      tail.foldLeft(head) {
-        case (left, ("+", right)) => Plus(left, right)
-        case (left, (_, right)) => Minus(left, right)
-      }
+        tail.foldLeft(head) {
+          case (left, ("+", right)) => Plus(left, right)
+          case (left, (_, right))   => Minus(left, right)
+        }
     }
 
   private def multiplicative[_: P]: P[Projection] =
@@ -383,10 +395,10 @@ object SQLParser {
         "FOR") ~ space ~ id).map {
         case (constraintName, value, name) => DefaultRelationConstraint(name, value, constraintName)
       } |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~ space ~ "(" ~ or ~ ")").map {
-        case (constraintName, condition) => CheckRelationConstraint(condition, constraintName)
-      }
-    ).map(Right(_))
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~ space ~ "(" ~ or ~ ")")
+        .map {
+          case (constraintName, condition) => CheckRelationConstraint(condition, constraintName)
+        }).map(Right(_))
 
   private def aggregate[_: P]: P[Aggregate] =
     P(

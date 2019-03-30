@@ -8,6 +8,10 @@ case class Var(name: String) extends Projection {
   override def show: String = name
 }
 
+case class Accessor(prefix: String, name: String) extends Projection {
+  override def show: String = s"$prefix.$name"
+}
+
 case class Alias(original: Projection, alias: String) extends Projection {
   override def show: String = alias
 }

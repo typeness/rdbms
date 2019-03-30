@@ -82,6 +82,8 @@ object BoolInterpreter {
 
   def getLiteral(expression: Projection, row: Row): Either[SQLError, Literal] =
     expression match {
+      case acc: Accessor =>
+        getLiteral(Var(acc.show), row)
       case Alias(proj, _)  =>
         getLiteral(proj, row)
       case agg: Aggregate =>

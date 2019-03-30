@@ -418,4 +418,57 @@ class IntegrationTest extends FunSuite {
     } yield result
     assert(rows == List(Row(List(BodyAttribute("EmployeeID*2", IntegerLiteral(10))))))
   }
+
+  test(
+    "SELECT CategoryID, CategoryName AS AveragePrice " +
+      "FROM Products AS P CROSS JOIN Categories") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t27.sql", schema)
+    } yield result
+    assert(
+      rows ==
+        List(
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(7)),
+            BodyAttribute("CategoryName", StringLiteral("Produce")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(32.37))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(1)),
+            BodyAttribute("CategoryName", StringLiteral("Beverages")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(37.979166666666664))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(5)),
+            BodyAttribute("CategoryName", StringLiteral("Grains/Cereals")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(20.25))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(8)),
+            BodyAttribute("CategoryName", StringLiteral("Seafood")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(20.6825))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(6)),
+            BodyAttribute("CategoryName", StringLiteral("Meat/Poultry")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(54.00666666666667))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(4)),
+            BodyAttribute("CategoryName", StringLiteral("Dairy Products")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(28.73))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(3)),
+            BodyAttribute("CategoryName", StringLiteral("Confections")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(25.16))
+          )),
+          Row(List(
+            BodyAttribute("P.CategoryID", IntegerLiteral(2)),
+            BodyAttribute("CategoryName", StringLiteral("Condiments")),
+            BodyAttribute("Avg(UnitPrice)", RealLiteral(23.0625))
+          ))
+        ))
+  }
 }
