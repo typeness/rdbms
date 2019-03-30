@@ -14,7 +14,7 @@ object RelationBuilder extends BuilderUtils {
 
   private def alterTable(alter: AlterTable, schema: Schema): Either[SQLError, Schema] =
     for {
-      relation <- schema.getRelation(alter.relation)
+      relation <- schema.getRelation(Some(alter.relation))
       newRelation <- alter match {
         case add @ AlterAddColumn(_, _)       => addColumn(add, relation)
         case drop @ AlterDropColumn(_, _)     => dropColumn(drop, relation)

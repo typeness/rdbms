@@ -8,8 +8,10 @@ case class RowsResult(rows: List[Row]) extends InterpreterResult
 object SQLInterpreter {
   def runFromFile(filename: String,
                   schema: Schema = Schema(Nil)): Either[SQLError, InterpreterResult] = {
-    val source = scala.io.Source.fromFile(filename).mkString
-    runFromSource(source, schema)
+    val source = scala.io.Source.fromFile(filename)
+    val result = runFromSource(source.mkString, schema)
+    source.close()
+    result
   }
 
   def runFromResource(resource: String,

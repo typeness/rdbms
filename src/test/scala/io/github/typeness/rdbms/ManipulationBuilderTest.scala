@@ -62,7 +62,7 @@ class ManipulationBuilderTest extends FunSuite {
   test("Insert row with missing primary key 'Nr' from Pracownicy") {}
 
   test("DELETE FROM Pracownicy WHERE Nr=1") {
-    val query = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(1))))
+    val query = Delete("Pracownicy", Some(Equals(Var("Nr"), IntegerLiteral(1))))
     val isDeleted = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
       newRelation <- newSchema.getRelation("Pracownicy")
@@ -161,7 +161,7 @@ class ManipulationBuilderTest extends FunSuite {
         BodyAttribute("Stawka", MoneyLiteral(1234)),
         BodyAttribute("LiczbaDzieci", IntegerLiteral(3))
       ),
-      Some(Equals("Nr", IntegerLiteral(1)))
+      Some(Equals(Var("Nr"), IntegerLiteral(1)))
     )
     val expectedRow = Row(
       BodyAttribute("Nr", IntegerLiteral(1)),
@@ -185,7 +185,7 @@ class ManipulationBuilderTest extends FunSuite {
       Row(
         BodyAttribute("Stawka", IntegerLiteral(1234)),
       ),
-      Some(Equals("Nr", IntegerLiteral(999)))
+      Some(Equals(Var("Nr"), IntegerLiteral(999)))
     )
     val noEffect = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
@@ -238,7 +238,7 @@ class ManipulationBuilderTest extends FunSuite {
   }
 
   test("ForeignKeyViolation when deleting primary key") {
-    val delete = Delete("Pracownicy", Some(Equals("Nr", IntegerLiteral(5))))
+    val delete = Delete("Pracownicy", Some(Equals(Var("Nr"), IntegerLiteral(5))))
     val error = ManipulationBuilder.run(delete, schemaPracownicyUrlopy)
     assert(error == Left(ForeignKeyViolation("Urlopy", "NrPrac")))
   }

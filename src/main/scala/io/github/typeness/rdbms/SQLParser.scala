@@ -58,8 +58,8 @@ object SQLParser {
 
   private def select[_: P]: P[Select] =
     P(
-      IgnoreCase("SELECT") ~ space ~ IgnoreCase("DISTINCT").!.? ~ space ~ selectList ~ space ~
-        IgnoreCase("FROM") ~ space ~ id ~ space ~ (IgnoreCase("AS") ~ space ~ id ~ space).? ~ join ~ (space ~ where).? ~
+      IgnoreCase("SELECT") ~ space ~ IgnoreCase("DISTINCT").!.? ~ space ~ selectList ~ (space ~
+        IgnoreCase("FROM") ~ space ~ id).? ~ space ~ (IgnoreCase("AS") ~ space ~ id ~ space).? ~ join ~ (space ~ where).? ~
         (space ~ groupBy).? ~ (space ~ having).? ~ (space ~ order).?
     ).map {
       case (distinct, proj, name, alias, join, cond, group, having, order) =>
@@ -169,7 +169,7 @@ object SQLParser {
     )
 
   private def selection[_: P]: P[Projection] =
-    P((aggregate | id.map(Var) | literal) ~ (space ~ IgnoreCase("AS") ~ space ~ id).?).map {
+    P((aggregate | additive) ~ (space ~ IgnoreCase("AS") ~ space ~ id).?).map {
       case (proj, Some(alias)) => Alias(proj, alias)
       case (proj, None)        => proj
     }
@@ -220,6 +220,23 @@ object SQLParser {
   private def expression[_: P]: P[Projection] =
     P(id.map(Var) | literal)
 
+  private def additive[_: P]: P[Projection] =
+    P(multiplicative ~ space ~ (CharIn("+\\-").! ~ space ~ multiplicative).rep(sep = space)).map {
+      case (head, tail) =>
+      tail.foldLeft(head) {
+        case (left, ("+", right)) => Plus(left, right)
+        case (left, (_, right)) => Minus(left, right)
+      }
+    }
+
+  private def multiplicative[_: P]: P[Projection] =
+    P(expression ~ space ~ ("*" ~ space ~ expression).rep(sep = space)).map {
+      case (head, tail) =>
+        tail.foldLeft(head) {
+          case (left, right) => Multiplication(left, right)
+        }
+    }
+
   private def booleanOperator[_: P]: P[Bool] =
     P(equals | greaterOrEquals | lessOrEquals | less | greater | isNull | between | like | isNotNull | not)
 
@@ -227,27 +244,27 @@ object SQLParser {
     P(IgnoreCase("NOT") ~ space ~ booleanOperator).map(Not)
 
   private def equals[_: P]: P[Equals] =
-    P(id ~ space ~ "=" ~ space ~ expression).map {
+    P(selection ~ space ~ "=" ~ space ~ expression).map {
       case (name, value) => Equals(name, value)
     }
 
   private def greaterOrEquals[_: P]: P[GreaterOrEquals] =
-    P(id ~ space ~ ">=" ~ space ~ expression).map {
+    P(selection ~ space ~ ">=" ~ space ~ expression).map {
       case (name, value) => GreaterOrEquals(name, value)
     }
 
   private def lessOrEquals[_: P]: P[LessOrEquals] =
-    P(id ~ space ~ "<=" ~ space ~ expression).map {
+    P(selection ~ space ~ "<=" ~ space ~ expression).map {
       case (name, value) => LessOrEquals(name, value)
     }
 
   private def less[_: P]: P[Less] =
-    P(id ~ space ~ "<" ~ space ~ expression).map {
+    P(selection ~ space ~ "<" ~ space ~ expression).map {
       case (name, value) => Less(name, value)
     }
 
   private def greater[_: P]: P[Greater] =
-    P(id ~ space ~ ">" ~ space ~ expression).map {
+    P(selection ~ space ~ ">" ~ space ~ expression).map {
       case (name, value) => Greater(name, value)
     }
 

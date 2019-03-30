@@ -9,7 +9,7 @@ class RelationPrinterTest extends FunSuite {
   }
   test("SELECT * FROM Pracownicy WHERE Nr=1") {
     val query =
-      Select(Nil, "Pracownicy", Nil, Some(Equals("Nr", IntegerLiteral(1))), Nil, None, Nil)
+      Select(Nil, Some("Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(1))), Nil, None, Nil)
     val rows = for {
       rows <- QueryBuilder.run(query, schemaPracownicyUrlopy)
       string = RelationPrinter.makeString(rows)

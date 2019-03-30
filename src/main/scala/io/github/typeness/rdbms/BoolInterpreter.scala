@@ -10,12 +10,12 @@ object BoolInterpreter {
       case Not(value) =>
         val complement = eval(value, rows)
         complement.map(rows.diff(_))
-      case Equals(name, rhs)          => filter(Var(name), rhs, x => x == 0, rows)
-      case Greater(name, rhs)         => filter(Var(name), rhs, x => x > 0, rows)
-      case GreaterOrEquals(name, rhs) => filter(Var(name), rhs, x => x >= 0, rows)
-      case Less(name, rhs)            => filter(Var(name), rhs, x => x < 0, rows)
-      case LessOrEquals(name, rhs)    => filter(Var(name), rhs, x => x <= 0, rows)
-      case IsNotNULL(name) => eval(Not(IsNULL(name)), rows)
+      case Equals(lhs, rhs)          => filter(lhs, rhs, x => x == 0, rows)
+      case Greater(lhs, rhs)         => filter(lhs, rhs, x => x > 0, rows)
+      case GreaterOrEquals(lhs, rhs) => filter(lhs, rhs, x => x >= 0, rows)
+      case Less(lhs, rhs)            => filter(lhs, rhs, x => x < 0, rows)
+      case LessOrEquals(lhs, rhs)    => filter(lhs, rhs, x => x <= 0, rows)
+      case IsNotNULL(name)           => eval(Not(IsNULL(name)), rows)
       case IsNULL(name) =>
         def isNull(attribute: BodyAttribute) = attribute match {
           case BodyAttribute(_, NULLLiteral) => true
@@ -30,8 +30,8 @@ object BoolInterpreter {
         }
         filtered.map(_.flatten)
       case Between(name, lhs, rhs) =>
-        val greaterOrEquals = GreaterOrEquals(name, lhs)
-        val lessOrEquals = LessOrEquals(name, rhs)
+        val greaterOrEquals = GreaterOrEquals(Var(name), lhs)
+        val lessOrEquals = LessOrEquals(Var(name), rhs)
         eval(And(greaterOrEquals, lessOrEquals), rows)
       case And(lhs, rhs) =>
         for {
@@ -80,14 +80,22 @@ object BoolInterpreter {
     filtered.sequence.map(_.flatten)
   }
 
-  private def getLiteral(expression: Projection, row: Row): Either[MissingColumnName, Literal] =
+  def getLiteral(expression: Projection, row: Row): Either[SQLError, Literal] =
     expression match {
-      case Alias(_, _)  => ???
-      case _: Aggregate => ???
+      case Alias(proj, _)  =>
+        getLiteral(proj, row)
+      case agg: Aggregate =>
+        agg.eval(row.getValues)
       case Var(name) =>
         row.projectEither(name).map(_.literal)
       case literal: Literal =>
         Right(literal)
+      case mult: Multiplication =>
+        ArithmeticInterpreter.calculate(mult.left, mult.right, row, (a, b) => a * b)
+      case plus: Plus =>
+        ArithmeticInterpreter.calculate(plus.left, plus.right, row, (a, b) => a + b)
+      case minus: Minus =>
+        ArithmeticInterpreter.calculate(minus.left, minus.right, row, (a, b) => a - b)
     }
 
 }

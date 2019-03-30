@@ -13,17 +13,17 @@ object ManipulationBuilder extends BuilderUtils {
     manipulation match {
       case insert: Insert =>
         for {
-          relation <- schema.getRelation(insert.to)
+          relation <- schema.getRelation(Some(insert.to))
           newSchema <- insertRow(insert, relation, schema)
         } yield newSchema
       case delete: Delete =>
         for {
-          relation <- schema.getRelation(delete.name)
+          relation <- schema.getRelation(Some(delete.name))
           newSchema <- deleteRows(delete, relation, schema)
         } yield newSchema
       case update: Update =>
         for {
-          relation <- schema.getRelation(update.name)
+          relation <- schema.getRelation(Some(update.name))
           newSchema <- updateRows(update, relation, schema)
         } yield newSchema
     }
@@ -35,7 +35,7 @@ object ManipulationBuilder extends BuilderUtils {
       case NamedInsert(to, rows) =>
         def insertNamedRow(row: Row, schema: Schema): Either[SQLError, Schema] =
           for {
-            relation <- schema.getRelation(to)
+            relation <- schema.getRelation(Some(to))
             relationNames = relation.heading.map(_.name)
             queryNames = row.getNames
             _ <- checkUndefinedNames(queryNames, relationNames)
@@ -57,7 +57,7 @@ object ManipulationBuilder extends BuilderUtils {
         }
       case AnonymousInsert(to, rows) =>
         def insertAnonymousRow(row: List[Literal], schema: Schema): Either[SQLError, Schema] =
-          schema.getRelation(to).flatMap { relation =>
+          schema.getRelation(Some(to)).flatMap { relation =>
             val relationRowSize = relation.heading.size
             val expectedSize =
               if (relation.identity.isEmpty) relationRowSize
@@ -162,9 +162,9 @@ object ManipulationBuilder extends BuilderUtils {
     def pKeyRelationContainsFKey(value: BodyAttribute,
                                  key: ForeignKey): Either[SQLError, BodyAttribute] = {
       val select = Select(List(Var(key.primaryKeyName)),
-                          key.pKeyRelationName,
+                          Some(key.pKeyRelationName),
                           Nil,
-                          Some(Equals(key.primaryKeyName, value.literal)),
+                          Some(Equals(Var(key.primaryKeyName), value.literal)),
                           Nil,
                           None,
                           Nil)
@@ -243,10 +243,10 @@ object ManipulationBuilder extends BuilderUtils {
     pKeys.flatMap {
       case Nil => Right(row)
       case key :: keys =>
-        val condition = keys.foldLeft[Bool](Equals(key.name, key.literal)) {
-          case (equals, key0) => And(equals, Equals(key0.name, key0.literal))
+        val condition = keys.foldLeft[Bool](Equals(Var(key.name), key.literal)) {
+          case (equals, key0) => And(equals, Equals(Var(key0.name), key0.literal))
         }
-        val select = Select(Nil, relation.name, Nil, Some(condition), Nil, None, Nil)
+        val select = Select(Nil, Some(relation.name), Nil, Some(condition), Nil, None, Nil)
         QueryBuilder.run(select, schema).map(_.isEmpty).flatMap {
           case true  => Right(row)
           case false => Left(PrimaryKeyDuplicate(key :: keys))
@@ -265,9 +265,9 @@ object ManipulationBuilder extends BuilderUtils {
           }.nonEmpty
           if (uniqueDisallowed) {
             val select = Select(List(Var(body.name)),
-                                relation.name,
+                                Some(relation.name),
                                 Nil,
-                                Some(Equals(body.name, body.literal)),
+                                Some(Equals(Var(body.name), body.literal)),
                                 Nil,
                                 None,
                                 Nil)
@@ -456,10 +456,10 @@ object ManipulationBuilder extends BuilderUtils {
                                     oldKey: BodyAttribute,
                                     newKey: BodyAttribute,
                                     schema: Schema): Either[SQLError, List[Row]] = {
-    val delete = Delete(fKeyRelation.name, Some(Equals(foreignKeyName, oldKey.literal)))
+    val delete = Delete(fKeyRelation.name, Some(Equals(Var(foreignKeyName), oldKey.literal)))
     ManipulationBuilder
       .deleteRows(delete, fKeyRelation, schema)
-      .flatMap(_.getRelation(fKeyRelation.name))
+      .flatMap(_.getRelation(Some(fKeyRelation.name)))
       .map(_.body)
   }
 
@@ -471,10 +471,10 @@ object ManipulationBuilder extends BuilderUtils {
                                  schema: Schema): Either[SQLError, List[Row]] = {
     val update = Update(fKeyRelation.name,
                         Row(BodyAttribute(foreignKeyName, newKey)),
-                        Some(Equals(foreignKeyName, oldKey.literal)))
+                        Some(Equals(Var(foreignKeyName), oldKey.literal)))
     ManipulationBuilder
       .updateRows(update, fKeyRelation, schema)
-      .flatMap(_.getRelation(fKeyRelation.name))
+      .flatMap(_.getRelation(Some(fKeyRelation.name)))
       .map(_.body)
   }
 
@@ -515,9 +515,9 @@ object ManipulationBuilder extends BuilderUtils {
                                newKey: BodyAttribute,
                                schema: Schema): Either[SQLError, List[Row]] = {
     val select = Select(List(Var(foreignKeyName)),
-                        fKeyRelation.name,
+                        Some(fKeyRelation.name),
                         Nil,
-                        Some(Equals(foreignKeyName, oldKey.literal)),
+                        Some(Equals(Var(foreignKeyName), oldKey.literal)),
                         Nil,
                         None,
                         Nil)

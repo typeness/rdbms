@@ -405,4 +405,17 @@ class IntegrationTest extends FunSuite {
                    BodyAttribute("Avg(UnitPrice)", RealLiteral(32.37))))
         ))
   }
+
+  test("SELECT 1 + 2 * 3 - 4") {
+    val Right(RowsResult(rows)) = SQLInterpreter.runFromResource("t25.sql")
+    assert(rows == List(Row(List(BodyAttribute("1+2*3-4", IntegerLiteral(3))))))
+  }
+
+  test("SELECT EmployeeID * 2 FROM Employees WHERE EmployeeID = 5") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t26.sql", schema)
+    } yield result
+    assert(rows == List(Row(List(BodyAttribute("EmployeeID*2", IntegerLiteral(10))))))
+  }
 }

@@ -81,7 +81,7 @@ object QueryBuilder extends BuilderUtils {
     }
 
   private def project(exprs: List[Projection],
-                      rows: List[Row]): Either[MissingColumnName, List[Row]] = exprs match {
+                      rows: List[Row]): Either[SQLError, List[Row]] = exprs match {
     case Nil =>
       Right(rows)
     case _ =>
@@ -100,6 +100,15 @@ object QueryBuilder extends BuilderUtils {
               Right(BodyAttribute(lit.show, lit))
             case Alias(lit: Literal, alias) =>
               Right(BodyAttribute(alias, lit))
+            case mult: Multiplication =>
+              ArithmeticInterpreter.calculate(mult.left, mult.right, row, mult.calc)
+                .map(x => BodyAttribute(mult.show, x))
+            case plus: Plus =>
+              ArithmeticInterpreter.calculate(plus.left, plus.right, row, plus.calc)
+                .map(x => BodyAttribute(plus.show, x))
+            case minus: Minus =>
+              ArithmeticInterpreter.calculate(minus.left, minus.right, row, minus.calc)
+                .map(x => BodyAttribute(minus.show, x))
           }.sequence
         }
         .map(_.map(Row.apply))
@@ -148,7 +157,7 @@ object QueryBuilder extends BuilderUtils {
                         schema: Schema): Either[SQLError, List[Row]] =
     for {
       joinsWithRelation <- joins.traverse(join =>
-        schema.getRelation(join.name).map(JoinWithRelation(join, _)))
+        schema.getRelation(Some(join.name)).map(JoinWithRelation(join, _)))
       rows <- joinsWithRelation.foldLeftM(relation) {
         case (relation0, join) => makeJoin(relation0, join.relation, join.join)
       }
@@ -265,6 +274,9 @@ object QueryBuilder extends BuilderUtils {
         case Alias(_, alias)      => alias
         case literal: Literal     => literal.show
         case aggregate: Aggregate => aggregate.toString
+        case multiplication: Multiplication => multiplication.show
+        case plus: Plus => plus.show
+        case minus: Minus => minus.show
       }
       .zipWithIndex
       .toMap

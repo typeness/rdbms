@@ -41,7 +41,7 @@ sealed trait Query extends SQL
 
 case class Select(
     projection: List[Projection],
-    from: String,
+    from: Option[String],
     joins: List[Join],
     where: Option[Bool],
     groupBy: List[String],
@@ -71,11 +71,11 @@ case class Ascending(name: String) extends Order
 case class Descending(name: String) extends Order
 
 sealed trait Bool
-case class Equals(name: String, value: Projection) extends Bool
-case class GreaterOrEquals(name: String, value: Projection) extends Bool
-case class Greater(name: String, value: Projection) extends Bool
-case class LessOrEquals(name: String, value: Projection) extends Bool
-case class Less(name: String, value: Projection) extends Bool
+case class Equals(left: Projection, right: Projection) extends Bool
+case class GreaterOrEquals(left: Projection, right: Projection) extends Bool
+case class Greater(left: Projection, right: Projection) extends Bool
+case class LessOrEquals(left: Projection, right: Projection) extends Bool
+case class Less(left: Projection, right: Projection) extends Bool
 case class IsNULL(name: String) extends Bool
 case class IsNotNULL(name: String) extends Bool
 case class Between(name: String, lhs: Projection, rhs: Projection) extends Bool
