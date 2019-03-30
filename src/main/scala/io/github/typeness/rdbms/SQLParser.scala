@@ -404,7 +404,7 @@ object SQLParser {
     P(
       (IgnoreCase("SUM") ~ "(" ~ id ~ ")").map(Sum) |
         (IgnoreCase("AVG") ~ "(" ~ id ~ ")").map(Avg) |
-        (IgnoreCase("COUNT") ~ "(" ~ id ~ ")").map(Count) |
+        (IgnoreCase("COUNT") ~ "(" ~ (id | "*".!) ~ ")").map(Count) |
         (IgnoreCase("MAX") ~ "(" ~ id ~ ")").map(Max) |
         (IgnoreCase("MIN") ~ "(" ~ id ~ ")").map(Min)
     )

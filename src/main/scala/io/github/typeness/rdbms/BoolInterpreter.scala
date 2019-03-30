@@ -87,7 +87,7 @@ object BoolInterpreter {
       case Alias(proj, _)  =>
         getLiteral(proj, row)
       case agg: Aggregate =>
-        agg.eval(row.getValues)
+        getLiteral(Var(agg.show), row)
       case Var(name) =>
         row.projectEither(name).map(_.literal)
       case literal: Literal =>

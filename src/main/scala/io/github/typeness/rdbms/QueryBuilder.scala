@@ -260,7 +260,9 @@ object QueryBuilder extends BuilderUtils {
       }
     def aggregate(groupRow: List[Row]): Either[SQLError, List[BodyAttribute]] =
       aggregates.traverse { function =>
-        val arguments = select(groupRow, function.argument).map(_.literal)
+        val arguments =
+          if (function.argument == "*") groupRow.flatMap(_.getValues.headOption)
+          else select(groupRow, function.argument).map(_.literal)
         function.eval(arguments).map(literal => BodyAttribute(function.toString, literal))
       }
 

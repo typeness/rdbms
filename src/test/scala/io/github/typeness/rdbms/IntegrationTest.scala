@@ -471,4 +471,14 @@ class IntegrationTest extends FunSuite {
           ))
         ))
   }
+
+  test("SELECT COUNT(*) FROM Customers") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t28.sql", schema)
+    } yield result
+    assert(
+      rows == List(Row(List(BodyAttribute("Count(*)",IntegerLiteral(91)))))
+    )
+  }
 }
