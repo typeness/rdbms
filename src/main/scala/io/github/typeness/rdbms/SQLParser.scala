@@ -137,7 +137,7 @@ object SQLParser {
 
   private def join[_: P]: P[List[Join]] =
     P(crossJoin | innerJoin | leftOuterJoin | rightOuterJoin | fullOuterJoin)
-      .rep(sep = " ")
+      .rep(sep = space)
       .map(_.toList)
 
   private def crossJoin[_: P]: P[CrossJoin] =
@@ -256,27 +256,27 @@ object SQLParser {
     P(IgnoreCase("NOT") ~ space ~ booleanOperator).map(Not)
 
   private def equals[_: P]: P[Equals] =
-    P(selection ~ space ~ "=" ~ space ~ expression).map {
+    P(selection ~ space ~ "=" ~ space ~ selection).map {
       case (name, value) => Equals(name, value)
     }
 
   private def greaterOrEquals[_: P]: P[GreaterOrEquals] =
-    P(selection ~ space ~ ">=" ~ space ~ expression).map {
+    P(selection ~ space ~ ">=" ~ space ~ selection).map {
       case (name, value) => GreaterOrEquals(name, value)
     }
 
   private def lessOrEquals[_: P]: P[LessOrEquals] =
-    P(selection ~ space ~ "<=" ~ space ~ expression).map {
+    P(selection ~ space ~ "<=" ~ space ~ selection).map {
       case (name, value) => LessOrEquals(name, value)
     }
 
   private def less[_: P]: P[Less] =
-    P(selection ~ space ~ "<" ~ space ~ expression).map {
+    P(selection ~ space ~ "<" ~ space ~ selection).map {
       case (name, value) => Less(name, value)
     }
 
   private def greater[_: P]: P[Greater] =
-    P(selection ~ space ~ ">" ~ space ~ expression).map {
+    P(selection ~ space ~ ">" ~ space ~ selection).map {
       case (name, value) => Greater(name, value)
     }
 
@@ -304,7 +304,7 @@ object SQLParser {
     }
 
   private def or[_: P]: P[Bool] =
-    P(and ~ (space ~ IgnoreCase("OR") ~ space ~ and).rep).map {
+    P(and ~ (space ~ IgnoreCase("OR") ~ space ~ and).rep(sep = space)).map {
       case (a, Nil) => a
       case (a, ops) => Or(a, ops.reduceLeft(Or))
     }

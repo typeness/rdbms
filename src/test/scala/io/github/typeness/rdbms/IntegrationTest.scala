@@ -481,4 +481,28 @@ class IntegrationTest extends FunSuite {
       rows == List(Row(List(BodyAttribute("Count(*)",IntegerLiteral(91)))))
     )
   }
+
+  test("SELECT * FROM Customers WHERE Country LIKE 'Poland' OR Country LIKE 'Germany'") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t29.sql", schema)
+    } yield result
+    assert(rows.size == 12)
+  }
+
+  test("SELECT * FROM Customers WHERE CustomerID LIKE 'N%' OR CustomerID LIKE 'C%'") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t30.sql", schema)
+    } yield result
+    assert(rows.size == 6)
+  }
+
+  test("SELECT ProductName, CategoryName FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID WHERE CategoryName LIKE 'C%'") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t31.sql", schema)
+    } yield result
+    println(RelationPrinter.makeString(rows))
+  }
 }
