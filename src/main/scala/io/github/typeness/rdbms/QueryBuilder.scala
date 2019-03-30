@@ -67,7 +67,7 @@ object QueryBuilder extends BuilderUtils {
       sortedRows <- sortRows(havingResult, query.order)
       selectedColumns <- project(query.projection, sortedRows)
       projections = if (query.projection.nonEmpty) query.projection
-      else relation.heading.map(a => Var(a.name))
+      else selectedColumns.headOption.map(_.getNames.map(Var)).getOrElse(Nil)
       withCorrectedColumnsOrder <- reorderColumns(projections, selectedColumns)
     } yield if (query.distinct) withCorrectedColumnsOrder.distinct else withCorrectedColumnsOrder
 
