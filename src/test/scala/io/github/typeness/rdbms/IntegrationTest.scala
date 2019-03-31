@@ -420,8 +420,8 @@ class IntegrationTest extends FunSuite {
   }
 
   test(
-    "SELECT CategoryID, CategoryName AS AveragePrice " +
-      "FROM Products AS P CROSS JOIN Categories") {
+    "SELECT P.CategoryID, CategoryName, AVG(UnitPrice) FROM Products AS P " +
+      "JOIN Categories ON P.CategoryID=Categories.CategoryID GROUP BY P.CategoryID, CategoryName") {
     val Right(RowsResult(rows)) = for {
       schema <- northwind
       result <- SQLInterpreter.runFromResource("t27.sql", schema)
@@ -478,7 +478,7 @@ class IntegrationTest extends FunSuite {
       result <- SQLInterpreter.runFromResource("t28.sql", schema)
     } yield result
     assert(
-      rows == List(Row(List(BodyAttribute("Count(*)",IntegerLiteral(91)))))
+      rows == List(Row(List(BodyAttribute("Count(*)", IntegerLiteral(91)))))
     )
   }
 
@@ -498,11 +498,66 @@ class IntegrationTest extends FunSuite {
     assert(rows.size == 6)
   }
 
-  test("SELECT ProductName, CategoryName FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID WHERE CategoryName LIKE 'C%'") {
+  test(
+    "SELECT ProductName, CategoryName FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID WHERE CategoryName LIKE 'C%'") {
+//    val Right(RowsResult(rows)) = for {
+//      schema <- northwind
+//      result <- SQLInterpreter.runFromResource("t31.sql", schema)
+//    } yield result
+//    println(RelationPrinter.makeString(rows))
+  }
+
+  test("SELECT * FROM Customers WHERE REGION IS NULL") {
     val Right(RowsResult(rows)) = for {
       schema <- northwind
-      result <- SQLInterpreter.runFromResource("t31.sql", schema)
+      result <- SQLInterpreter.runFromResource("t32.sql", schema)
     } yield result
-    println(RelationPrinter.makeString(rows))
+    assert(rows.size == 60)
+  }
+
+  test(
+    "SELECT DISTINCT COUNTRY FROM Customers JOIN Orders ON Customers.CustomerID = Orders.CustomerID") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t33.sql", schema)
+    } yield result
+    assert(rows.size == 21)
+  }
+
+  test(
+    "SELECT ProductName FROM Products JOIN Categories ON Products.CategoryID = Categories.CategoryID " +
+      "WHERE CategoryName LIKE 'Beverages' AND UnitPrice BETWEEN 20 AND 30") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t34.sql", schema)
+    } yield result
+    assert(rows.isEmpty)
+  }
+
+  test(
+    "SELECT ContactName FROM Customers LEFT JOIN Orders ON Customers.CustomerID = Orders.CustomerID " +
+      "WHERE OrderID IS NULL") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t35.sql", schema)
+    } yield result
+    assert(rows.size == 91)
+  }
+
+  test(
+    "SELECT Country, COUNT(*) FROM Customers GROUP BY Country HAVING Country LIKE 'Poland' " +
+      "OR Country LIKE 'Germany'") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t36.sql", schema)
+    } yield result
+    assert(
+      rows ==
+        List(
+          Row(List(BodyAttribute("Country", StringLiteral("Poland")),
+                   BodyAttribute("Count(*)", IntegerLiteral(1)))),
+          Row(List(BodyAttribute("Country", StringLiteral("Germany")),
+                   BodyAttribute("Count(*)", IntegerLiteral(11))))
+        ))
   }
 }

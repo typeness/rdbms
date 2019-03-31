@@ -152,17 +152,17 @@ object SQLParser {
       }
 
   private def leftOuterJoin[_: P]: P[LeftOuterJoin] =
-    P(IgnoreCase("LEFT OUTER JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("LEFT") ~ space ~ IgnoreCase("OUTER").? ~ space ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
       case (name, on) => LeftOuterJoin(name, on)
     }
 
   private def rightOuterJoin[_: P]: P[RightOuterJoin] =
-    P(IgnoreCase("RIGHT OUTER JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("RIGHT") ~ space ~ IgnoreCase("OUTER").? ~ space ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
       case (name, on) => RightOuterJoin(name, on)
     }
 
   private def fullOuterJoin[_: P]: P[FullOuterJoin] =
-    P(IgnoreCase("FULL OUTER JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("FULL") ~ space ~ IgnoreCase("OUTER").? ~ space ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
       case (name, on) => FullOuterJoin(name, on)
     }
 
