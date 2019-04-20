@@ -163,7 +163,7 @@ object QueryBuilder extends BuilderUtils {
                         schema: Schema): Either[SQLError, List[Row]] =
     for {
       joinsWithRelation <- joins.traverse(join =>
-        schema.getRelation(Some(join.name)).map(JoinWithRelation(join, _)))
+        schema.getRelation(join.name).map(JoinWithRelation(join, _)))
       rows <- joinsWithRelation.foldLeftM(relation) {
         case (relation0, join) => makeJoin(relation0, join.relation, join.join)
       }

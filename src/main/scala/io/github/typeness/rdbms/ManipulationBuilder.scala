@@ -13,17 +13,17 @@ object ManipulationBuilder extends BuilderUtils {
     manipulation match {
       case insert: Insert =>
         for {
-          relation <- schema.getRelation(Some(insert.to))
+          relation <- schema.getRelation(insert.to)
           newSchema <- insertRow(insert, relation, schema)
         } yield newSchema
       case delete: Delete =>
         for {
-          relation <- schema.getRelation(Some(delete.name))
+          relation <- schema.getRelation(delete.name)
           newSchema <- deleteRows(delete, relation, schema)
         } yield newSchema
       case update: Update =>
         for {
-          relation <- schema.getRelation(Some(update.name))
+          relation <- schema.getRelation(update.name)
           newSchema <- updateRows(update, relation, schema)
         } yield newSchema
     }
@@ -35,7 +35,7 @@ object ManipulationBuilder extends BuilderUtils {
       case NamedInsert(to, rows) =>
         def insertNamedRow(row: Row, schema: Schema): Either[SQLError, Schema] =
           for {
-            relation <- schema.getRelation(Some(to))
+            relation <- schema.getRelation(to)
             relationNames = relation.heading.map(_.name)
             queryNames = row.getNames
             _ <- checkUndefinedNames(queryNames, relationNames)
@@ -57,7 +57,7 @@ object ManipulationBuilder extends BuilderUtils {
         }
       case AnonymousInsert(to, rows) =>
         def insertAnonymousRow(row: List[Literal], schema: Schema): Either[SQLError, Schema] =
-          schema.getRelation(Some(to)).flatMap { relation =>
+          schema.getRelation(to).flatMap { relation =>
             val relationRowSize = relation.heading.size
             val expectedSize =
               if (relation.identity.isEmpty) relationRowSize
@@ -459,7 +459,7 @@ object ManipulationBuilder extends BuilderUtils {
     val delete = Delete(fKeyRelation.name, Some(Equals(Var(foreignKeyName), oldKey.literal)))
     ManipulationBuilder
       .deleteRows(delete, fKeyRelation, schema)
-      .flatMap(_.getRelation(Some(fKeyRelation.name)))
+      .flatMap(_.getRelation(fKeyRelation.name))
       .map(_.body)
   }
 
@@ -474,7 +474,7 @@ object ManipulationBuilder extends BuilderUtils {
                         Some(Equals(Var(foreignKeyName), oldKey.literal)))
     ManipulationBuilder
       .updateRows(update, fKeyRelation, schema)
-      .flatMap(_.getRelation(Some(fKeyRelation.name)))
+      .flatMap(_.getRelation(fKeyRelation.name))
       .map(_.body)
   }
 

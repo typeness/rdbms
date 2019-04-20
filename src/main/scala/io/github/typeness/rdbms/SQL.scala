@@ -50,7 +50,7 @@ case class Select(
     distinct: Boolean = false,
     alias: Option[String] = None
 ) extends Query {
-  def getAggregates: List[Aggregate] =
+  lazy val getAggregates: List[Aggregate] =
     projection
       .filter {
         case _: Aggregate => true

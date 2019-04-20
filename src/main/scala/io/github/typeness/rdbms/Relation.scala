@@ -12,12 +12,12 @@ object Schema {
 case class Schema(relations: Map[String, Relation]) {
   def getRelation(name: Option[String]): Either[RelationDoesNotExists, Relation] =
     name match {
-      case Some(value) => Either.fromOption(relations.get(value), RelationDoesNotExists(value))
+      case Some(value) => getRelation(value)
       case None => Right(Relation.empty)
     }
 
   def getRelation(name: String): Either[RelationDoesNotExists, Relation] =
-    getRelation(Some(name))
+    Either.fromOption(relations.get(name), RelationDoesNotExists(name))
 
   def update(relation: Relation): Schema =
     Schema(relations.updated(relation.name, relation))
@@ -35,8 +35,8 @@ case class Row(attributes: List[BodyAttribute]) {
     Either.fromOption(projectOption(name), MissingColumnName(name))
   def projectList(names: List[String]): Row =
     Row(attributes.filter(attrib => names.contains(attrib.name)))
-  def getNames: List[String] = attributes.map(_.name)
-  def getValues: List[Literal] = attributes.map(_.literal)
+  lazy val getNames: List[String] = attributes.map(_.name)
+  lazy val getValues: List[Literal] = attributes.map(_.literal)
   def map(f: BodyAttribute => BodyAttribute): Row = Row(attributes.map(f))
   def filter(f: BodyAttribute => Boolean): Row = Row(attributes.filter(f))
 
@@ -52,12 +52,12 @@ case class Relation(name: String,
                     heading: Relation.Header,
                     body: List[Row]) {
 
-  def getPrimaryKeys: List[HeadingAttribute] =
+  lazy val getPrimaryKeys: List[HeadingAttribute] =
     heading.filter(_.constraints.exists {
       case _: PrimaryKey => true
       case _             => false
     })
-  def getForeignKeys: List[(String, ForeignKey)] =
+  lazy val getForeignKeys: List[(String, ForeignKey)] =
     heading.collect {
       case attribute: Attribute
           if attribute.constraints.collect { case key: ForeignKey => key }.nonEmpty =>
