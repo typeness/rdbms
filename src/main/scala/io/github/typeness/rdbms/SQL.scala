@@ -52,9 +52,9 @@ case class Select(
 ) extends Query {
   lazy val getAggregates: List[Aggregate] =
     projection
-      .filter {
-        case _: Aggregate => true
-        case _            => false
+      .collect {
+        case agg: Aggregate => agg
+        case Alias(agg: Aggregate, _) => agg
       }
       .asInstanceOf[List[Aggregate]]
 }

@@ -560,4 +560,40 @@ class IntegrationTest extends FunSuite {
                    BodyAttribute("Count(*)", IntegerLiteral(11))))
         ))
   }
+
+  test("SELECT CategoryID, AVG(UnitPrice) AS AveragePrice FROM Products GROUP BY CategoryID") {
+    val Right(RowsResult(rows)) = for {
+      schema <- northwind
+      result <- SQLInterpreter.runFromResource("t37.sql", schema)
+    } yield result
+    assert(
+      rows ==
+        List(
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(8)),
+                 BodyAttribute("AveragePrice", RealLiteral(20.6825)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(1)),
+                 BodyAttribute("AveragePrice", RealLiteral(37.979166666666664)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(4)),
+                 BodyAttribute("AveragePrice", RealLiteral(28.73)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(3)),
+                 BodyAttribute("AveragePrice", RealLiteral(25.16)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(5)),
+                 BodyAttribute("AveragePrice", RealLiteral(20.25)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(6)),
+                 BodyAttribute("AveragePrice", RealLiteral(54.00666666666667)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(2)),
+                 BodyAttribute("AveragePrice", RealLiteral(23.0625)))),
+          Row(
+            List(BodyAttribute("CategoryID", IntegerLiteral(7)),
+                 BodyAttribute("AveragePrice", RealLiteral(32.37))))
+        )
+    )
+  }
 }
