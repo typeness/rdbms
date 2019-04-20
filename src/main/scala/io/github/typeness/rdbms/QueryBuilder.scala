@@ -129,7 +129,7 @@ object QueryBuilder extends BuilderUtils {
   private def having(rows: List[Row], condition: Option[Bool]): Either[SQLError, List[Row]] =
     filterRows(rows, condition)
 
-  private def sortRows(rows: List[Row], order: List[Order]): Either[SQLError, List[Row]] = {
+  private def sortRows(rows: List[Row], orders: List[Order]): Either[SQLError, List[Row]] = {
     def sortRowsWithKey(rows: List[(Literal, Row)], condition: Int => Boolean): List[Row] =
       rows
         .sortWith {
@@ -138,23 +138,22 @@ object QueryBuilder extends BuilderUtils {
         .map {
           case (_, row) => row
         }
-    order match {
+    orders match {
       case Nil =>
         Right(rows)
       case _ =>
-        order.foldRight[Either[SQLError, List[Row]]](Right(rows))((order, rows) => {
-          rows.flatMap { rowList =>
-            val name = order.name
+        orders.reverse.foldLeftM(rows) {
+          case (currentRows, currentOrder) =>
+            val name = currentOrder.name
             val rowsWithKey =
-              rowList.traverse(row => row.projectEither(name).map(key => (key.literal, row)))
-            order match {
+              currentRows.traverse(row => row.projectEither(name).map(key => (key.literal, row)))
+            currentOrder match {
               case Descending(_) =>
                 rowsWithKey.map(sortRowsWithKey(_, _ >= 0))
               case Ascending(_) =>
                 rowsWithKey.map(sortRowsWithKey(_, _ <= 0))
             }
-          }
-        })
+        }
     }
   }
 
