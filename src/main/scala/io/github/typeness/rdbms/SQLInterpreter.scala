@@ -9,15 +9,21 @@ object SQLInterpreter {
   def runFromFile(filename: String,
                   schema: Schema = Schema(Nil)): Either[SQLError, InterpreterResult] = {
     val source = scala.io.Source.fromFile(filename)
-    val result = runFromSource(source.mkString, schema)
-    source.close()
-    result
+    try {
+      runFromSource(source.mkString, schema)
+    } finally {
+      source.close()
+    }
   }
 
   def runFromResource(resource: String,
                       schema: Schema = Schema(Nil)): Either[SQLError, InterpreterResult] = {
-    val source = scala.io.Source.fromResource(resource).mkString
-    runFromSource(source, schema)
+    val source = scala.io.Source.fromResource(resource)
+    try {
+      runFromSource(source.mkString, schema)
+    } finally {
+      source.close()
+    }
   }
 
   def runFromSource(source: String,
