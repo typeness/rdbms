@@ -56,7 +56,6 @@ case class Select(
         case agg: Aggregate => agg
         case Alias(agg: Aggregate, _) => agg
       }
-      .asInstanceOf[List[Aggregate]]
 }
 
 case class Union(left: Query, right: Query) extends Query
