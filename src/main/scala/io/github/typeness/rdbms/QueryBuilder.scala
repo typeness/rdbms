@@ -168,43 +168,65 @@ object QueryBuilder extends BuilderUtils {
       }
     } yield rows.body
 
-  private def makeJoin(left: Relation, right: Relation, join: Join): Either[SQLError, Relation] = {
-    val pairs = for {
-      first <- left.body
-      second <- right.body
-    } yield (first, second)
-    def normalizeNames(attribs: List[BodyAttribute],
-                       names: List[String],
-                       relation: String): List[BodyAttribute] =
-      attribs.map { bodyAttrib =>
-        if (names.contains(bodyAttrib.name))
-          bodyAttrib.copy(name = s"$relation.${bodyAttrib.name}")
-        else bodyAttrib
-      }
-    val crossProduct = pairs.map {
-      case (first, second) =>
-        val firstNames = first.getNames
-        val secondNames = second.getNames
-        val firstAttributes = normalizeNames(first.attributes, secondNames, left.name)
-        val secondAttributes = normalizeNames(second.attributes, firstNames, right.name)
-        Row(firstAttributes ::: secondAttributes)
+  private def innerJoin(left: Relation,
+                        right: Relation,
+                        condition: Bool): Either[SQLError, List[Row]] = {
+
+    def matches(left: Row, right: Row, condition: Bool): Either[SQLError, Boolean] = {
+      val sumRow = List(Row(left.attributes ::: right.attributes))
+      BoolInterpreter.eval(condition, sumRow).map(_ == sumRow)
     }
+
+    left.body.flatTraverse { leftRow =>
+      right.body.flatTraverse { rightRow =>
+        val first = prefixRelationName(leftRow, left.name, rightRow)
+        val second = prefixRelationName(rightRow, right.name, leftRow)
+        matches(first, second, condition).map {
+          case false => Nil
+          case true  => List(Row(first.attributes ::: second.attributes))
+        }
+      }
+    }
+  }
+
+  private def prefixRelationName(left: Row, relationName: String, right: Row): Row = {
+    val names = right.getNames
+    val attributes = left.attributes.map { bodyAttrib =>
+      if (names.contains(bodyAttrib.name))
+        bodyAttrib.copy(name = s"$relationName.${bodyAttrib.name}")
+      else bodyAttrib
+    }
+    Row(attributes)
+  }
+
+  private def makeJoin(left: Relation, right: Relation, join: Join): Either[SQLError, Relation] = {
+
     val joined = join match {
       case CrossJoin(_) =>
+        val pairs = for {
+          first <- left.body
+          second <- right.body
+        } yield (first, second)
+        val crossProduct = pairs.map {
+          case (first, second) =>
+            val firstRow = prefixRelationName(first, left.name, second)
+            val secondRow = prefixRelationName(second, right.name, first)
+            Row(firstRow.attributes ::: secondRow.attributes)
+        }
         Right(crossProduct)
       case InnerJoin(_, on) =>
-        BoolInterpreter.eval(on, crossProduct)
+        innerJoin(left, right, on)
       case LeftOuterJoin(_, on) =>
-        val inner = BoolInterpreter.eval(on, crossProduct)
+        val inner = innerJoin(left, right, on)
         makeOuterJoin(Nil, left.body, inner, right.heading, Nil)
       case RightOuterJoin(_, on) =>
-        val inner = BoolInterpreter.eval(on, crossProduct)
+        val inner = innerJoin(left, right, on)
         makeOuterJoin(left.heading, Nil, inner, Nil, right.body)
       case FullOuterJoin(_, on) =>
-        val inner = BoolInterpreter.eval(on, crossProduct)
+        val inner = innerJoin(left, right, on)
         makeOuterJoin(left.heading, left.body, inner, right.heading, right.body)
     }
-    joined.map(rows => Relation("", Nil, None, left.heading ::: right.heading, rows))
+    joined.map(rows => Relation(right.name, Nil, None, left.heading ::: right.heading, rows))
   }
 
   private def makeOuterJoin(leftHeading: List[HeadingAttribute],

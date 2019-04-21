@@ -229,7 +229,7 @@ INSERT [Suppliers] ([CompanyName], [ContactName], [ContactTitle], [Address], [Ci
 INSERT [Suppliers] ([CompanyName], [ContactName], [ContactTitle], [Address], [City], [Region], [PostalCode], [Country], [Phone], [Fax], [HomePage]) VALUES (N'Forets derables', N'Chantal Goulet', N'Accounting Manager', N'148 rue Chasseur', N'Ste-Hyacinthe', N'Quebec', N'J2S 7S8', N'Canada', N'(514) 555-2955', N'(514) 555-2921', NULL)
 
 CREATE TABLE [Orders](
-	[OrderID] int IDENTITY(1,1) NOT NULL,
+	[OrderID] int IDENTITY(10248,1) NOT NULL,
 	[CustomerID] nvarchar(5) NULL,
 	[EmployeeID] int NULL,
 	[OrderDate] date NULL,
