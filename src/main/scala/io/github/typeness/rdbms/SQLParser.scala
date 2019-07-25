@@ -7,14 +7,14 @@ import cats.instances.list._
 
 object SQLParser {
 
-  def parse(source: String): Parsed[SQL] = fastparse.parse(source, sqlSingle(_))
+  def parse(source: String): Parsed[SQL] = fastparse.parse(source, sqlSingle(_), verboseFailures = true)
 
-  def parseMany(source: String): Parsed[List[SQL]] = fastparse.parse(source, sqlMany(_))
+  def parseMany(source: String): Parsed[List[SQL]] = fastparse.parse(source, sqlMany(_), verboseFailures = true)
 
-  private def sqlSingle[_: P]: P[SQL] = sql ~ End
+  private def sqlSingle[_: P]: P[SQL] = P(sql ~ End)
 
   private def sqlMany[_: P]: P[List[SQL]] =
-    space ~ sql.rep(1, sep = space).map(_.toList) ~ space ~ End
+    P(space ~ sql.rep(1, sep = space).map(_.toList) ~ space ~ End)
 
   private def sql[_: P]: P[SQL] =
     P(space ~ (insert | delete | update | query | create | alterTable) ~ space)
@@ -22,7 +22,7 @@ object SQLParser {
   private def query[_: P]: P[Query] =
     P(
       select ~ (space ~ (IgnoreCase("UNION") | IgnoreCase("INTERSECT") |
-        IgnoreCase("EXCEPT") | IgnoreCase("UNION ALL")).! ~ space ~ select).rep).map {
+        IgnoreCase("EXCEPT") | IgnoreCase("UNION ALL")).! ~/ space ~ select).rep).map {
       case (left, Nil) =>
         left
       case (left, queries) =>
@@ -36,9 +36,9 @@ object SQLParser {
 
   private def insert[_: P]: P[Insert] =
     P(
-      IgnoreCase("INSERT") ~ space ~ IgnoreCase("INTO").? ~ space ~ id ~ space ~ ids.? ~ IgnoreCase(
-        "VALUES") ~ space ~ row
-        .rep(min = 1, sep = commaSeparator))
+      IgnoreCase("INSERT") ~/ space ~ IgnoreCase("INTO").? ~/ space ~ id ~ space ~ ids.? ~ IgnoreCase(
+        "VALUES") ~/ space ~ row
+        .rep(min = 1, sep = commaSeparator./))
       .map {
         case (name, None, rows) =>
           AnonymousInsert(name, rows.toList)
@@ -52,14 +52,14 @@ object SQLParser {
       }
 
   private def delete[_: P]: P[Delete] =
-    P(IgnoreCase("DELETE FROM") ~ space ~ id ~ space ~ where).map {
+    P(IgnoreCase("DELETE FROM") ~/ space ~ id ~ space ~ where).map {
       case (name, bool) => Delete(name, Some(bool))
     }
 
   private def select[_: P]: P[Select] =
     P(
-      IgnoreCase("SELECT") ~ space ~ IgnoreCase("DISTINCT").!.? ~ space ~ selectList ~ (space ~
-        IgnoreCase("FROM") ~ space ~ id).? ~ space ~ (IgnoreCase("AS") ~ space ~ id ~ space).? ~ join ~ (space ~ where).? ~
+      IgnoreCase("SELECT") ~/ space ~ IgnoreCase("DISTINCT").!.? ~/ space ~ selectList ~ (space ~
+        IgnoreCase("FROM") ~/ space ~ id).? ~ space ~ (IgnoreCase("AS") ~/ space ~ id ~ space).? ~ join ~ (space ~ where).? ~
         (space ~ groupBy).? ~ (space ~ having).? ~ (space ~ order).?
     ).map {
       case (distinct, proj, name, alias, join, cond, group, having, order) =>
@@ -76,8 +76,8 @@ object SQLParser {
 
   private def create[_: P]: P[Create] =
     P(
-      IgnoreCase("CREATE TABLE") ~ space ~ id ~ space ~ "(" ~ space ~
-        (headingAttribute | relationConstraint).rep(sep = commaSeparator) ~ space ~ ")").map {
+      IgnoreCase("CREATE TABLE") ~/ space ~ id ~ space ~ "(" ~ space ~
+        (headingAttribute | relationConstraint).rep(sep = commaSeparator./) ~ space ~ ")").map {
       case (name, attributes) =>
         val (headingAttributes, relationConstraints) = attributes.toList.partitionEither(identity)
         Create(name, headingAttributes, relationConstraints, None)
@@ -85,19 +85,19 @@ object SQLParser {
 
   private def alterTable[_: P]: P[AlterTable] =
     P(
-      (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ headingAttribute)
+      (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("ADD") ~/ space ~ headingAttribute)
         .map {
           case (name, Left(attrib)) => AlterAddColumn(name, attrib)
         } |
-        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~ space ~ id)
+        (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~/ space ~ id)
           .map {
             case (name, column) => AlterDropColumn(name, column)
           } |
-        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ relationConstraint)
+        (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("ADD") ~/ space ~ relationConstraint)
           .map {
             case (name, Right(constraint)) => AlterAddConstraint(name, constraint)
           } |
-        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP CONSTRAINT") ~ space ~ id)
+        (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("DROP CONSTRAINT") ~/ space ~ id)
           .map {
             case (name, constraint) => AlterDropConstraint(name, constraint)
           }
@@ -112,9 +112,9 @@ object SQLParser {
 
   private def order[_: P]: P[List[Order]] =
     P(
-      IgnoreCase("ORDER BY") ~ space ~
+      IgnoreCase("ORDER BY") ~/ space ~
         (id ~ space ~ (IgnoreCase("ASC").! | IgnoreCase("DESC").!).?)
-          .rep(min = 1, sep = commaSeparator)
+          .rep(min = 1, sep = commaSeparator./)
     ).map { x =>
       x.map {
         case (name, Some("ASC")) => Ascending(name)
@@ -124,15 +124,15 @@ object SQLParser {
     }
 
   private def where[_: P]: P[Bool] =
-    P(IgnoreCase("WHERE") ~ space ~ or)
+    P(IgnoreCase("WHERE") ~/ space ~ or)
 
   private def having[_: P]: P[Bool] =
-    P(IgnoreCase("HAVING") ~ space ~ or)
+    P(IgnoreCase("HAVING") ~/ space ~ or)
 
   private def groupBy[_: P]: P[List[String]] =
     P(
-      IgnoreCase("GROUP BY") ~ space ~ varAccessor
-        .rep(min = 1, sep = commaSeparator)
+      IgnoreCase("GROUP BY") ~/ space ~ varAccessor
+        .rep(min = 1, sep = commaSeparator./)
         .map(_.map(_.show).toList))
 
   private def join[_: P]: P[List[Join]] =
@@ -141,48 +141,48 @@ object SQLParser {
       .map(_.toList)
 
   private def crossJoin[_: P]: P[CrossJoin] =
-    P(IgnoreCase("CROSS JOIN") ~ space ~ varAccessor.map(_.show)).map(CrossJoin)
+    P(IgnoreCase("CROSS JOIN") ~/ space ~ varAccessor.map(_.show)).map(CrossJoin)
 
   private def innerJoin[_: P]: P[InnerJoin] =
     P(
-      (IgnoreCase("INNER") ~ space).? ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space
-        ~ IgnoreCase("ON") ~ space ~ or)
+      (IgnoreCase("INNER") ~/ space).? ~ IgnoreCase("JOIN") ~/ space ~ varAccessor.map(_.show) ~ space
+        ~ IgnoreCase("ON") ~/ space ~ or)
       .map {
         case (name, on) => InnerJoin(name, on)
       }
 
   private def leftOuterJoin[_: P]: P[LeftOuterJoin] =
-    P(IgnoreCase("LEFT") ~ space ~ IgnoreCase("OUTER").? ~ space ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("LEFT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
       case (name, on) => LeftOuterJoin(name, on)
     }
 
   private def rightOuterJoin[_: P]: P[RightOuterJoin] =
-    P(IgnoreCase("RIGHT") ~ space ~ IgnoreCase("OUTER").? ~ space ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("RIGHT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
       case (name, on) => RightOuterJoin(name, on)
     }
 
   private def fullOuterJoin[_: P]: P[FullOuterJoin] =
-    P(IgnoreCase("FULL") ~ space ~ IgnoreCase("OUTER").? ~ space ~ IgnoreCase("JOIN") ~ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~ space ~ or).map {
+    P(IgnoreCase("FULL") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
       case (name, on) => FullOuterJoin(name, on)
     }
 
   private def selectList[_: P]: P[List[Projection]] =
     P(
       "*".!.map(_ => List.empty) |
-        selection.rep(1, sep = commaSeparator).map(_.toList)
+        selection.rep(1, sep = commaSeparator././).map(_.toList)
     )
 
   private def selection[_: P]: P[Projection] =
-    P((aggregate | additive) ~ (space ~ IgnoreCase("AS") ~ space ~ id).?).map {
+    P((aggregate | additive) ~ (space ~ IgnoreCase("AS") ~/ space ~ id).?).map {
       case (proj, Some(alias)) => Alias(proj, alias)
       case (proj, None)        => proj
     }
 
   private def ids[_: P]: P[List[String]] =
-    P("(" ~ space ~ id.rep(1, sep = commaSeparator).map(_.toList) ~ space ~ ")" ~ space)
+    P("(" ~ space ~ id.rep(1, sep = commaSeparator./).map(_.toList) ~ space ~ ")" ~ space)
 
   private def row[_: P]: P[List[Literal]] =
-    P("(" ~ literal.rep(1, sep = commaSeparator).map(_.toList) ~ ")")
+    P("(" ~ literal.rep(1, sep = commaSeparator././).map(_.toList) ~ ")")
 
   private def literal[_: P]: P[Literal] =
     P(double | integer | `null` | date | string)
@@ -253,7 +253,7 @@ object SQLParser {
     P(equals | greaterOrEquals | lessOrEquals | less | greater | isNull | between | like | isNotNull | not)
 
   private def not[_: P]: P[Not] =
-    P(IgnoreCase("NOT") ~ space ~ booleanOperator).map(Not)
+    P(IgnoreCase("NOT") ~/ space ~ booleanOperator).map(Not)
 
   private def equals[_: P]: P[Equals] =
     P(selection ~ space ~ "=" ~ space ~ selection).map {
@@ -292,32 +292,32 @@ object SQLParser {
     }
 
   private def between[_: P]: P[Between] =
-    P(id ~ space ~ IgnoreCase("BETWEEN") ~ space ~ expression ~ space ~ IgnoreCase("AND") ~ space ~ expression)
+    P(id ~ space ~ IgnoreCase("BETWEEN") ~/ space ~ expression ~ space ~ IgnoreCase("AND") ~/ space ~ expression)
       .map {
         case (name, value1, value2) => Between(name, value1, value2)
       }
 
   private def and[_: P]: P[Bool] =
-    P(booleanOperator ~ (space ~ IgnoreCase("AND") ~ space ~ booleanOperator).rep).map {
+    P(booleanOperator ~ (space ~ IgnoreCase("AND") ~/ space ~ booleanOperator).rep).map {
       case (a, Nil) => a
       case (a, ops) => And(a, ops.reduceLeft(And))
     }
 
   private def or[_: P]: P[Bool] =
-    P(and ~ (space ~ IgnoreCase("OR") ~ space ~ and).rep(sep = space)).map {
+    P(and ~ (space ~ IgnoreCase("OR") ~/ space ~ and).rep(sep = space)).map {
       case (a, Nil) => a
       case (a, ops) => Or(a, ops.reduceLeft(Or))
     }
 
   private def update[_: P]: P[Update] =
     P(
-      IgnoreCase("UPDATE") ~ space ~ id ~ space ~
-        IgnoreCase("SET") ~ space ~ updateList ~ (space ~ where).?).map {
+      IgnoreCase("UPDATE") ~/ space ~ id ~ space ~
+        IgnoreCase("SET") ~/ space ~ updateList ~ (space ~ where).?).map {
       case (name, row, condition) => Update(name, row, condition)
     }
 
   private def updateList[_: P]: P[Row] =
-    P((id ~ space ~ "=" ~ space ~ literal).rep(1, sep = commaSeparator).map { x =>
+    P((id ~ space ~ "=" ~ space ~ literal).rep(1, sep = commaSeparator./).map { x =>
       x.map {
         case (name, lit) => BodyAttribute(name, lit)
       }
@@ -349,23 +349,23 @@ object SQLParser {
     )
 
   private def columnConstraint[_: P]: P[ColumnConstraint] =
-    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("IDENTITY(") ~ space ~ integer ~ space ~ "," ~ space ~ integer ~ space ~ ")")
+    P(((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("IDENTITY(") ~ space ~ integer ~ space ~ "," ~ space ~ integer ~ space ~ ")")
         .map {
           case (name, IntegerLiteral(int1), IntegerLiteral(int2)) =>
             AttributeIdentity(name, int1, int2)
         } |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
         .map(PrimaryKey) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT") ~ space ~ literal))
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT") ~/ space ~ literal))
         .map(a => Default(a._2, a._1)) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("CHECK") ~ space ~ or))
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("CHECK") ~/ space ~ or))
         .map(a => Check(a._2, a._1)) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY REFERENCES")
-        ~ space ~ id ~ "(" ~ id ~ ")" ~ (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).?
-        ~ (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?))
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY REFERENCES")
+        ~/ space ~ id ~ "(" ~ id ~ ")" ~ (space ~ IgnoreCase("ON DELETE") ~/ space ~ primaryKeyTrigger).?
+        ~ (space ~ IgnoreCase("ON UPDATE") ~/ space ~ primaryKeyTrigger).?))
         .map {
           case (constraintName, (relation, name, onUpdate, onDelete)) =>
             ForeignKey(name,
@@ -376,12 +376,12 @@ object SQLParser {
         })
 
   private def relationConstraint[_: P]: P[Right[Nothing, RelationConstraint]] =
-    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~
-      (IgnoreCase("PRIMARY KEY") ~ space ~ ids)).map(a => PKeyRelationConstraint(a._2, a._1)) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY") ~ space ~ ids ~ space ~
-        IgnoreCase("REFERENCES") ~ space ~ id ~ space ~ "(" ~ space ~ id ~ space ~ ")" ~
-        (space ~ IgnoreCase("ON DELETE") ~ space ~ primaryKeyTrigger).? ~
-        (space ~ IgnoreCase("ON UPDATE") ~ space ~ primaryKeyTrigger).?))
+    P(((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~
+      (IgnoreCase("PRIMARY KEY") ~/ space ~ ids)).map(a => PKeyRelationConstraint(a._2, a._1)) |
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY") ~/ space ~ ids ~ space ~
+        IgnoreCase("REFERENCES") ~/ space ~ id ~ space ~ "(" ~ space ~ id ~ space ~ ")" ~
+        (space ~ IgnoreCase("ON DELETE") ~/ space ~ primaryKeyTrigger).? ~
+        (space ~ IgnoreCase("ON UPDATE") ~/ space ~ primaryKeyTrigger).?))
         .map {
           case (name, (names, pKeyRelation, pKey, onUpdate, onDelete)) =>
             FKeyRelationConstraint(names,
@@ -391,22 +391,22 @@ object SQLParser {
                                    onUpdate.getOrElse(NoAction),
                                    name)
         } |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("DEFAULT") ~ space ~ "(" ~ literal ~ ")" ~ space ~ IgnoreCase(
-        "FOR") ~ space ~ id).map {
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("DEFAULT") ~/ space ~ "(" ~ literal ~ ")" ~ space ~ IgnoreCase(
+        "FOR") ~/ space ~ id).map {
         case (constraintName, value, name) => DefaultRelationConstraint(name, value, constraintName)
       } |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~ space ~ "(" ~ or ~ ")")
+      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~/ space ~ "(" ~ or ~ ")")
         .map {
           case (constraintName, condition) => CheckRelationConstraint(condition, constraintName)
         }).map(Right(_))
 
   private def aggregate[_: P]: P[Aggregate] =
     P(
-      (IgnoreCase("SUM") ~ "(" ~ id ~ ")").map(Sum) |
-        (IgnoreCase("AVG") ~ "(" ~ id ~ ")").map(Avg) |
-        (IgnoreCase("COUNT") ~ "(" ~ (id | "*".!) ~ ")").map(Count) |
-        (IgnoreCase("MAX") ~ "(" ~ id ~ ")").map(Max) |
-        (IgnoreCase("MIN") ~ "(" ~ id ~ ")").map(Min)
+      (IgnoreCase("SUM") ~/ "(" ~ id ~ ")").map(Sum) |
+        (IgnoreCase("AVG") ~/ "(" ~ id ~ ")").map(Avg) |
+        (IgnoreCase("COUNT") ~/ "(" ~ (id | "*".!) ~ ")").map(Count) |
+        (IgnoreCase("MAX") ~/ "(" ~ id ~ ")").map(Max) |
+        (IgnoreCase("MIN") ~/ "(" ~ id ~ ")").map(Min)
     )
 
   private def commaSeparator[_: P]: P[Unit] =
