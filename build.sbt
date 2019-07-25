@@ -2,7 +2,7 @@ name := "rdbms"
 
 version := "0.1"
 
-scalaVersion := "2.12.7"
+scalaVersion := "2.12.8"
 
 scalacOptions ++= Seq(
   "-target:jvm-1.8",
@@ -19,6 +19,6 @@ scalacOptions ++= Seq(
   "-Ypartial-unification"
 )
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5"
-libraryDependencies += "org.typelevel" %% "cats-core" % "1.4.0"
-libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.1.0"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8"
+libraryDependencies += "org.typelevel" %% "cats-core" % "1.6.1"
+libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.1.3"
