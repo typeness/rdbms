@@ -85,19 +85,19 @@ object SQLParser {
 
   private def alterTable[_: P]: P[AlterTable] =
     P(
-      (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("ADD") ~/ space ~ headingAttribute)
+      (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ headingAttribute)
         .map {
           case (name, Left(attrib)) => AlterAddColumn(name, attrib)
         } |
-        (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~/ space ~ id)
+        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~/ space ~ id)
           .map {
             case (name, column) => AlterDropColumn(name, column)
           } |
-        (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("ADD") ~/ space ~ relationConstraint)
+        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ relationConstraint)
           .map {
             case (name, Right(constraint)) => AlterAddConstraint(name, constraint)
           } |
-        (IgnoreCase("ALTER TABLE") ~/ space ~ id ~ space ~ IgnoreCase("DROP CONSTRAINT") ~/ space ~ id)
+        (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP CONSTRAINT") ~/ space ~ id)
           .map {
             case (name, constraint) => AlterDropConstraint(name, constraint)
           }
@@ -304,7 +304,7 @@ object SQLParser {
     }
 
   private def or[_: P]: P[Bool] =
-    P(and ~ (space ~ IgnoreCase("OR") ~/ space ~ and).rep(sep = space)).map {
+    P(and ~ (space ~ IgnoreCase("OR") ~ space ~ and).rep(sep = space)).map {
       case (a, Nil) => a
       case (a, ops) => Or(a, ops.reduceLeft(Or))
     }
@@ -349,21 +349,21 @@ object SQLParser {
     )
 
   private def columnConstraint[_: P]: P[ColumnConstraint] =
-    P(((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("IDENTITY(") ~ space ~ integer ~ space ~ "," ~ space ~ integer ~ space ~ ")")
+    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("UNIQUE")).map(Unique) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("IDENTITY(") ~ space ~ integer ~ space ~ "," ~ space ~ integer ~ space ~ ")")
         .map {
           case (name, IntegerLiteral(int1), IntegerLiteral(int2)) =>
             AttributeIdentity(name, int1, int2)
         } |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NOT NULL")).map(NotNULL) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
         .map(PrimaryKey) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT") ~/ space ~ literal))
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT") ~/ space ~ literal))
         .map(a => Default(a._2, a._1)) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("CHECK") ~/ space ~ or))
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("CHECK") ~/ space ~ or))
         .map(a => Check(a._2, a._1)) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY REFERENCES")
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY REFERENCES")
         ~/ space ~ id ~ "(" ~ id ~ ")" ~ (space ~ IgnoreCase("ON DELETE") ~/ space ~ primaryKeyTrigger).?
         ~ (space ~ IgnoreCase("ON UPDATE") ~/ space ~ primaryKeyTrigger).?))
         .map {
@@ -376,9 +376,9 @@ object SQLParser {
         })
 
   private def relationConstraint[_: P]: P[Right[Nothing, RelationConstraint]] =
-    P(((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~
+    P(((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~
       (IgnoreCase("PRIMARY KEY") ~/ space ~ ids)).map(a => PKeyRelationConstraint(a._2, a._1)) |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY") ~/ space ~ ids ~ space ~
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("FOREIGN KEY") ~/ space ~ ids ~ space ~
         IgnoreCase("REFERENCES") ~/ space ~ id ~ space ~ "(" ~ space ~ id ~ space ~ ")" ~
         (space ~ IgnoreCase("ON DELETE") ~/ space ~ primaryKeyTrigger).? ~
         (space ~ IgnoreCase("ON UPDATE") ~/ space ~ primaryKeyTrigger).?))
@@ -391,11 +391,11 @@ object SQLParser {
                                    onUpdate.getOrElse(NoAction),
                                    name)
         } |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("DEFAULT") ~/ space ~ "(" ~ literal ~ ")" ~ space ~ IgnoreCase(
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("DEFAULT") ~/ space ~ "(" ~ literal ~ ")" ~ space ~ IgnoreCase(
         "FOR") ~/ space ~ id).map {
         case (constraintName, value, name) => DefaultRelationConstraint(name, value, constraintName)
       } |
-      ((IgnoreCase("CONSTRAINT") ~/ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~/ space ~ "(" ~ or ~ ")")
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("CHECK") ~/ space ~ "(" ~ or ~ ")")
         .map {
           case (constraintName, condition) => CheckRelationConstraint(condition, constraintName)
         }).map(Right(_))
@@ -404,7 +404,7 @@ object SQLParser {
     P(
       (IgnoreCase("SUM") ~/ "(" ~ id ~ ")").map(Sum) |
         (IgnoreCase("AVG") ~/ "(" ~ id ~ ")").map(Avg) |
-        (IgnoreCase("COUNT") ~/ "(" ~ (id | "*".!) ~ ")").map(Count) |
+        (IgnoreCase("COUNT") ~ "(" ~ (id | "*".!) ~ ")").map(Count) |
         (IgnoreCase("MAX") ~/ "(" ~ id ~ ")").map(Max) |
         (IgnoreCase("MIN") ~/ "(" ~ id ~ ")").map(Min)
     )
