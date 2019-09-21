@@ -62,7 +62,7 @@ object ManipulationBuilder extends BuilderUtils {
             val expectedSize =
               if (relation.identity.isEmpty) relationRowSize
               else relationRowSize - 1
-            if (row.size != expectedSize) Left(WrongNumberOfAttributes)
+            if (row.size != expectedSize) Left(WrongNumberOfAttributes(relation.heading, row))
             else {
               val header =
                 if (relation.identity.isEmpty) relation.heading

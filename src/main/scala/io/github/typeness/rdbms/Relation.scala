@@ -25,7 +25,7 @@ case class Schema(relations: Map[String, Relation]) {
 
 object Relation {
   type Header = List[HeadingAttribute]
-  val empty = Relation("", Nil, None, Nil, List(Row()))
+  val empty = Relation("", Nil, None, Nil, List(Row()), Nil)
 }
 
 case class Row(attributes: List[BodyAttribute]) {
@@ -50,7 +50,8 @@ case class Relation(name: String,
                     primaryKeys: List[String],
                     identity: Option[Identity],
                     heading: Relation.Header,
-                    body: List[Row]) {
+                    body: List[Row],
+                    relationConstraints: List[RelationConstraint]) {
 
   lazy val getPrimaryKeys: List[HeadingAttribute] =
     heading.filter(_.constraints.exists {

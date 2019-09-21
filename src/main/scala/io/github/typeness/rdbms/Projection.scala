@@ -35,12 +35,12 @@ case class RealLiteral(value: Double) extends NumericLiteral {
 
 case class StringLiteral(value: String) extends Literal {
   override def typeOf: AnyType = NVarCharType(1)
-  override def show: String = value
+  override def show: String = s"'$value'"
 }
 
 case class DateLiteral(value: String) extends Literal {
   override def typeOf: AnyType = DateType
-  override def show: String = value
+  override def show: String = s"'$value'"
 }
 
 case class MoneyLiteral(value: Int) extends Literal {

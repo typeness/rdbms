@@ -11,7 +11,8 @@ object Relations {
       Row(BodyAttribute("a", IntegerLiteral(1))),
       Row(BodyAttribute("a", IntegerLiteral(2))),
       Row(BodyAttribute("a", IntegerLiteral(3)))
-    )
+    ),
+    Nil
   )
 
   val relationB = Relation(
@@ -23,7 +24,8 @@ object Relations {
       Row(BodyAttribute("b", IntegerLiteral(2))),
       Row(BodyAttribute("b", IntegerLiteral(3))),
       Row(BodyAttribute("b", IntegerLiteral(4)))
-    )
+    ),
+    Nil
   )
 
   val relationC = Relation(
@@ -35,7 +37,8 @@ object Relations {
       Row(BodyAttribute("c", IntegerLiteral(3))),
       Row(BodyAttribute("c", IntegerLiteral(4))),
       Row(BodyAttribute("c", IntegerLiteral(5)))
-    )
+    ),
+    Nil
   )
 
   val schemaABC = Schema(List(relationA, relationB, relationC))
@@ -129,7 +132,8 @@ object Relations {
       pracownicyRow3,
       pracownicyRow4,
       pracownicyRow5
-    )
+    ),
+    Nil
   )
 
   /*
@@ -156,7 +160,8 @@ object Relations {
       Row(BodyAttribute("NrPrac", IntegerLiteral(5)),
           BodyAttribute("OdKiedy", DateLiteral("2010-01-01")),
           BodyAttribute("DoKiedy", DateLiteral("2010-02-01")))
-    )
+    ),
+    Nil
   )
 
   val schemaPracownicyUrlopy = Schema(List(pracownicy, urlopy))
@@ -173,6 +178,7 @@ object Relations {
       HeadingAttribute("DataZatrudnienia", DateType, Nil),
       HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
     ),
+    Nil,
     Nil
   )
 

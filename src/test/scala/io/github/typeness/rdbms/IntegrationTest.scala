@@ -1,30 +1,15 @@
 package io.github.typeness.rdbms
-import org.scalatest.FunSuite
-
-import fastparse._
-
-import cats.instances.list._
 import cats.instances.either._
-import cats.syntax.foldable._
+import cats.instances.list._
 import cats.syntax.traverse._
+import io.github.typeness.rdbms.TestUtils._
+import org.scalatest.FunSuite
 
 class IntegrationTest extends FunSuite {
 
-  private def createSchema(source: String): Either[SQLError, Schema] = {
-    val code = scala.io.Source.fromResource(source).mkString
-    val Parsed.Success(trees, _) = SQLParser.parseMany(code)
-    trees.foldLeftM(Schema(Nil)) {
-      case (schema, tree) =>
-        SQLInterpreter.run(tree, schema).map {
-          case SchemaResult(newSchema) => newSchema
-          case RowsResult(_)           => schema
-        }
-    }
-  }
-
-  private lazy val pracownicyUrlopy = createSchema("pracownicyUrlopySchema.sql")
-  private lazy val pracownicyUrlopy2 = createSchema("pracownicyUrlopySchema2.sql")
-  private lazy val northwind = createSchema("northwind.sql")
+  private lazy val pracownicyUrlopy = createSchemaFromFile("pracownicyUrlopySchema.sql")
+  private lazy val pracownicyUrlopy2 = createSchemaFromFile("pracownicyUrlopySchema2.sql")
+  private lazy val northwind = createSchemaFromFile("northwind.sql")
 
   test("Create empty schema") {
     val Right(SchemaResult(schema)) = SQLInterpreter.runFromResource("empty.sql")
@@ -73,7 +58,8 @@ class IntegrationTest extends FunSuite {
                 BodyAttribute("DataZatrudnienia", DateLiteral("'2010-01-01'")),
                 BodyAttribute("LiczbaDzieci", IntegerLiteral(2))
               ))
-            )
+            ),
+            Nil
           ),
           "Urlopy" -> Relation(
             "Urlopy",
@@ -87,7 +73,8 @@ class IntegrationTest extends FunSuite {
               HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
               HeadingAttribute("DoKiedy", DateType, List())
             ),
-            List()
+            List(),
+            List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"),"Pracownicy","Nr",NoAction,NoAction,None))
           )
         )))
     )
@@ -172,7 +159,8 @@ class IntegrationTest extends FunSuite {
           Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
                    BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'")),
                    BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'"))))
-        )
+        ),
+        List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"),"Pracownicy","Nr",NoAction,NoAction,None))
       )))
   }
 
@@ -260,7 +248,7 @@ class IntegrationTest extends FunSuite {
   }
 
   test("Named constraints") {
-    val Right(schema) = createSchema("t13.sql")
+    val Right(schema) = createSchemaFromFile("t13.sql")
     assert(
       schema == Schema(
         Map("Dbo" -> Relation(
@@ -273,13 +261,14 @@ class IntegrationTest extends FunSuite {
                              List(ForeignKey("B", "TAB", NoAction, NoAction, Some("FKey")),
                                   PrimaryKey(Some("Test")),
                                   Unique(Some("ColumnAUnique"))))),
-          List()
+          List(),
+          List(PKeyRelationConstraint(List("ColumnA"),Some("Test")), FKeyRelationConstraint(List("ColumnA"),"TAB","B",NoAction,NoAction,Some("FKey")))
         )))
     )
   }
 
   test("ALTER TABLE") {
-    val Right(schema) = createSchema("t14.sql")
+    val Right(schema) = createSchemaFromFile("t14.sql")
     assert(
       schema == Schema(
         Map("Test" -> Relation(
@@ -294,7 +283,8 @@ class IntegrationTest extends FunSuite {
                              IntegerType,
                              List(ForeignKey("X", "TestB", NoAction, Cascade, Some("FKey"))))
           ),
-          List()
+          List(),
+          List(FKeyRelationConstraint(List("C"),"TestB","X",Cascade,NoAction,Some("FKey")))
         )))
     )
   }
@@ -597,12 +587,13 @@ class IntegrationTest extends FunSuite {
     )
   }
 
-  test("SELECT Orders.OrderID, OrderDate, Products.ProductID, ProductName, " +
-    "[Order Details].UnitPrice, Quantity, CategoryName, Customers.CustomerID, " +
-    "CompanyName FROM Customers JOIN Orders ON Customers.CustomerID = Orders.CustomerID " +
-    "JOIN [Order Details] ON Orders.OrderID = [Order Details].OrderID " +
-    "JOIN Products ON [Order Details].ProductID = Products.ProductID " +
-    "JOIN Categories ON Products.CategoryID = Categories.CategoryID") {
+  test(
+    "SELECT Orders.OrderID, OrderDate, Products.ProductID, ProductName, " +
+      "[Order Details].UnitPrice, Quantity, CategoryName, Customers.CustomerID, " +
+      "CompanyName FROM Customers JOIN Orders ON Customers.CustomerID = Orders.CustomerID " +
+      "JOIN [Order Details] ON Orders.OrderID = [Order Details].OrderID " +
+      "JOIN Products ON [Order Details].ProductID = Products.ProductID " +
+      "JOIN Categories ON Products.CategoryID = Categories.CategoryID") {
     val Right(RowsResult(rows)) = for {
       schema <- northwind
       result <- SQLInterpreter.runFromResource("t38.sql", schema)

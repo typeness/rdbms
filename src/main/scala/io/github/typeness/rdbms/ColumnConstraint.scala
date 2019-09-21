@@ -2,25 +2,45 @@ package io.github.typeness.rdbms
 
 sealed trait ColumnConstraint extends Product with Serializable {
   def name: Option[String]
+  def show: String
 }
 case class AttributeIdentity(name: Option[String], current: Int, step: Int)
     extends ColumnConstraint {
   def toIdentity(attributeName: String): Identity = Identity(attributeName, current, step)
+
+  override def show: String = s"IDENTITY($current,$step)"
 }
-case class Unique(name: Option[String] = None) extends ColumnConstraint
-case class NotNULL(name: Option[String] = None) extends ColumnConstraint
-case class NULL(name: Option[String] = None) extends ColumnConstraint
-case class PrimaryKey(name: Option[String] = None) extends ColumnConstraint
-case class Default(value: Literal, name: Option[String] = None) extends ColumnConstraint
-case class Check(bool: Bool, name: Option[String] = None) extends ColumnConstraint
+case class Unique(name: Option[String] = None) extends ColumnConstraint {
+  override def show: String = "UNIQUE"
+}
+case class NotNULL(name: Option[String] = None) extends ColumnConstraint {
+  override def show: String = "NOT NULL"
+}
+case class NULL(name: Option[String] = None) extends ColumnConstraint {
+  override def show: String = "NULL"
+}
+case class PrimaryKey(name: Option[String] = None) extends ColumnConstraint {
+  override def show: String = "PRIMARY KEY"
+}
+case class Default(value: Literal, name: Option[String] = None) extends ColumnConstraint {
+  override def show: String = s"DEFAULT(${value.show})"
+}
+
+case class Check(bool: Bool, name: Option[String] = None) extends ColumnConstraint {
+  override def show: String = s"CHECK(${bool.show})"
+}
 case class ForeignKey(primaryKeyName: String,
                       pKeyRelationName: String,
                       onUpdate: PrimaryKeyTrigger,
                       onDelete: PrimaryKeyTrigger,
                       name: Option[String] = None)
-    extends ColumnConstraint
+    extends ColumnConstraint {
+  override def show: String =
+    s"FOREIGN KEY REFERENCES $pKeyRelationName($primaryKeyName)"
+}
 
-sealed trait PrimaryKeyTrigger
+sealed trait PrimaryKeyTrigger {
+}
 case object NoAction extends PrimaryKeyTrigger
 case object Cascade extends PrimaryKeyTrigger
 case object SetNULL extends PrimaryKeyTrigger

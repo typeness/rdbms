@@ -59,7 +59,11 @@ object RelationBuilder extends BuilderUtils {
           else attrib
         }
     }
-    Right(relation.copy(heading = newHeading))
+    Right(
+      relation.copy(
+        heading = newHeading,
+        relationConstraints = alterAddConstraint.constraint :: relation.relationConstraints
+      ))
   }
 
   private def build(query: Create, schema: Schema): Either[SQLError, Schema] =
@@ -73,7 +77,8 @@ object RelationBuilder extends BuilderUtils {
                           primaryKeys,
                           createWithConstrains.identity,
                           createWithConstrains.attributes,
-                          Nil)
+                          Nil,
+                          query.relationConstraints)
     } yield schema.update(relation)
 
   private def drop(query: DropTable, schema: Schema): Either[SQLError, Schema] =
@@ -115,6 +120,7 @@ object RelationBuilder extends BuilderUtils {
             updateHeader(names, attributes, pKey.toColumnConstraint)
           case (attributes, fKey @ FKeyRelationConstraint(names, _, _, _, _, _)) =>
             updateHeader(names, attributes, fKey.toColumnConstraint)
+          case (attributes, _) => attributes
         })
     }
     def getIdentity(attribute: HeadingAttribute): Either[MultipleIdentity, Option[Identity]] = {

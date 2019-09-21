@@ -226,7 +226,7 @@ object QueryBuilder extends BuilderUtils {
         val inner = innerJoin(left, right, on)
         makeOuterJoin(left.heading, left.body, inner, right.heading, right.body)
     }
-    joined.map(rows => Relation(right.name, Nil, None, left.heading ::: right.heading, rows))
+    joined.map(rows => Relation(right.name, Nil, None, left.heading ::: right.heading, rows, Nil))
   }
 
   private def makeOuterJoin(leftHeading: List[HeadingAttribute],

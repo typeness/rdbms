@@ -1,11 +1,13 @@
 package io.github.typeness.rdbms
 
+import io.github.typeness.rdbms.Relation.Header
+
 sealed trait SQLError
 case class MultiplePrimaryKeys(first: String, second: String) extends SQLError
 case class MultipleColumnNames(name: String) extends SQLError
 case class ColumnDoesNotExists(name: String) extends SQLError
 case class MissingColumnName(name: String) extends SQLError
-case object WrongNumberOfAttributes extends SQLError
+case class WrongNumberOfAttributes(relationHeader: Header, rows: List[Literal]) extends SQLError
 case class IdentityViolation(name: String) extends SQLError
 case class RelationDoesNotExists(name: String) extends SQLError
 case class TypeMismatch(first: AnyType, second: AnyType, literal: Literal) extends SQLError

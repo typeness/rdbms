@@ -7,9 +7,11 @@ import cats.instances.list._
 
 object SQLParser {
 
-  def parse(source: String): Parsed[SQL] = fastparse.parse(source, sqlSingle(_), verboseFailures = true)
+  def parse(source: String): Parsed[SQL] =
+    fastparse.parse(source, sqlSingle(_), verboseFailures = true)
 
-  def parseMany(source: String): Parsed[List[SQL]] = fastparse.parse(source, sqlMany(_), verboseFailures = true)
+  def parseMany(source: String): Parsed[List[SQL]] =
+    fastparse.parse(source, sqlMany(_), verboseFailures = true)
 
   private def sqlSingle[_: P]: P[SQL] = P(sql ~ End)
 
@@ -37,8 +39,7 @@ object SQLParser {
   private def insert[_: P]: P[Insert] =
     P(
       IgnoreCase("INSERT") ~/ space ~ IgnoreCase("INTO").? ~/ space ~ id ~ space ~ ids.? ~ IgnoreCase(
-        "VALUES") ~/ space ~ row
-        .rep(min = 1, sep = commaSeparator./))
+        "VALUES") ~/ space ~ row.rep(min = 1, sep = commaSeparator./))
       .map {
         case (name, None, rows) =>
           AnonymousInsert(name, rows.toList)
@@ -145,24 +146,31 @@ object SQLParser {
 
   private def innerJoin[_: P]: P[InnerJoin] =
     P(
-      (IgnoreCase("INNER") ~/ space).? ~ IgnoreCase("JOIN") ~/ space ~ varAccessor.map(_.show) ~ space
+      (IgnoreCase("INNER") ~/ space).? ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
+        .map(_.show) ~ space
         ~ IgnoreCase("ON") ~/ space ~ or)
       .map {
         case (name, on) => InnerJoin(name, on)
       }
 
   private def leftOuterJoin[_: P]: P[LeftOuterJoin] =
-    P(IgnoreCase("LEFT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
+    P(
+      IgnoreCase("LEFT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
+        .map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
       case (name, on) => LeftOuterJoin(name, on)
     }
 
   private def rightOuterJoin[_: P]: P[RightOuterJoin] =
-    P(IgnoreCase("RIGHT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
+    P(
+      IgnoreCase("RIGHT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
+        .map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
       case (name, on) => RightOuterJoin(name, on)
     }
 
   private def fullOuterJoin[_: P]: P[FullOuterJoin] =
-    P(IgnoreCase("FULL") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/space ~ varAccessor.map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
+    P(
+      IgnoreCase("FULL") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
+        .map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
       case (name, on) => FullOuterJoin(name, on)
     }
 
@@ -359,7 +367,7 @@ object SQLParser {
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("NULL")).map(_ => NULL()) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ IgnoreCase("PRIMARY KEY"))
         .map(PrimaryKey) |
-      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT") ~/ space ~ literal))
+      ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("DEFAULT(") ~/ space ~ literal ~ ")"))
         .map(a => Default(a._2, a._1)) |
       ((IgnoreCase("CONSTRAINT") ~ space ~ id ~ space).? ~ (IgnoreCase("CHECK") ~/ space ~ or))
         .map(a => Check(a._2, a._1)) |

@@ -68,6 +68,7 @@ class RelationBuilderTest extends FunSuite {
         HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
         HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
       ),
+      Nil,
       Nil
     )
     val relation2 = Relation(
@@ -78,6 +79,7 @@ class RelationBuilderTest extends FunSuite {
         HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
         HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
       ),
+      Nil,
       Nil
     )
     val schema = Schema(
