@@ -21,8 +21,8 @@ class IntegrationTest extends FunSuite {
     assert(
       pracownicyUrlopy == Right(
         Schema(Map(
-          "Pracownicy" -> Relation(
-            "Pracownicy",
+          rel"Pracownicy" -> Relation(
+            rel"Pracownicy",
             List("Nr"),
             None,
             List(
@@ -61,20 +61,20 @@ class IntegrationTest extends FunSuite {
             ),
             Nil
           ),
-          "Urlopy" -> Relation(
-            "Urlopy",
+          rel"Urlopy" -> Relation(
+            rel"Urlopy",
             List("NrPrac", "OdKiedy"),
             None,
             List(
               HeadingAttribute("NrPrac",
                                IntegerType,
-                               List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction),
+                               List(ForeignKey("Nr", rel"Pracownicy", NoAction, NoAction),
                                     PrimaryKey())),
               HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
               HeadingAttribute("DoKiedy", DateType, List())
             ),
             List(),
-            List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"),"Pracownicy","Nr",NoAction,NoAction,None))
+            List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"), rel"Pracownicy" ,"Nr",NoAction,NoAction,None))
           )
         )))
     )
@@ -105,7 +105,7 @@ class IntegrationTest extends FunSuite {
     } yield newSchema
     assert(
       result == Left(
-        PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(23416))))
+        PrimaryKeyDoesNotExist(rel"Urlopy", "NrPrac", rel"Pracownicy" , "Nr", IntegerLiteral(23416))))
   }
 
   test("Success when inserting existing primary key as foreign key") {
@@ -113,7 +113,7 @@ class IntegrationTest extends FunSuite {
       schema <- pracownicyUrlopy
       newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
     } yield newSchema
-    val urlopy = result.getRelation("Urlopy").map(_.body)
+    val urlopy = result.getRelation(rel"Urlopy").map(_.body)
     assert(
       urlopy == Right(
         List(Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
@@ -139,16 +139,16 @@ class IntegrationTest extends FunSuite {
       newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
     } yield newSchema
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t6.sql", newSchema)
-    val urlopy = result.getRelation("Urlopy")
+    val urlopy = result.getRelation(rel"Urlopy")
     assert(
       urlopy == Right(Relation(
-        "Urlopy",
+        rel"Urlopy",
         List("NrPrac", "OdKiedy"),
         None,
         List(
           HeadingAttribute("NrPrac",
                            IntegerType,
-                           List(ForeignKey("Nr", "Pracownicy", NoAction, NoAction), PrimaryKey())),
+                           List(ForeignKey("Nr", rel"Pracownicy", NoAction, NoAction), PrimaryKey())),
           HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
           HeadingAttribute("DoKiedy", DateType, List())
         ),
@@ -160,7 +160,7 @@ class IntegrationTest extends FunSuite {
                    BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'")),
                    BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'"))))
         ),
-        List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"),"Pracownicy","Nr",NoAction,NoAction,None))
+        List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"), rel"Pracownicy" ,"Nr",NoAction,NoAction,None))
       )))
   }
 
@@ -170,7 +170,7 @@ class IntegrationTest extends FunSuite {
       newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
     } yield newSchema
     val result = SQLInterpreter.runFromResource("t7.sql", newSchema)
-    assert(result == Left(ForeignKeyViolation("Urlopy", "NrPrac")))
+    assert(result == Left(ForeignKeyViolation(rel"Urlopy" , "NrPrac")))
   }
 
   test("Success when deleting row with primary key not referenced in other relation") {
@@ -180,7 +180,7 @@ class IntegrationTest extends FunSuite {
     } yield newSchema
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t8.sql", newSchema)
     val isDeleted = result
-      .getRelation("Pracownicy")
+      .getRelation(rel"Pracownicy")
       .flatMap(_.body.traverse(_.projectEither("Nr").map(_.literal.show)))
     assert(isDeleted.map(_.contains("2")) == Right(false))
   }
@@ -191,7 +191,7 @@ class IntegrationTest extends FunSuite {
       newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
     } yield newSchema
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t7.sql", newSchema)
-    val urlopyBody = result.getRelation("Urlopy").map(_.body)
+    val urlopyBody = result.getRelation(rel"Urlopy").map(_.body)
     assert(urlopyBody == Right(Nil))
   }
 
@@ -202,7 +202,7 @@ class IntegrationTest extends FunSuite {
     } yield newSchema
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t10.sql", newSchema)
     val urlopyBody =
-      result.getRelation("Urlopy").flatMap(_.body.traverse(_.projectEither("NrPrac")))
+      result.getRelation(rel"Urlopy").flatMap(_.body.traverse(_.projectEither("NrPrac")))
     assert(urlopyBody == Right(List(BodyAttribute("NrPrac", IntegerLiteral(333)))))
   }
 
@@ -214,7 +214,7 @@ class IntegrationTest extends FunSuite {
     val result = SQLInterpreter.runFromResource("t11.sql", newSchema)
     assert(
       result == Left(
-        PrimaryKeyDoesNotExist("Urlopy", "NrPrac", "Pracownicy", "Nr", IntegerLiteral(2512))))
+        PrimaryKeyDoesNotExist(rel"Urlopy", "NrPrac", rel"Pracownicy", "Nr", IntegerLiteral(2512))))
   }
 
   test("Column alias") {
@@ -251,18 +251,18 @@ class IntegrationTest extends FunSuite {
     val Right(schema) = createSchemaFromFile("t13.sql")
     assert(
       schema == Schema(
-        Map("Dbo" -> Relation(
-          "Dbo",
+        Map(rel"Dbo" -> Relation(
+          rel"Dbo",
           List("ColumnA"),
           None,
           List(
             HeadingAttribute("ColumnA",
                              IntegerType,
-                             List(ForeignKey("B", "TAB", NoAction, NoAction, Some("FKey")),
+                             List(ForeignKey("B", rel"TAB", NoAction, NoAction, Some("FKey")),
                                   PrimaryKey(Some("Test")),
                                   Unique(Some("ColumnAUnique"))))),
           List(),
-          List(PKeyRelationConstraint(List("ColumnA"),Some("Test")), FKeyRelationConstraint(List("ColumnA"),"TAB","B",NoAction,NoAction,Some("FKey")))
+          List(PKeyRelationConstraint(List("ColumnA"),Some("Test")), FKeyRelationConstraint(List("ColumnA"), rel"TAB","B",NoAction,NoAction,Some("FKey")))
         )))
     )
   }
@@ -271,8 +271,8 @@ class IntegrationTest extends FunSuite {
     val Right(schema) = createSchemaFromFile("t14.sql")
     assert(
       schema == Schema(
-        Map("Test" -> Relation(
-          "Test",
+        Map(rel"Test" -> Relation(
+          rel"Test",
           List("PKey"),
           None,
           List(
@@ -281,10 +281,10 @@ class IntegrationTest extends FunSuite {
             HeadingAttribute("B", DateType, List()),
             HeadingAttribute("C",
                              IntegerType,
-                             List(ForeignKey("X", "TestB", NoAction, Cascade, Some("FKey"))))
+                             List(ForeignKey("X", rel"TestB", NoAction, Cascade, Some("FKey"))))
           ),
           List(),
-          List(FKeyRelationConstraint(List("C"),"TestB","X",Cascade,NoAction,Some("FKey")))
+          List(FKeyRelationConstraint(List("C"), rel"TestB","X",Cascade,NoAction,Some("FKey")))
         )))
     )
   }

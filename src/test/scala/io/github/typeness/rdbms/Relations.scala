@@ -3,7 +3,7 @@ package io.github.typeness.rdbms
 object Relations {
 
   val relationA = Relation(
-    "RelationA",
+    rel"RelationA",
     List("a"),
     None,
     List(HeadingAttribute("a", IntegerType, List(PrimaryKey()))),
@@ -16,7 +16,7 @@ object Relations {
   )
 
   val relationB = Relation(
-    "RelationB",
+    rel"RelationB",
     List("b"),
     None,
     List(HeadingAttribute("b", IntegerType, List(PrimaryKey()))),
@@ -29,7 +29,7 @@ object Relations {
   )
 
   val relationC = Relation(
-    "RelationC",
+    rel"RelationC",
     List("c"),
     None,
     List(HeadingAttribute("c", IntegerType, List(PrimaryKey()))),
@@ -115,7 +115,7 @@ object Relations {
   )
    */
   val pracownicy = Relation(
-    "Pracownicy",
+    rel"Pracownicy",
     Nil,
     None,
     List(
@@ -146,13 +146,13 @@ object Relations {
    */
 
   val urlopy = Relation(
-    "Urlopy",
+    rel"Urlopy",
     Nil,
     None,
     List(
       HeadingAttribute("NrPrac",
                        IntegerType,
-                       List(PrimaryKey(), ForeignKey("Nr", "Pracownicy", NoAction, NoAction))),
+                       List(PrimaryKey(), ForeignKey("Nr", rel"Pracownicy", NoAction, NoAction))),
       HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
       HeadingAttribute("DoKiedy", DateType, Nil),
     ),
@@ -167,7 +167,7 @@ object Relations {
   val schemaPracownicyUrlopy = Schema(pracownicy, urlopy)
 
   val pracownicy2 = Relation(
-    "Pracownicy2",
+    rel"Pracownicy2",
     List("Nr"),
     Some(Identity("Nr", 1, 1)),
     List(

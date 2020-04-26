@@ -9,8 +9,8 @@ class JoinsTest extends FunSuite {
   test("CROSS JOIN on 2 relations") {
     val join = Select(
       List(Var("a"), Var("b")),
-      Some("RelationA"),
-      List(CrossJoin("RelationB")),
+      Some(rel"RelationA"),
+      List(CrossJoin(rel"RelationB")),
       None,
       Nil,
       None,
@@ -34,8 +34,8 @@ class JoinsTest extends FunSuite {
   test("CROSS JOIN on 3 relations") {
     val join = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
-      List(CrossJoin("RelationB"), CrossJoin("RelationC")),
+      Some(rel"RelationA"),
+      List(CrossJoin(rel"RelationB"), CrossJoin(rel"RelationC")),
       None,
       Nil,
       None,
@@ -131,8 +131,8 @@ class JoinsTest extends FunSuite {
   test("INNER JOIN on 2 relations") {
     val join = Select(
       List(Var("a"), Var("b")),
-      Some("RelationA"),
-      List(InnerJoin("RelationB", Equals(Var("a"), Var("b")))),
+      Some(rel"RelationA"),
+      List(InnerJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
       None,
       Nil,
       None,
@@ -149,10 +149,10 @@ class JoinsTest extends FunSuite {
   test("INNER JOIN on 3 relations") {
     val join = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        InnerJoin("RelationB", Equals(Var("a"), Var("b"))),
-        InnerJoin("RelationC", Equals(Var("a"), Var("c"))),
+        InnerJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        InnerJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -171,8 +171,8 @@ class JoinsTest extends FunSuite {
   test("LEFT OUTER JOIN on 2 relations") {
     val join = Select(
       List(Var("a"), Var("b")),
-      Some("RelationA"),
-      List(LeftOuterJoin("RelationB", Equals(Var("a"), Var("b")))),
+      Some(rel"RelationA"),
+      List(LeftOuterJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
       None,
       Nil,
       None,
@@ -190,10 +190,10 @@ class JoinsTest extends FunSuite {
   test("LEFT OUTER JOIN on 3 relations") {
     val join = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        LeftOuterJoin("RelationB", Equals(Var("a"), Var("b"))),
-        LeftOuterJoin("RelationC", Equals(Var("a"), Var("c"))),
+        LeftOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        LeftOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -218,8 +218,8 @@ class JoinsTest extends FunSuite {
   test("RIGHT OUTER JOIN on 2 relations") {
     val join = Select(
       List(Var("a"), Var("b")),
-      Some("RelationA"),
-      List(RightOuterJoin("RelationB", Equals(Var("a"), Var("b")))),
+      Some(rel"RelationA"),
+      List(RightOuterJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
       None,
       Nil,
       None,
@@ -237,10 +237,10 @@ class JoinsTest extends FunSuite {
   test("RIGHT OUTER JOIN on 3 relations") {
     val join = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        RightOuterJoin("RelationB", Equals(Var("a"), Var("b"))),
-        RightOuterJoin("RelationC", Equals(Var("a"), Var("c"))),
+        RightOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        RightOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -265,8 +265,8 @@ class JoinsTest extends FunSuite {
   test("FULL OUTER JOIN on 2 relations") {
     val join = Select(
       List(Var("a"), Var("b")),
-      Some("RelationA"),
-      List(FullOuterJoin("RelationB", Equals(Var("a"), Var("b")))),
+      Some(rel"RelationA"),
+      List(FullOuterJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
       None,
       Nil,
       None,
@@ -285,10 +285,10 @@ class JoinsTest extends FunSuite {
   test("FULL OUTER JOIN on 3 relations") {
     val join = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        FullOuterJoin("RelationB", Equals(Var("a"), Var("b"))),
-        FullOuterJoin("RelationC", Equals(Var("a"), Var("c"))),
+        FullOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        FullOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,

@@ -9,14 +9,14 @@ object Schema {
     Schema(relations.map(relation => (relation.name, relation)).toMap)
 }
 
-case class Schema(relations: Map[String, Relation]) {
-  def getRelation(name: Option[String]): Either[RelationDoesNotExists, Relation] =
+case class Schema(relations: Map[RelationName, Relation]) {
+  def getRelation(name: Option[RelationName]): Either[RelationDoesNotExists, Relation] =
     name match {
       case Some(value) => getRelation(value)
       case None => Right(Relation.empty)
     }
 
-  def getRelation(name: String): Either[RelationDoesNotExists, Relation] =
+  def getRelation(name: RelationName): Either[RelationDoesNotExists, Relation] =
     Either.fromOption(relations.get(name), RelationDoesNotExists(name))
 
   def update(relation: Relation): Schema =
@@ -25,7 +25,7 @@ case class Schema(relations: Map[String, Relation]) {
 
 object Relation {
   type Header = List[HeadingAttribute]
-  val empty: Relation = Relation("", Nil, None, Nil, List(Row()), Nil)
+  val empty: Relation = Relation(RelationName(""), Nil, None, Nil, List(Row()), Nil)
 }
 
 case class Row(attributes: List[BodyAttribute]) {
@@ -42,11 +42,13 @@ case class Row(attributes: List[BodyAttribute]) {
 
 }
 
+case class RelationName(value: String) extends AnyVal
+
 object Row {
   def apply(attributes: BodyAttribute*): Row = this(attributes.toList)
 }
 
-case class Relation(name: String,
+case class Relation(name: RelationName,
                     primaryKeys: List[String],
                     identity: Option[Identity],
                     heading: Relation.Header,

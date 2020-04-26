@@ -189,11 +189,11 @@ object QueryBuilder extends BuilderUtils {
     }
   }
 
-  private def prefixRelationName(left: Row, relationName: String, right: Row): Row = {
+  private def prefixRelationName(left: Row, relationName: RelationName, right: Row): Row = {
     val names = right.getNames
     val attributes = left.attributes.map { bodyAttrib =>
       if (names.contains(bodyAttrib.name))
-        bodyAttrib.copy(name = s"$relationName.${bodyAttrib.name}")
+        bodyAttrib.copy(name = s"${relationName.value}.${bodyAttrib.name}")
       else bodyAttrib
     }
     Row(attributes)

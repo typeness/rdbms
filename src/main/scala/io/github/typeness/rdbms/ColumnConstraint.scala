@@ -30,7 +30,7 @@ case class Check(bool: Bool, name: Option[String] = None) extends ColumnConstrai
   override def show: String = s"CHECK(${bool.show})"
 }
 case class ForeignKey(primaryKeyName: String,
-                      pKeyRelationName: String,
+                      pKeyRelationName: RelationName,
                       onUpdate: PrimaryKeyTrigger,
                       onDelete: PrimaryKeyTrigger,
                       name: Option[String] = None)
@@ -56,7 +56,7 @@ case class PKeyRelationConstraint(names: List[String], constraintName: Option[St
   override def toColumnConstraint: ColumnConstraint = PrimaryKey(constraintName)
 }
 case class FKeyRelationConstraint(names: List[String],
-                                  pKeyRelationName: String,
+                                  pKeyRelationName: RelationName,
                                   pKeyColumnName: String,
                                   onDelete: PrimaryKeyTrigger,
                                   onUpdate: PrimaryKeyTrigger,

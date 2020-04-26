@@ -6,7 +6,7 @@ class SQLParserTest extends FunSuite {
   test("INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')") {
     val sql = "INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')"
     val expected = AnonymousInsert(
-      "Abc",
+      rel"Abc",
       List(List(IntegerLiteral(1), IntegerLiteral(123), NULLLiteral, DateLiteral("'2010-01-01'")))
     )
     val Parsed.Success(value, _) = SQLParser.parse(sql)
@@ -16,7 +16,7 @@ class SQLParserTest extends FunSuite {
   test("INSERT INTO Pracownicy (Nr, Nazwisko, Imie) VALUES (1, 'Kowal', 'Piotr')") {
     val sql = "INSERT INTO Pracownicy (Nr, Nazwisko, Imie) VALUES (1, 'Kowal', 'Piotr')"
     val expected = NamedInsert(
-      "Pracownicy",
+      rel"Pracownicy",
       List(Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
         BodyAttribute("Nazwisko", StringLiteral("Kowal")),
@@ -29,7 +29,7 @@ class SQLParserTest extends FunSuite {
 
   test("DELETE FROM Pracownicy WHERE Nr = 1") {
     val sql = "DELETE FROM Pracownicy WHERE Nr = 1"
-    val expected = Delete("Pracownicy", Some(Equals(Var("Nr"), IntegerLiteral(1))))
+    val expected = Delete(rel"Pracownicy", Some(Equals(Var("Nr"), IntegerLiteral(1))))
     val Parsed.Success(result, _) = SQLParser.parse(sql)
     assert(result == expected)
   }
@@ -37,7 +37,7 @@ class SQLParserTest extends FunSuite {
   test("UPDATE Pracownicy SET Stawka = 1234, LiczbaDzieci = 3 WHERE Nr = 1") {
     val sql = "UPDATE Pracownicy SET Stawka = 1234, LiczbaDzieci = 3 WHERE Nr = 1"
     val expected = Update(
-      "Pracownicy",
+      rel"Pracownicy",
       Row(
         List(BodyAttribute("Stawka", IntegerLiteral(1234)),
              BodyAttribute("LiczbaDzieci", IntegerLiteral(3)))),
@@ -50,7 +50,7 @@ class SQLParserTest extends FunSuite {
   test("SELECT * FROM Pracownicy WHERE Nr = 1") {
     val sql = "SELECT * FROM Pracownicy WHERE Nr = 1"
     val expected =
-      Select(List(), Some("Pracownicy"), List(), Some(Equals(Var("Nr"), IntegerLiteral(1))), Nil, None, List())
+      Select(List(), Some(rel"Pracownicy"), List(), Some(Equals(Var("Nr"), IntegerLiteral(1))), Nil, None, List())
     val Parsed.Success(result, _) = SQLParser.parse(sql)
     assert(result == expected)
   }
@@ -59,7 +59,7 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT Nr, Nazwisko, Imie FROM Pracownicy"
     val expected =
       Select(List(Var("Nr"), Var("Nazwisko"), Var("Imie")),
-             Some("Pracownicy"),
+             Some(rel"Pracownicy"),
              List(),
              None,
              Nil,
@@ -72,7 +72,7 @@ class SQLParserTest extends FunSuite {
   test("SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' OR Nazwisko='Nowak'") {
     val sql = "SELECT * FROM Pracownicy WHERE Nazwisko='Kowalski' OR Nazwisko='Nowak'"
     val expected = Select(List(),
-                          Some("Pracownicy"),
+                          Some(rel"Pracownicy"),
                           List(),
                           Some(
                             Or(Equals(Var("Nazwisko"), StringLiteral("Kowalski")),
@@ -87,7 +87,7 @@ class SQLParserTest extends FunSuite {
   test("SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC") {
     val sql = "SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC"
     val expected = Select(List(Var("Nr"), Var("LiczbaDzieci")),
-                          Some("Pracownicy"),
+                          Some(rel"Pracownicy"),
                           List(),
                           None,
                           Nil,
@@ -101,8 +101,8 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT a, b FROM RelationA CROSS JOIN RelationB"
     val expected = Select(
       List(Var("a"), Var("b")),
-      Some("RelationA"),
-      List(CrossJoin("RelationB")),
+      Some(rel"RelationA"),
+      List(CrossJoin(rel"RelationB")),
       None,
       Nil,
       None,
@@ -116,8 +116,8 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT a, b, c FROM RelationA CROSS JOIN RelationB CROSS JOIN RelationC"
     val expected = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
-      List(CrossJoin("RelationB"), CrossJoin("RelationC")),
+      Some(rel"RelationA"),
+      List(CrossJoin(rel"RelationB"), CrossJoin(rel"RelationC")),
       None,
       Nil,
       None,
@@ -132,10 +132,10 @@ class SQLParserTest extends FunSuite {
       "SELECT a, b, c FROM RelationA INNER JOIN RelationB ON a = b INNER JOIN RelationC ON a = c"
     val expected = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        InnerJoin("RelationB", Equals(Var("a"), Var("b"))),
-        InnerJoin("RelationC", Equals(Var("a"), Var("c"))),
+        InnerJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        InnerJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -152,10 +152,10 @@ class SQLParserTest extends FunSuite {
       "SELECT a, b, c FROM RelationA LEFT OUTER JOIN RelationB ON a = b LEFT OUTER JOIN RelationC ON a = c"
     val expected = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        LeftOuterJoin("RelationB", Equals(Var("a"), Var("b"))),
-        LeftOuterJoin("RelationC", Equals(Var("a"), Var("c"))),
+        LeftOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        LeftOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -172,10 +172,10 @@ class SQLParserTest extends FunSuite {
       "SELECT a, b, c FROM RelationA RIGHT OUTER JOIN RelationB ON a = b RIGHT OUTER JOIN RelationC ON a = c"
     val expected = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        RightOuterJoin("RelationB", Equals(Var("a"), Var("b"))),
-        RightOuterJoin("RelationC", Equals(Var("a"), Var("c"))),
+        RightOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        RightOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -192,10 +192,10 @@ class SQLParserTest extends FunSuite {
       "SELECT a, b, c FROM RelationA FULL OUTER JOIN RelationB ON a = b FULL OUTER JOIN RelationC ON a = c"
     val expected = Select(
       List(Var("a"), Var("b"), Var("c")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       List(
-        FullOuterJoin("RelationB", Equals(Var("a"), Var("b"))),
-        FullOuterJoin("RelationC", Equals(Var("a"), Var("c"))),
+        FullOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
+        FullOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
       ),
       None,
       Nil,
@@ -210,7 +210,7 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT Nr FROM Pracownicy WHERE Nr = 1 UNION SELECT Nr FROM Pracownicy WHERE Nr = 2"
     val query1 = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(Equals(Var("Nr"), IntegerLiteral(1))),
       Nil,
@@ -219,7 +219,7 @@ class SQLParserTest extends FunSuite {
     )
     val query2 = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(Equals(Var("Nr"), IntegerLiteral(2))),
       Nil,
@@ -235,7 +235,7 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT a FROM RelationA INTERSECT SELECT a FROM RelationA WHERE a=3"
     val query1 = Select(
       List(Var("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -244,7 +244,7 @@ class SQLParserTest extends FunSuite {
     )
     val query2 = Select(
       List(Var("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       Some(Equals(Var("a"), IntegerLiteral(3))),
       Nil,
@@ -259,7 +259,7 @@ class SQLParserTest extends FunSuite {
   test("CREATE TABLE Urlopy(NrPrac INT PRIMARY KEY, OdKiedy DATE PRIMARY KEY, DoKiedy DATE)") {
     val sql = "CREATE TABLE Urlopy(NrPrac INT PRIMARY KEY, OdKiedy DATE PRIMARY KEY, DoKiedy DATE)"
     val expected = Create(
-      "Urlopy",
+      rel"Urlopy",
       List(
         HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey())),
         HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
@@ -283,7 +283,7 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko ORDER BY Count(Nr) DESC"
     val expected = Select(
       List(Var("Nazwisko"), Count("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       List("Nazwisko"),
@@ -298,7 +298,7 @@ class SQLParserTest extends FunSuite {
     val sql = "SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko HAVING Count(Nr) >= 2 ORDER BY Count(Nr) DESC"
     val expected = Select(
       List(Var("Nazwisko"), Count("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       List("Nazwisko"),

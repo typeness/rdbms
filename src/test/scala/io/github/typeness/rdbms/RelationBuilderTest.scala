@@ -12,7 +12,7 @@ class RelationBuilderTest extends FunSuite {
     )
      */
     val query = Create(
-      "Urlopy",
+      rel"Urlopy",
       List(
         HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey())),
         HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
@@ -31,7 +31,7 @@ class RelationBuilderTest extends FunSuite {
     )
      */
     val query = Create(
-      "Test",
+      rel"Test",
       List(
         HeadingAttribute("name", IntegerType, List(PrimaryKey())),
         HeadingAttribute("name", DateType, Nil)
@@ -49,7 +49,7 @@ class RelationBuilderTest extends FunSuite {
     )
      */
     val query = Create(
-      "Test",
+      rel"Test",
       List(
         HeadingAttribute("name", NVarCharType(50), Nil)
       ),
@@ -61,7 +61,7 @@ class RelationBuilderTest extends FunSuite {
 
   test("DROP TABLE Pracownicy1") {
     val relation1 = Relation(
-      "Pracownicy1",
+      rel"Pracownicy1",
       Nil,
       None,
       List(
@@ -72,7 +72,7 @@ class RelationBuilderTest extends FunSuite {
       Nil
     )
     val relation2 = Relation(
-      "Pracownicy2",
+      rel"Pracownicy2",
       Nil,
       None,
       List(
@@ -86,7 +86,7 @@ class RelationBuilderTest extends FunSuite {
         relation1,
         relation2
     )
-    val query = DropTable("Pracownicy1")
+    val query = DropTable(rel"Pracownicy1")
     val Right(newSchema) = for {
       newSchema <- RelationBuilder.run(query, schema)
     } yield newSchema

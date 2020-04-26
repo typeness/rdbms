@@ -7,30 +7,30 @@ sealed trait SQL
 sealed trait Manipulation extends SQL
 // Data Manipulation Language
 sealed trait Insert extends Manipulation {
-  def to: String
+  def to: RelationName
 }
-case class NamedInsert(to: String, rows: List[Row]) extends Insert
-case class AnonymousInsert(to: String, rows: List[List[Literal]]) extends Insert
-case class Delete(name: String, condition: Option[Bool]) extends Manipulation
-case class Update(name: String, updated: Row, condition: Option[Bool]) extends Manipulation
+case class NamedInsert(to: RelationName, rows: List[Row]) extends Insert
+case class AnonymousInsert(to: RelationName, rows: List[List[Literal]]) extends Insert
+case class Delete(name: RelationName, condition: Option[Bool]) extends Manipulation
+case class Update(name: RelationName, updated: Row, condition: Option[Bool]) extends Manipulation
 
 // Data Definition Language
 sealed trait Definition extends SQL
-case class Create(name: String,
+case class Create(name: RelationName,
                   attributes: Header,
                   relationConstraints: List[RelationConstraint],
                   identity: Option[Identity])
     extends Definition
 
 sealed trait AlterTable extends Definition {
-  def relation: String
+  def relation: RelationName
 }
-case class AlterAddColumn(relation: String, headingAttribute: HeadingAttribute) extends AlterTable
-case class AlterDropColumn(relation: String, column: String) extends AlterTable
-case class AlterAddConstraint(relation: String, constraint: RelationConstraint) extends AlterTable
-case class AlterDropConstraint(relation: String, constraint: String) extends AlterTable
+case class AlterAddColumn(relation: RelationName, headingAttribute: HeadingAttribute) extends AlterTable
+case class AlterDropColumn(relation: RelationName, column: String) extends AlterTable
+case class AlterAddConstraint(relation: RelationName, constraint: RelationConstraint) extends AlterTable
+case class AlterDropConstraint(relation: RelationName, constraint: String) extends AlterTable
 
-case class DropTable(name: String) extends Definition
+case class DropTable(name: RelationName) extends Definition
 
 // Data Access Language
 sealed trait Control extends SQL
@@ -41,14 +41,14 @@ sealed trait Query extends SQL
 
 case class Select(
     projection: List[Projection],
-    from: Option[String],
+    from: Option[RelationName],
     joins: List[Join],
     where: Option[Bool],
     groupBy: List[String],
     having: Option[Bool],
     order: List[Order],
     distinct: Boolean = false,
-    alias: Option[String] = None
+    alias: Option[RelationName] = None
 ) extends Query {
   lazy val getAggregates: List[Aggregate] =
     projection
@@ -112,10 +112,10 @@ case class Not(value: Bool) extends Bool {
 case class Where(condition: Bool)
 
 sealed trait Join {
-  def name: String
+  def name: RelationName
 }
-case class CrossJoin(name: String) extends Join
-case class InnerJoin(name: String, on: Bool) extends Join
-case class LeftOuterJoin(name: String, on: Bool) extends Join
-case class RightOuterJoin(name: String, on: Bool) extends Join
-case class FullOuterJoin(name: String, on: Bool) extends Join
+case class CrossJoin(name: RelationName) extends Join
+case class InnerJoin(name: RelationName, on: Bool) extends Join
+case class LeftOuterJoin(name: RelationName, on: Bool) extends Join
+case class RightOuterJoin(name: RelationName, on: Bool) extends Join
+case class FullOuterJoin(name: RelationName, on: Bool) extends Join

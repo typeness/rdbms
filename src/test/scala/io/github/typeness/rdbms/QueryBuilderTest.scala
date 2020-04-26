@@ -12,7 +12,7 @@ class QueryBuilderTest extends FunSuite {
       SELECT * FROM Pracownicy WHERE Nr=1
      */
     val query =
-      Select(Nil, Some("Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(1))), Nil, None, Nil)
+      Select(Nil, Some(rel"Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(1))), Nil, None, Nil)
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(List(pracownicyRow1)))
   }
@@ -23,7 +23,7 @@ class QueryBuilderTest extends FunSuite {
       SELECT * FROM Pracownicy WHERE Nr=9999
      */
     val query =
-      Select(Nil, Some("Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(9999))), Nil, None, Nil)
+      Select(Nil, Some(rel"Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(9999))), Nil, None, Nil)
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(Nil))
   }
@@ -34,7 +34,7 @@ class QueryBuilderTest extends FunSuite {
       SELECT Nr, Nazwisko, Imie FROM Pracownicy
      */
     val query =
-      Select(List(Var("Nr"), Var("Nazwisko"), Var("Imie")), Some("Pracownicy"), Nil, None, Nil, None, Nil)
+      Select(List(Var("Nr"), Var("Nazwisko"), Var("Imie")), Some(rel"Pracownicy"), Nil, None, Nil, None, Nil)
     val expected = List(
       Row(
         BodyAttribute("Nr", IntegerLiteral(1)),
@@ -73,7 +73,7 @@ class QueryBuilderTest extends FunSuite {
      */
     val query = Select(
       Nil,
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(
         Or(
@@ -95,7 +95,7 @@ class QueryBuilderTest extends FunSuite {
      */
     val query = Select(
       Nil,
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(
         And(
@@ -113,7 +113,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy WHERE Nr = 1 UNION SELECT Nr FROM Pracownicy WHERE Nr = 2") {
     val query1 = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(Equals(Var("Nr"), IntegerLiteral(1))),
       Nil,
@@ -122,7 +122,7 @@ class QueryBuilderTest extends FunSuite {
     )
     val query2 = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(Equals(Var("Nr"), IntegerLiteral(2))),
       Nil,
@@ -141,7 +141,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT DISTINCT Nazwisko FROM Pracownicy") {
     val query = Select(
       List(Var("Nazwisko")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
@@ -162,7 +162,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy WHERE Nr > 1") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(Greater(Var("Nr"), IntegerLiteral(1))),
       Nil,
@@ -182,7 +182,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy WHERE Nr <= 2") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(LessOrEquals(Var("Nr"), IntegerLiteral(2))),
       Nil,
@@ -200,7 +200,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy WHERE Nr BETWEEN 2 AND 3") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(Between("Nr", IntegerLiteral(2), IntegerLiteral(3))),
       Nil,
@@ -218,7 +218,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy WHERE LiczbaDzieci IS NULL") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       Some(IsNULL("LiczbaDzieci")),
       Nil,
@@ -235,7 +235,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy ORDER BY Nr DESC") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
@@ -255,7 +255,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy ORDER BY Nr ASC") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
@@ -276,7 +276,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC") {
     val query = Select(
       List(Var("Nr"), Var("LiczbaDzieci")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
@@ -297,7 +297,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT a FROM RelationA INTERSECT SELECT a FROM RelationA WHERE a=3") {
     val query1 = Select(
       List(Var("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -306,7 +306,7 @@ class QueryBuilderTest extends FunSuite {
     )
     val query2 = Select(
       List(Var("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       Some(Equals(Var("a"), IntegerLiteral(3))),
       Nil,
@@ -324,7 +324,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT MAX(a) FROM RelationA") {
     val query = Select(
       List(Max("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -341,7 +341,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT MIN(a) FROM RelationA") {
     val query = Select(
       List(Min("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -358,7 +358,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT COUNT(a) FROM RelationA") {
     val query = Select(
       List(Count("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -375,7 +375,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT SUM(a) FROM RelationA") {
     val query = Select(
       List(Sum("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -392,7 +392,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT AVG(a) FROM RelationA") {
     val query = Select(
       List(Avg("a")),
-      Some("RelationA"),
+      Some(rel"RelationA"),
       Nil,
       None,
       Nil,
@@ -409,7 +409,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nr FROM Pracownicy GROUP BY Nr ORDER BY Nr") {
     val query = Select(
       List(Var("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       List("Nr"),
@@ -430,7 +430,7 @@ class QueryBuilderTest extends FunSuite {
   test("SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko ORDER BY Count(Nr) DESC") {
     val query = Select(
       List(Var("Nazwisko"), Count("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       List("Nazwisko"),
@@ -460,7 +460,7 @@ class QueryBuilderTest extends FunSuite {
     "SELECT Nazwisko, 1, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko HAVING Count(Nr) >= 2 ORDER BY Count(Nr) DESC") {
     val query = Select(
       List(Var("Nazwisko"), IntegerLiteral(1), Count("Nr")),
-      Some("Pracownicy"),
+      Some(rel"Pracownicy"),
       Nil,
       None,
       List("Nazwisko"),

@@ -42,19 +42,19 @@ object SQLParser {
         "VALUES") ~/ space ~ row.rep(min = 1, sep = commaSeparator./))
       .map {
         case (name, None, rows) =>
-          AnonymousInsert(name, rows.toList)
+          AnonymousInsert(RelationName(name), rows.toList)
         case (name, Some(ids), rows) =>
 ////        if (ids.size != row.size)
 ////          Fail("Number of identifiers do not match number of attributes")
 ////        else
-          NamedInsert(name,
+          NamedInsert(RelationName(name),
                       rows.toList.map(literals =>
                         Row(ids.zip(literals).map(attr => BodyAttribute(attr._1, attr._2)))))
       }
 
   private def delete[_: P]: P[Delete] =
     P(IgnoreCase("DELETE FROM") ~/ space ~ id ~ space ~ where).map {
-      case (name, bool) => Delete(name, Some(bool))
+      case (name, bool) => Delete(RelationName(name), Some(bool))
     }
 
   private def select[_: P]: P[Select] =
@@ -65,14 +65,14 @@ object SQLParser {
     ).map {
       case (distinct, proj, name, alias, join, cond, group, having, order) =>
         Select(proj,
-               name,
+               name.map(RelationName),
                join,
                cond,
                group.getOrElse(Nil),
                having,
                order.getOrElse(Nil),
                distinct.isDefined,
-               alias)
+               alias.map(RelationName))
     }
 
   private def create[_: P]: P[Create] =
@@ -81,26 +81,26 @@ object SQLParser {
         (headingAttribute | relationConstraint).rep(sep = commaSeparator./) ~ space ~ ")").map {
       case (name, attributes) =>
         val (headingAttributes, relationConstraints) = attributes.toList.partitionEither(identity)
-        Create(name, headingAttributes, relationConstraints, None)
+        Create(RelationName(name), headingAttributes, relationConstraints, None)
     }
 
   private def alterTable[_: P]: P[AlterTable] =
     P(
       (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ headingAttribute)
         .map {
-          case (name, Left(attrib)) => AlterAddColumn(name, attrib)
+          case (name, Left(attrib)) => AlterAddColumn(RelationName(name), attrib)
         } |
         (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~/ space ~ id)
           .map {
-            case (name, column) => AlterDropColumn(name, column)
+            case (name, column) => AlterDropColumn(RelationName(name), column)
           } |
         (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ relationConstraint)
           .map {
-            case (name, Right(constraint)) => AlterAddConstraint(name, constraint)
+            case (name, Right(constraint)) => AlterAddConstraint(RelationName(name), constraint)
           } |
         (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP CONSTRAINT") ~/ space ~ id)
           .map {
-            case (name, constraint) => AlterDropConstraint(name, constraint)
+            case (name, constraint) => AlterDropConstraint(RelationName(name), constraint)
           }
     )
 
@@ -142,7 +142,7 @@ object SQLParser {
       .map(_.toList)
 
   private def crossJoin[_: P]: P[CrossJoin] =
-    P(IgnoreCase("CROSS JOIN") ~/ space ~ varAccessor.map(_.show)).map(CrossJoin)
+    P(IgnoreCase("CROSS JOIN") ~/ space ~ varAccessor.map(_.show)).map(RelationName.andThen(CrossJoin))
 
   private def innerJoin[_: P]: P[InnerJoin] =
     P(
@@ -150,28 +150,28 @@ object SQLParser {
         .map(_.show) ~ space
         ~ IgnoreCase("ON") ~/ space ~ or)
       .map {
-        case (name, on) => InnerJoin(name, on)
+        case (name, on) => InnerJoin(RelationName(name), on)
       }
 
   private def leftOuterJoin[_: P]: P[LeftOuterJoin] =
     P(
       IgnoreCase("LEFT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
         .map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
-      case (name, on) => LeftOuterJoin(name, on)
+      case (name, on) => LeftOuterJoin(RelationName(name), on)
     }
 
   private def rightOuterJoin[_: P]: P[RightOuterJoin] =
     P(
       IgnoreCase("RIGHT") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
         .map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
-      case (name, on) => RightOuterJoin(name, on)
+      case (name, on) => RightOuterJoin(RelationName(name), on)
     }
 
   private def fullOuterJoin[_: P]: P[FullOuterJoin] =
     P(
       IgnoreCase("FULL") ~/ space ~ IgnoreCase("OUTER").? ~/ space ~ IgnoreCase("JOIN") ~/ space ~ varAccessor
         .map(_.show) ~ space ~ IgnoreCase("ON") ~/ space ~ or).map {
-      case (name, on) => FullOuterJoin(name, on)
+      case (name, on) => FullOuterJoin(RelationName(name), on)
     }
 
   private def selectList[_: P]: P[List[Projection]] =
@@ -321,7 +321,7 @@ object SQLParser {
     P(
       IgnoreCase("UPDATE") ~/ space ~ id ~ space ~
         IgnoreCase("SET") ~/ space ~ updateList ~ (space ~ where).?).map {
-      case (name, row, condition) => Update(name, row, condition)
+      case (name, row, condition) => Update(RelationName(name), row, condition)
     }
 
   private def updateList[_: P]: P[Row] =
@@ -377,7 +377,7 @@ object SQLParser {
         .map {
           case (constraintName, (relation, name, onUpdate, onDelete)) =>
             ForeignKey(name,
-                       relation,
+                       RelationName(relation),
                        onUpdate.getOrElse(NoAction),
                        onDelete.getOrElse(NoAction),
                        constraintName)
@@ -393,7 +393,7 @@ object SQLParser {
         .map {
           case (name, (names, pKeyRelation, pKey, onUpdate, onDelete)) =>
             FKeyRelationConstraint(names,
-                                   pKeyRelation,
+                                   RelationName(pKeyRelation),
                                    pKey,
                                    onDelete.getOrElse(NoAction),
                                    onUpdate.getOrElse(NoAction),

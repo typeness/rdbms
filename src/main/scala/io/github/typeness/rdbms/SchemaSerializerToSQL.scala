@@ -2,16 +2,16 @@ package io.github.typeness.rdbms
 
 object SchemaSerializerToSQL extends SchemaSerializer[String] {
   def serialize(relation: Relation): String = {
-    val creation = createTable(inSquareBrackets(relation.name), relation.heading, relation.relationConstraints)
-    val insertion = insertInto(inSquareBrackets(relation.name), relation.body, relation.identity)
-    val alteration  = alterTable(inSquareBrackets(relation.name), relation.relationConstraints)
+    val creation = createTable(inSquareBrackets(relation.name.value), relation.heading, relation.relationConstraints)
+    val insertion = insertInto(inSquareBrackets(relation.name.value), relation.body, relation.identity)
+    val alteration  = alterTable(inSquareBrackets(relation.name.value), relation.relationConstraints)
     s"$creation\n\n$insertion\n\n$alteration"
   }
 
   private def alterTable(name: String, constraints: List[RelationConstraint]): String = {
     constraints.reverse.map {
       case FKeyRelationConstraint(names, pKeyRelationName, pKeyColumnName, _, _, constraintName) =>
-        s"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} FOREIGN KEY(${names.mkString(",")}) REFERENCES $pKeyRelationName ($pKeyColumnName)"
+        s"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} FOREIGN KEY(${names.mkString(",")}) REFERENCES ${pKeyRelationName.value} ($pKeyColumnName)"
       case DefaultRelationConstraint(columnName, value, constraintName) =>
         s"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} DEFAULT (${value.show}) for $columnName"
       case CheckRelationConstraint(condition, constraintName) =>
