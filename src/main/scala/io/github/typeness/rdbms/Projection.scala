@@ -95,7 +95,7 @@ object Literal {
     implicitly[Ordering[String]].compare(lhs.value, rhs.value)
   def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
   def comparison(lhs: RealLiteral, rhs: RealLiteral): Int =
-    implicitly[Ordering[Double]].compare(lhs.value, rhs.value)
+    Ordering.Double.TotalOrdering.compare(lhs.value, rhs.value)
 }
 
 sealed trait Aggregate extends Projection {
