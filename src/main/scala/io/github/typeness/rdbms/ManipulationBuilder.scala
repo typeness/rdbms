@@ -271,7 +271,7 @@ object ManipulationBuilder extends BuilderUtils {
                                 Nil,
                                 None,
                                 Nil)
-            val notFound = QueryBuilder.run(select, Schema(List(relation))).map(_.isEmpty)
+            val notFound = QueryBuilder.run(select, Schema(relation)).map(_.isEmpty)
             notFound.flatMap {
               case true  => Right(body)
               case false => Left(UniqueViolation(body))

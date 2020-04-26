@@ -21,7 +21,7 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None
     )
-    assert(RelationBuilder.run(query, Schema(Nil)) == Left(MultiplePrimaryKeys("NrPrac", "OdKiedy")))
+    assert(RelationBuilder.run(query, Schema()) == Left(MultiplePrimaryKeys("NrPrac", "OdKiedy")))
   }
   test("Non-unique names in table definition") {
     /*
@@ -39,7 +39,7 @@ class RelationBuilderTest extends FunSuite {
       Nil,
       None
     )
-    assert(RelationBuilder.run(query, Schema(Nil)) == Left(MultipleColumnNames("name")))
+    assert(RelationBuilder.run(query, Schema()) == Left(MultipleColumnNames("name")))
   }
   test("Primary key referencing non-existing column name") {
     /*
@@ -56,7 +56,7 @@ class RelationBuilderTest extends FunSuite {
       List(PKeyRelationConstraint(List("id"))),
       None
     )
-    assert(RelationBuilder.run(query, Schema(Nil)) == Left(ColumnDoesNotExists("id")))
+    assert(RelationBuilder.run(query, Schema()) == Left(ColumnDoesNotExists("id")))
   }
 
   test("DROP TABLE Pracownicy1") {
@@ -83,10 +83,8 @@ class RelationBuilderTest extends FunSuite {
       Nil
     )
     val schema = Schema(
-      List(
         relation1,
         relation2
-      )
     )
     val query = DropTable("Pracownicy1")
     val Right(newSchema) = for {

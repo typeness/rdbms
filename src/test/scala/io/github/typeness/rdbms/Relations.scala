@@ -41,7 +41,7 @@ object Relations {
     Nil
   )
 
-  val schemaABC = Schema(List(relationA, relationB, relationC))
+  val schemaABC = Schema(relationA, relationB, relationC)
 
   /*
      INSERT INTO Pracownicy VALUES
@@ -164,7 +164,7 @@ object Relations {
     Nil
   )
 
-  val schemaPracownicyUrlopy = Schema(List(pracownicy, urlopy))
+  val schemaPracownicyUrlopy = Schema(pracownicy, urlopy)
 
   val pracownicy2 = Relation(
     "Pracownicy2",
@@ -182,6 +182,6 @@ object Relations {
     Nil
   )
 
-  val schemaPracownicy2 = Schema(List(pracownicy2))
+  val schemaPracownicy2 = Schema(pracownicy2)
 
 }

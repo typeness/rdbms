@@ -11,7 +11,7 @@ object TestUtils {
 
   def createSchemaFromSQL(sql: String): Either[SQLError, Schema] = {
     val Parsed.Success(trees, _) = SQLParser.parseMany(sql)
-    trees.foldLeftM(Schema(Nil)) {
+    trees.foldLeftM(Schema()) {
       case (schema, tree) =>
         SQLInterpreter.run(tree, schema).map {
           case SchemaResult(newSchema) => newSchema

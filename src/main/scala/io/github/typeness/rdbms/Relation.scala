@@ -5,7 +5,7 @@ import cats.syntax.either._
 case class Identity(name: String, current: Int, step: Int)
 
 object Schema {
-  def apply(relations: List[Relation]): Schema =
+  def apply(relations: Relation*): Schema =
     Schema(relations.map(relation => (relation.name, relation)).toMap)
 }
 
@@ -25,7 +25,7 @@ case class Schema(relations: Map[String, Relation]) {
 
 object Relation {
   type Header = List[HeadingAttribute]
-  val empty = Relation("", Nil, None, Nil, List(Row()), Nil)
+  val empty: Relation = Relation("", Nil, None, Nil, List(Row()), Nil)
 }
 
 case class Row(attributes: List[BodyAttribute]) {

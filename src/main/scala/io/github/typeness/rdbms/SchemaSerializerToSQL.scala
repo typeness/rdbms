@@ -10,7 +10,7 @@ object SchemaSerializerToSQL extends SchemaSerializer[String] {
 
   private def alterTable(name: String, constraints: List[RelationConstraint]): String = {
     constraints.reverse.map {
-      case FKeyRelationConstraint(names, pKeyRelationName, pKeyColumnName, onDelete, onUpdate, constraintName) =>
+      case FKeyRelationConstraint(names, pKeyRelationName, pKeyColumnName, _, _, constraintName) =>
         s"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} FOREIGN KEY(${names.mkString(",")}) REFERENCES $pKeyRelationName ($pKeyColumnName)"
       case DefaultRelationConstraint(columnName, value, constraintName) =>
         s"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} DEFAULT (${value.show}) for $columnName"

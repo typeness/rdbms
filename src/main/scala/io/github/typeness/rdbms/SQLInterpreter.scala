@@ -7,7 +7,7 @@ case class RowsResult(rows: List[Row]) extends InterpreterResult
 
 object SQLInterpreter {
   def runFromFile(filename: String,
-                  schema: Schema = Schema(Nil)): Either[SQLError, InterpreterResult] = {
+                  schema: Schema = Schema()): Either[SQLError, InterpreterResult] = {
     val source = scala.io.Source.fromFile(filename)
     try {
       runFromSource(source.mkString, schema)
@@ -17,7 +17,7 @@ object SQLInterpreter {
   }
 
   def runFromResource(resource: String,
-                      schema: Schema = Schema(Nil)): Either[SQLError, InterpreterResult] = {
+                      schema: Schema = Schema()): Either[SQLError, InterpreterResult] = {
     val source = scala.io.Source.fromResource(resource)
     try {
       runFromSource(source.mkString, schema)
@@ -27,7 +27,7 @@ object SQLInterpreter {
   }
 
   def runFromSource(source: String,
-                    schema: Schema = Schema(Nil)): Either[SQLError, InterpreterResult] = {
+                    schema: Schema = Schema()): Either[SQLError, InterpreterResult] = {
     val Parsed.Success(tree, _) = SQLParser.parse(source)
     run(tree, schema)
   }
