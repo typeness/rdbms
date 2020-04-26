@@ -2,24 +2,21 @@ name := "rdbms"
 
 version := "0.1"
 
-scalaVersion := "2.12.8"
+scalaVersion := "2.13.1"
 
 scalacOptions ++= Seq(
   "-target:jvm-1.8",
   "-encoding", "UTF-8",
   "-unchecked",
   "-deprecation",
-  "-Xfuture",
-  "-Yno-adapted-args",
   "-Ywarn-dead-code",
   "-Ywarn-value-discard",
   "-Ywarn-unused:locals",              // Warn if a local definition is unused.
   "-Ywarn-unused:patvars",             // Warn if a variable bound in a pattern is unused.
   "-Ywarn-unused:privates",            // Warn if a private member is unused.
-  "-Ypartial-unification"
 )
 
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8"
-libraryDependencies += "org.typelevel" %% "cats-core" % "1.6.1"
-libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.1.3"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.1"
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.1.1"
+libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.3.0"

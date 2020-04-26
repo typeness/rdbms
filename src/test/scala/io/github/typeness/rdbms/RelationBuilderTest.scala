@@ -1,8 +1,8 @@
 package io.github.typeness.rdbms
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class RelationBuilderTest extends FunSuite {
+class RelationBuilderTest extends AnyFunSuite {
   test("Table definition with multiple primary keys") {
     /*
     CREATE TABLE Urlopy(

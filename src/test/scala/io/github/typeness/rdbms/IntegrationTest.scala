@@ -3,9 +3,9 @@ import cats.instances.either._
 import cats.instances.list._
 import cats.syntax.traverse._
 import io.github.typeness.rdbms.TestUtils._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class IntegrationTest extends FunSuite {
+class IntegrationTest extends AnyFunSuite {
 
   private lazy val pracownicyUrlopy = createSchemaFromFile("pracownicyUrlopySchema.sql")
   private lazy val pracownicyUrlopy2 = createSchemaFromFile("pracownicyUrlopySchema2.sql")
@@ -375,8 +375,8 @@ class IntegrationTest extends FunSuite {
       result <- SQLInterpreter.runFromResource("t24.sql", schema)
     } yield result
     assert(
-      rows ==
-        List(
+      rows.toSet ==
+        Set(
           Row(List(BodyAttribute("CategoryID", IntegerLiteral(8)),
                    BodyAttribute("Avg(UnitPrice)", RealLiteral(20.6825)))),
           Row(List(BodyAttribute("CategoryID", IntegerLiteral(1)),
@@ -417,8 +417,8 @@ class IntegrationTest extends FunSuite {
       result <- SQLInterpreter.runFromResource("t27.sql", schema)
     } yield result
     assert(
-      rows ==
-        List(
+      rows.toSet ==
+        Set(
           Row(List(
             BodyAttribute("P.CategoryID", IntegerLiteral(7)),
             BodyAttribute("CategoryName", StringLiteral("Produce")),
@@ -557,8 +557,8 @@ class IntegrationTest extends FunSuite {
       result <- SQLInterpreter.runFromResource("t37.sql", schema)
     } yield result
     assert(
-      rows ==
-        List(
+      rows.toSet ==
+        Set(
           Row(
             List(BodyAttribute("CategoryID", IntegerLiteral(8)),
                  BodyAttribute("AveragePrice", RealLiteral(20.6825)))),

@@ -1,8 +1,8 @@
 package io.github.typeness.rdbms
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class QueryBuilderTest extends FunSuite {
+class QueryBuilderTest extends AnyFunSuite {
 
   import Relations._
 

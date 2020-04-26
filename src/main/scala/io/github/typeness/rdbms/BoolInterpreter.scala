@@ -61,9 +61,9 @@ object BoolInterpreter {
     }
 
   private def sqlLikeToRegex(like: String): String = like.flatMap {
-    case '_' => '.' :: Nil
-    case '%' => '.' :: '*' :: Nil
-    case a   => a :: Nil
+    case '_' => "."
+    case '%' => ".*"
+    case a   => a.toString
   }
 
   private def filter(left: Projection,
@@ -80,6 +80,7 @@ object BoolInterpreter {
     filtered.sequence.map(_.flatten)
   }
 
+  @scala.annotation.tailrec
   def getLiteral(expression: Projection, row: Row): Either[SQLError, Literal] =
     expression match {
       case acc: Accessor =>

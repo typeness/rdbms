@@ -1,8 +1,8 @@
 package io.github.typeness.rdbms
 import fastparse._
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class SQLParserTest extends FunSuite {
+class SQLParserTest extends AnyFunSuite {
   test("INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')") {
     val sql = "INSERT INTO Abc VALUES (1, 123, NULL, '2010-01-01')"
     val expected = AnonymousInsert(
