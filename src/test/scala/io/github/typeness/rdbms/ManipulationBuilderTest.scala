@@ -23,12 +23,12 @@ class ManipulationBuilderTest extends FunSuite {
       "Pracownicy",
       List(row)
     )
-    val containsRow = for {
+    val Right(rows) = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
       newRelation <- newSchema.getRelation("Pracownicy")
       rows = newRelation.body.map(_.getValues)
-    } yield rows.contains(row)
-    assert(containsRow == Right(true))
+    } yield rows
+    assert(rows.contains(row))
   }
 
   test("Successful named row insert into table Pracownicy") {
@@ -63,12 +63,12 @@ class ManipulationBuilderTest extends FunSuite {
 
   test("DELETE FROM Pracownicy WHERE Nr=1") {
     val query = Delete("Pracownicy", Some(Equals(Var("Nr"), IntegerLiteral(1))))
-    val isDeleted = for {
+    val Right(rows) = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
       newRelation <- newSchema.getRelation("Pracownicy")
       rows = newRelation.body
-    } yield !rows.contains(pracownicyRow1)
-    assert(isDeleted.contains(true))
+    } yield rows
+    assert(!rows.contains(pracownicyRow1))
   }
 
   test("Anonymous insert into table with defined Identity") {
@@ -88,12 +88,12 @@ class ManipulationBuilderTest extends FunSuite {
       "Pracownicy2",
       List(row)
     )
-    val containsRow = for {
+    val Right(rows) = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicy2)
       newRelation <- newSchema.getRelation("Pracownicy2")
       rows = newRelation.body.map(_.getValues)
-    } yield rows.contains(rowWithID)
-    assert(containsRow == Right(true))
+    } yield rows
+    assert(rows.contains(rowWithID))
   }
 
   test("Identity violation") {
@@ -187,11 +187,11 @@ class ManipulationBuilderTest extends FunSuite {
       ),
       Some(Equals(Var("Nr"), IntegerLiteral(999)))
     )
-    val noEffect = for {
+    val Right(newRelation) = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
       newRelation <- newSchema.getRelation("Pracownicy")
-    } yield newRelation.body == pracownicy.body
-    assert(noEffect == Right(true))
+    } yield newRelation
+    assert(newRelation.body == pracownicy.body)
   }
 
   test("UNIQUE violation") {
@@ -211,12 +211,12 @@ class ManipulationBuilderTest extends FunSuite {
       "Pracownicy",
       List(row)
     )
-    val containsRow = for {
+    val error = for {
       newSchema <- ManipulationBuilder.run(query, schemaPracownicyUrlopy)
       newRelation <- newSchema.getRelation("Pracownicy")
-      rows = newRelation.body.map(_.getValues)
-    } yield rows.contains(row)
-    assert(containsRow == Left(PrimaryKeyDuplicate(List(BodyAttribute("Nr", IntegerLiteral(1))))))
+      error = newRelation.body.map(_.getValues)
+    } yield error
+    assert(error == Left(PrimaryKeyDuplicate(List(BodyAttribute("Nr", IntegerLiteral(1))))))
   }
 
   test("PrimaryKeyDoesNotExist when inserting new row to relation with foreign key") {
