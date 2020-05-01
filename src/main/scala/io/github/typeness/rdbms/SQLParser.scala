@@ -207,7 +207,7 @@ object SQLParser {
       CharPred(c => '0' <= c && c <= '9').rep(1).! ~
         ("." ~ CharPred(c => '0' <= c && c <= '9').rep(1).!)).map {
       case (int, float) =>
-        val str = s"$int.$float"
+        val str = str"$int.$float"
         RealLiteral(str.toDouble)
     }
 

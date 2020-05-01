@@ -21,10 +21,10 @@ case class NVarCharType(size: Int) extends AnyType {
     case _ => false
   }
 
-  override def show: String = s"NVARCHAR($size)"
+  override def show: String = str"NVARCHAR(${size.toString})"
 }
 case class CharType(size: Int) extends AnyType {
-  override def show: String = s"CHAR($size)"
+  override def show: String = str"CHAR(${size.toString})"
 }
 case object NullType extends AnyType {
   override def show: String = "NULL"
@@ -36,7 +36,7 @@ case object BitType extends AnyType {
   override def show: String = "BIT"
 }
 case class DecimalType(precision: Int, scale: Int) extends AnyType {
-  override def show: String = s"DECIMAL($precision, $scale)"
+  override def show: String = str"DECIMAL(${precision.toString}, ${scale.toString})"
 }
 case object TinyIntType extends AnyType {
   override def show: String = "TINYINT"

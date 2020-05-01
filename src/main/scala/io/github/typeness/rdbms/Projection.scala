@@ -9,7 +9,7 @@ case class Var(name: String) extends Projection {
 }
 
 case class Accessor(prefix: String, name: String) extends Projection {
-  override def show: String = s"$prefix.$name"
+  override def show: String = str"$prefix.$name"
 }
 
 case class Alias(original: Projection, alias: String) extends Projection {
@@ -35,12 +35,12 @@ case class RealLiteral(value: Double) extends NumericLiteral {
 
 case class StringLiteral(value: String) extends Literal {
   override def typeOf: AnyType = NVarCharType(1)
-  override def show: String = s"'$value'"
+  override def show: String = str"'$value'"
 }
 
 case class DateLiteral(value: String) extends Literal {
   override def typeOf: AnyType = DateType
-  override def show: String = s"'$value'"
+  override def show: String = str"'$value'"
 }
 
 case class MoneyLiteral(value: Int) extends Literal {
@@ -122,7 +122,7 @@ case class Sum(argument: String) extends Aggregate {
     else Right(RealLiteral(reals.map(_.value).sum))
   }
 
-  override def show: String = s"Sum($argument)"
+  override def show: String = str"Sum($argument)"
 }
 case class Avg(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, RealLiteral] = {
@@ -135,12 +135,12 @@ case class Avg(argument: String) extends Aggregate {
         case RealLiteral(value)    => RealLiteral(value / count.value)
       }
   }
-  override def show: String = s"Avg($argument)"
+  override def show: String = str"Avg($argument)"
 }
 case class Count(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] =
     Right(IntegerLiteral(literals.size))
-  override def show: String = s"Count($argument)"
+  override def show: String = str"Count($argument)"
 }
 case class Max(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, Literal] =
@@ -151,7 +151,7 @@ case class Max(argument: String) extends Aggregate {
         }
         .headOption
         .getOrElse(NULLLiteral))
-  override def show: String = s"Max($argument)"
+  override def show: String = str"Max($argument)"
 }
 case class Min(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, Literal] =
@@ -162,20 +162,20 @@ case class Min(argument: String) extends Aggregate {
         }
         .headOption
         .getOrElse(NULLLiteral))
-  override def show: String = s"Min($argument)"
+  override def show: String = str"Min($argument)"
 }
 
 case class Plus(left: Projection, right: Projection) extends Projection {
   val calc: (Double, Double) => Double = (a, b) => a + b
-  def show: String = s"${left.show}+${right.show}"
+  def show: String = str"${left.show}+${right.show}"
 }
 
 case class Minus(left: Projection, right: Projection) extends Projection {
   val calc: (Double, Double) => Double = (a, b) => a - b
-  def show: String = s"${left.show}-${right.show}"
+  def show: String = str"${left.show}-${right.show}"
 }
 
 case class Multiplication(left: Projection, right: Projection) extends Projection {
   val calc: (Double, Double) => Double = (a, b) => a * b
-  def show: String = s"${left.show}*${right.show}"
+  def show: String = str"${left.show}*${right.show}"
 }

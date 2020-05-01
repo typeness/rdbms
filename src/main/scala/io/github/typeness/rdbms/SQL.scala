@@ -73,19 +73,19 @@ sealed trait Bool {
   def show: String
 }
 case class Equals(left: Projection, right: Projection) extends Bool {
-  override def show: String = s"${left.show}==${right.show}"
+  override def show: String = str"${left.show}==${right.show}"
 }
 case class GreaterOrEquals(left: Projection, right: Projection) extends Bool {
-  override def show: String = s"${left.show}>=${right.show}"
+  override def show: String = str"${left.show}>=${right.show}"
 }
 case class Greater(left: Projection, right: Projection) extends Bool {
-  override def show: String = s"${left.show}>${right.show}"
+  override def show: String = str"${left.show}>${right.show}"
 }
 case class LessOrEquals(left: Projection, right: Projection) extends Bool {
-  override def show: String = s"${left.show}<=${right.show}"
+  override def show: String = str"${left.show}<=${right.show}"
 }
 case class Less(left: Projection, right: Projection) extends Bool {
-  override def show: String = s"${left.show}<${right.show}"
+  override def show: String = str"${left.show}<${right.show}"
 }
 case class IsNULL(name: String) extends Bool {
   override def show: String = "IS NULL"
@@ -94,19 +94,19 @@ case class IsNotNULL(name: String) extends Bool {
   override def show: String = "IS NOT NULL"
 }
 case class Between(name: String, lhs: Projection, rhs: Projection) extends Bool {
-  override def show: String = s"BETWEEN ${lhs.show} AND ${rhs.show}"
+  override def show: String = str"BETWEEN ${lhs.show} AND ${rhs.show}"
 }
 case class And(lhs: Bool, rhs: Bool) extends Bool {
-  override def show: String = s"${lhs.show} AND ${rhs.show}"
+  override def show: String = str"${lhs.show} AND ${rhs.show}"
 }
 case class Or(lhs: Bool, rhs: Bool) extends Bool {
-  override def show: String = s"${lhs.show} OR ${rhs.show}"
+  override def show: String = str"${lhs.show} OR ${rhs.show}"
 }
 case class Like(name: String, text: String) extends Bool {
-  override def show: String = s"LIKE $text"
+  override def show: String = str"LIKE $text"
 }
 case class Not(value: Bool) extends Bool {
-  override def show: String = s"NOT ${value.show}"
+  override def show: String = str"NOT ${value.show}"
 }
 
 case class Where(condition: Bool)

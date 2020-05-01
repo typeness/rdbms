@@ -8,7 +8,7 @@ case class AttributeIdentity(name: Option[String], current: Int, step: Int)
     extends ColumnConstraint {
   def toIdentity(attributeName: String): Identity = Identity(attributeName, current, step)
 
-  override def show: String = s"IDENTITY($current,$step)"
+  override def show: String = str"IDENTITY(${current.toString},${step.toString})"
 }
 case class Unique(name: Option[String] = None) extends ColumnConstraint {
   override def show: String = "UNIQUE"
@@ -23,11 +23,11 @@ case class PrimaryKey(name: Option[String] = None) extends ColumnConstraint {
   override def show: String = "PRIMARY KEY"
 }
 case class Default(value: Literal, name: Option[String] = None) extends ColumnConstraint {
-  override def show: String = s"DEFAULT(${value.show})"
+  override def show: String = str"DEFAULT(${value.show})"
 }
 
 case class Check(bool: Bool, name: Option[String] = None) extends ColumnConstraint {
-  override def show: String = s"CHECK(${bool.show})"
+  override def show: String = str"CHECK(${bool.show})"
 }
 case class ForeignKey(primaryKeyName: String,
                       pKeyRelationName: RelationName,
@@ -36,7 +36,7 @@ case class ForeignKey(primaryKeyName: String,
                       name: Option[String] = None)
     extends ColumnConstraint {
   override def show: String =
-    s"FOREIGN KEY REFERENCES $pKeyRelationName($primaryKeyName)"
+    str"FOREIGN KEY REFERENCES ${pKeyRelationName.value}($primaryKeyName)"
 }
 
 sealed trait PrimaryKeyTrigger {

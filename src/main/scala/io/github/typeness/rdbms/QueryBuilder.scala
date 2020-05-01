@@ -193,7 +193,7 @@ object QueryBuilder extends BuilderUtils {
     val names = right.getNames
     val attributes = left.attributes.map { bodyAttrib =>
       if (names.contains(bodyAttrib.name))
-        bodyAttrib.copy(name = s"${relationName.value}.${bodyAttrib.name}")
+        bodyAttrib.copy(name = str"${relationName.value}.${bodyAttrib.name}")
       else bodyAttrib
     }
     Row(attributes)

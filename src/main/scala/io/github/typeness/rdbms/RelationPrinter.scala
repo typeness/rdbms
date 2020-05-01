@@ -9,7 +9,7 @@ object RelationPrinter {
       val names = head.getNames.map(name => rightPad(name, sizes(name), ' '))
       val header = names.map(str => str.map(_ => '-')).mkString(" ")
       val body = rows.map(showRow(_, sizes)).mkString("\n")
-      s"${names.mkString(" ")}\n$header\n$body"
+      str"${names.mkString(" ")}\n$header\n$body"
   }
 
   private def rightPad(text: String, size: Int, pad: Char): String =
