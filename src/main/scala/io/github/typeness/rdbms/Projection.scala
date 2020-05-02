@@ -2,18 +2,22 @@ package io.github.typeness.rdbms
 
 sealed trait Projection {
   def show: String
+  def toAttributeName: AttributeName
 }
 
-case class Var(name: String) extends Projection {
-  override def show: String = name
+case class Var(name: AttributeName) extends Projection {
+  override def show: String = name.value
+  override def toAttributeName: AttributeName = name
 }
 
-case class Accessor(prefix: String, name: String) extends Projection {
-  override def show: String = str"$prefix.$name"
+case class Accessor(prefix: RelationName, name: AttributeName) extends Projection {
+  override def show: String = str"${prefix.value}.${name.value}"
+  def toAttributeName: AttributeName = AttributeName(str"${prefix.value}.${name.value}")
 }
 
-case class Alias(original: Projection, alias: String) extends Projection {
-  override def show: String = alias
+case class Alias(original: Projection, alias: AttributeName) extends Projection {
+  override def show: String = alias.value
+  override def toAttributeName: AttributeName = alias
 }
 
 sealed trait Literal extends Projection {
@@ -26,31 +30,37 @@ sealed trait NumericLiteral extends Literal
 case class IntegerLiteral(value: Int) extends NumericLiteral {
   override def typeOf: AnyType = IntegerType
   override def show: String = value.toString
+  override def toAttributeName: AttributeName = AttributeName(value.toString)
 }
 
 case class RealLiteral(value: Double) extends NumericLiteral {
   override def typeOf: AnyType = RealType
   override def show: String = value.toString
+  override def toAttributeName: AttributeName = AttributeName(value.toString)
 }
 
 case class StringLiteral(value: String) extends Literal {
   override def typeOf: AnyType = NVarCharType(1)
   override def show: String = str"'$value'"
+  override def toAttributeName: AttributeName = AttributeName(str"'$value'")
 }
 
 case class DateLiteral(value: String) extends Literal {
   override def typeOf: AnyType = DateType
   override def show: String = str"'$value'"
+  override def toAttributeName: AttributeName = AttributeName(str"'$value'")
 }
 
 case class MoneyLiteral(value: Int) extends Literal {
   override def typeOf: AnyType = MoneyType
   override def show: String = value.toString
+  override def toAttributeName: AttributeName = AttributeName(value.toString)
 }
 
 case object NULLLiteral extends Literal {
   override def typeOf: AnyType = NullType
   override def show: String = "NULL"
+  override def toAttributeName: AttributeName = AttributeName("NULL")
 }
 
 object Literal {
@@ -122,6 +132,8 @@ case class Sum(argument: String) extends Aggregate {
   }
 
   override def show: String = str"Sum($argument)"
+
+  override def toAttributeName: AttributeName = AttributeName(str"Sum($argument)")
 }
 case class Avg(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, RealLiteral] = {
@@ -135,11 +147,15 @@ case class Avg(argument: String) extends Aggregate {
       }
   }
   override def show: String = str"Avg($argument)"
+
+  override def toAttributeName: AttributeName = AttributeName(str"Avg($argument)")
 }
 case class Count(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, IntegerLiteral] =
     Right(IntegerLiteral(literals.size))
   override def show: String = str"Count($argument)"
+
+  override def toAttributeName: AttributeName = AttributeName(str"Count($argument)")
 }
 case class Max(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, Literal] =
@@ -151,6 +167,8 @@ case class Max(argument: String) extends Aggregate {
         .headOption
         .getOrElse(NULLLiteral))
   override def show: String = str"Max($argument)"
+
+  override def toAttributeName: AttributeName = AttributeName(str"Max($argument)")
 }
 case class Min(argument: String) extends Aggregate {
   override def eval(literals: List[Literal]): Either[TypeMismatch, Literal] =
@@ -162,19 +180,27 @@ case class Min(argument: String) extends Aggregate {
         .headOption
         .getOrElse(NULLLiteral))
   override def show: String = str"Min($argument)"
+
+  override def toAttributeName: AttributeName = AttributeName(str"Min($argument)")
 }
 
 case class Plus(left: Projection, right: Projection) extends Projection {
   val calc: (Double, Double) => Double = (a, b) => a + b
   def show: String = str"${left.show}+${right.show}"
+
+  override def toAttributeName: AttributeName = AttributeName(str"${left.show}+${right.show}")
 }
 
 case class Minus(left: Projection, right: Projection) extends Projection {
   val calc: (Double, Double) => Double = (a, b) => a - b
   def show: String = str"${left.show}-${right.show}"
+
+  override def toAttributeName: AttributeName = AttributeName(str"${left.show}-${right.show}")
 }
 
 case class Multiplication(left: Projection, right: Projection) extends Projection {
   val calc: (Double, Double) => Double = (a, b) => a * b
   def show: String = str"${left.show}*${right.show}"
+
+  override def toAttributeName: AttributeName = AttributeName(str"${left.show}*${right.show}")
 }

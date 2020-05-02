@@ -11,7 +11,7 @@ object SchemaSerializerToSQL extends SchemaSerializer[String] {
   private def alterTable(name: String, constraints: List[RelationConstraint]): String = {
     constraints.reverse.map {
       case FKeyRelationConstraint(names, pKeyRelationName, pKeyColumnName, _, _, constraintName) =>
-        str"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} FOREIGN KEY(${names.mkString(",")}) REFERENCES ${pKeyRelationName.value} ($pKeyColumnName)"
+        str"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} FOREIGN KEY(${names.mkString(",")}) REFERENCES ${pKeyRelationName.value} (${pKeyColumnName.value})"
       case DefaultRelationConstraint(columnName, value, constraintName) =>
         str"ALTER TABLE $name ADD CONSTRAINT ${constraintName.getOrElse("")} DEFAULT (${value.show}) for $columnName"
       case CheckRelationConstraint(condition, constraintName) =>
@@ -27,7 +27,7 @@ object SchemaSerializerToSQL extends SchemaSerializer[String] {
     }
     val attributes = attributesWithoutNamedConstraints
       .map { attrib =>
-        str"${inSquareBrackets(attrib.name)} ${attrib.domain.show} ${attrib.constraints.map(_.show).mkString(" ")}"
+        str"${inSquareBrackets(attrib.name.value)} ${attrib.domain.show} ${attrib.constraints.map(_.show).mkString(" ")}"
       }
       .mkString(",\n")
     val pKeysConstraint = constraints.collect {
@@ -53,7 +53,7 @@ object SchemaSerializerToSQL extends SchemaSerializer[String] {
       }
       .mkString(",\n")
     if (attributes.nonEmpty) {
-      val names = rowWithoutIdentity(rows.head).attributes.map(_.name).mkString(",")
+      val names = rowWithoutIdentity(rows.head).attributes.map(_.name.value).mkString(",")
       str"INSERT INTO $name ($names) VALUES \n$attributes\n"
     }
     else ""

@@ -90,31 +90,31 @@ object QueryBuilder extends BuilderUtils {
           .traverse { row =>
             exprs.collect {
               case acc: Accessor =>
-                row.projectEither(acc.show)
+                row.projectEither(acc.toAttributeName)
               case Var(name) =>
                 row.projectEither(name)
               case aggregate: Aggregate =>
-                row.projectEither(aggregate.toString)
+                row.projectEither(aggregate.toAttributeName)
               case Alias(v: Var, alias) =>
                 row.projectEither(v.name).map(_.copy(name = alias))
               case Alias(v: Aggregate, alias) =>
-                row.projectEither(v.show).map(_.copy(name = alias))
+                row.projectEither(v.toAttributeName).map(_.copy(name = alias))
               case lit: Literal =>
-                Right(BodyAttribute(lit.show, lit))
+                Right(BodyAttribute(lit.toAttributeName, lit))
               case Alias(lit: Literal, alias) =>
                 Right(BodyAttribute(alias, lit))
               case mult: Multiplication =>
                 ArithmeticInterpreter
                   .calculate(mult.left, mult.right, row, mult.calc)
-                  .map(x => BodyAttribute(mult.show, x))
+                  .map(x => BodyAttribute(mult.toAttributeName, x))
               case plus: Plus =>
                 ArithmeticInterpreter
                   .calculate(plus.left, plus.right, row, plus.calc)
-                  .map(x => BodyAttribute(plus.show, x))
+                  .map(x => BodyAttribute(plus.toAttributeName, x))
               case minus: Minus =>
                 ArithmeticInterpreter
                   .calculate(minus.left, minus.right, row, minus.calc)
-                  .map(x => BodyAttribute(minus.show, x))
+                  .map(x => BodyAttribute(minus.toAttributeName, x))
             }.sequence
           }
           .map(_.map(Row.apply))
@@ -192,8 +192,8 @@ object QueryBuilder extends BuilderUtils {
   private def prefixRelationName(left: Row, relationName: RelationName, right: Row): Row = {
     val names = right.getNames
     val attributes = left.attributes.map { bodyAttrib =>
-      if (names.contains(bodyAttrib.name))
-        bodyAttrib.copy(name = str"${relationName.value}.${bodyAttrib.name}")
+      if (names.has(bodyAttrib.name))
+        bodyAttrib.copy(name = Accessor(relationName, bodyAttrib.name).toAttributeName)
       else bodyAttrib
     }
     Row(attributes)
@@ -248,7 +248,7 @@ object QueryBuilder extends BuilderUtils {
                      side: Side) = {
       val innerOfOuter =
         inner.map(_.attributes.filterNot(a => nullRow.exists(_.name == a.name)))
-      outer.map(_.attributes).filterNot(innerOfOuter.contains(_)).map { row =>
+      outer.map(_.attributes).filterNot(innerOfOuter.has(_)).map { row =>
         side match {
           case Left  => Row(row ::: nullRow)
           case Right => Row(nullRow ::: row)
@@ -267,10 +267,10 @@ object QueryBuilder extends BuilderUtils {
 
   case class Group(values: List[BodyAttribute]) extends AnyVal
 
-  private def groupBy(names: List[String],
+  private def groupBy(names: List[AttributeName],
                       rows: List[Row],
                       aggregates: List[Aggregate]): Either[SQLError, List[Row]] = {
-    def select(rows: List[Row], name: String): List[BodyAttribute] =
+    def select(rows: List[Row], name: AttributeName): List[BodyAttribute] =
       rows.flatMap(_.projectOption(name))
     def updateGroup(groups: Map[Group, List[Row]],
                     group: Group,
@@ -283,8 +283,8 @@ object QueryBuilder extends BuilderUtils {
       aggregates.traverse { function =>
         val arguments =
           if (function.argument == "*") groupRow.flatMap(_.getValues.headOption)
-          else select(groupRow, function.argument).map(_.literal)
-        function.eval(arguments).map(literal => BodyAttribute(function.toString, literal))
+          else select(groupRow, AttributeName(function.argument)).map(_.literal)
+        function.eval(arguments).map(literal => BodyAttribute(AttributeName(function.toString), literal))
       }
 
     if (names.isEmpty && aggregates.isEmpty) Right(rows)
@@ -293,7 +293,7 @@ object QueryBuilder extends BuilderUtils {
       val grouped = rows.foldLeft(Map[Group, List[Row]]()) {
         case (groups, row) =>
           val (group, values) = row.attributes.partition {
-            case attribute: BodyAttribute if names.contains(attribute.name) => true
+            case attribute: BodyAttribute if names.has(attribute.name) => true
             case _                                                          => false
           }
           updateGroup(groups, Group(group), values)
@@ -312,14 +312,15 @@ object QueryBuilder extends BuilderUtils {
                              rows: List[Row]): Either[MissingColumnName, List[Row]] = {
     val names = projections
       .map {
-        case Var(name)                      => name
-        case a: Accessor                    => a.show
-        case Alias(_, alias)                => alias
-        case literal: Literal               => literal.show
-        case aggregate: Aggregate           => aggregate.toString
-        case multiplication: Multiplication => multiplication.show
-        case plus: Plus                     => plus.show
-        case minus: Minus                   => minus.show
+//        case Var(name)                      => name
+//        case a: Accessor                    => a.toAttributeName
+//        case Alias(_, alias)                => alias
+//        case literal: Literal               => literal.show
+//        case aggregate: Aggregate           => aggregate.toString
+//        case multiplication: Multiplication => multiplication.show
+//        case plus: Plus                     => plus.show
+//        case minus: Minus                   => minus.show
+        _.toAttributeName
       }
       .zipWithIndex
       .toMap

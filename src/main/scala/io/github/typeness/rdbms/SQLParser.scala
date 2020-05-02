@@ -49,7 +49,7 @@ object SQLParser {
 ////        else
           NamedInsert(RelationName(name),
                       rows.toList.map(literals =>
-                        Row(ids.zip(literals).map(attr => BodyAttribute(attr._1, attr._2)))))
+                        Row(ids.zip(literals).map(attr => BodyAttribute(AttributeName(attr._1), attr._2)))))
       }
 
   private def delete[_: P]: P[Delete] =
@@ -68,7 +68,7 @@ object SQLParser {
                name.map(RelationName),
                join,
                cond,
-               group.getOrElse(Nil),
+               group.map(_.map(AttributeName)).getOrElse(Nil),
                having,
                order.getOrElse(Nil),
                distinct.isDefined,
@@ -92,7 +92,7 @@ object SQLParser {
         } |
         (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("DROP COLUMN") ~/ space ~ id)
           .map {
-            case (name, column) => AlterDropColumn(RelationName(name), column)
+            case (name, column) => AlterDropColumn(RelationName(name), AttributeName(column))
           } |
         (IgnoreCase("ALTER TABLE") ~ space ~ id ~ space ~ IgnoreCase("ADD") ~ space ~ relationConstraint)
           .map {
@@ -107,7 +107,7 @@ object SQLParser {
   private def headingAttribute[_: P]: P[Left[HeadingAttribute, Nothing]] =
     P(id ~ space ~ typeOfAttribute ~ (space ~ columnConstraint).rep)
       .map {
-        case (name, typeOf, properties) => HeadingAttribute(name, typeOf, properties.toList)
+        case (name, typeOf, properties) => HeadingAttribute(AttributeName(name), typeOf, properties.toList)
       }
       .map(Left(_))
 
@@ -118,9 +118,9 @@ object SQLParser {
           .rep(min = 1, sep = commaSeparator./)
     ).map { x =>
       x.map {
-        case (name, Some("ASC")) => Ascending(name)
-        case (name, None)        => Ascending(name)
-        case (name, _)           => Descending(name)
+        case (name, Some("ASC")) => Ascending(AttributeName(name))
+        case (name, None)        => Ascending(AttributeName(name))
+        case (name, _)           => Descending(AttributeName(name))
       }.toList
     }
 
@@ -182,7 +182,7 @@ object SQLParser {
 
   private def selection[_: P]: P[Projection] =
     P((aggregate | additive) ~ (space ~ IgnoreCase("AS") ~/ space ~ id).?).map {
-      case (proj, Some(alias)) => Alias(proj, alias)
+      case (proj, Some(alias)) => Alias(proj, AttributeName(alias))
       case (proj, None)        => proj
     }
 
@@ -230,14 +230,14 @@ object SQLParser {
   private def space[_: P]: P[Unit] = P(CharsWhileIn(" \r\n\t", 0))
 
   private def varAccessor[_: P]: P[Projection] =
-    P(accessor | id.map(Var))
+    P(accessor | id.map(AttributeName andThen  Var))
 
   private def expression[_: P]: P[Projection] =
     P(varAccessor | literal)
 
   private def accessor[_: P]: P[Accessor] =
     P(id ~ "." ~ id).map {
-      case (a, b) => Accessor(a, b)
+      case (a, b) => Accessor(RelationName(a), AttributeName(b))
     }
 
   private def additive[_: P]: P[Projection] =
@@ -289,20 +289,20 @@ object SQLParser {
     }
 
   private def isNull[_: P]: P[IsNULL] =
-    P(id ~ space ~ IgnoreCase("IS NULL")).map(IsNULL)
+    P(id ~ space ~ IgnoreCase("IS NULL")).map(AttributeName andThen IsNULL)
 
   private def isNotNull[_: P]: P[IsNotNULL] =
-    P(id ~ space ~ IgnoreCase("IS NOT NULL")).map(IsNotNULL)
+    P(id ~ space ~ IgnoreCase("IS NOT NULL")).map(AttributeName andThen IsNotNULL)
 
   private def like[_: P]: P[Like] =
     P(id ~ space ~ IgnoreCase("LIKE") ~ space ~ string).map {
-      case (name, text) => Like(name, text.value)
+      case (name, text) => Like(AttributeName(name), text.value)
     }
 
   private def between[_: P]: P[Between] =
     P(id ~ space ~ IgnoreCase("BETWEEN") ~/ space ~ expression ~ space ~ IgnoreCase("AND") ~/ space ~ expression)
       .map {
-        case (name, value1, value2) => Between(name, value1, value2)
+        case (name, value1, value2) => Between(AttributeName(name), value1, value2)
       }
 
   private def and[_: P]: P[Bool] =
@@ -327,7 +327,7 @@ object SQLParser {
   private def updateList[_: P]: P[Row] =
     P((id ~ space ~ "=" ~ space ~ literal).rep(1, sep = commaSeparator./).map { x =>
       x.map {
-        case (name, lit) => BodyAttribute(name, lit)
+        case (name, lit) => BodyAttribute(AttributeName(name), lit)
       }
     }).map(_.toList).map(new Row(_))
 
@@ -376,7 +376,7 @@ object SQLParser {
         ~ (space ~ IgnoreCase("ON UPDATE") ~/ space ~ primaryKeyTrigger).?))
         .map {
           case (constraintName, (relation, name, onUpdate, onDelete)) =>
-            ForeignKey(name,
+            ForeignKey(AttributeName(name),
                        RelationName(relation),
                        onUpdate.getOrElse(NoAction),
                        onDelete.getOrElse(NoAction),
@@ -394,7 +394,7 @@ object SQLParser {
           case (name, (names, pKeyRelation, pKey, onUpdate, onDelete)) =>
             FKeyRelationConstraint(names,
                                    RelationName(pKeyRelation),
-                                   pKey,
+                                   AttributeName(pKey),
                                    onDelete.getOrElse(NoAction),
                                    onUpdate.getOrElse(NoAction),
                                    name)

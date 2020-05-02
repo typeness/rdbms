@@ -6,7 +6,7 @@ sealed trait ColumnConstraint extends Product with Serializable {
 }
 case class AttributeIdentity(name: Option[String], current: Int, step: Int)
     extends ColumnConstraint {
-  def toIdentity(attributeName: String): Identity = Identity(attributeName, current, step)
+  def toIdentity(attributeName: AttributeName ): Identity = Identity(attributeName, current, step)
 
   override def show: String = str"IDENTITY(${current.toString},${step.toString})"
 }
@@ -29,14 +29,14 @@ case class Default(value: Literal, name: Option[String] = None) extends ColumnCo
 case class Check(bool: Bool, name: Option[String] = None) extends ColumnConstraint {
   override def show: String = str"CHECK(${bool.show})"
 }
-case class ForeignKey(primaryKeyName: String,
+case class ForeignKey(primaryKeyName: AttributeName,
                       pKeyRelationName: RelationName,
                       onUpdate: PrimaryKeyTrigger,
                       onDelete: PrimaryKeyTrigger,
                       name: Option[String] = None)
     extends ColumnConstraint {
   override def show: String =
-    str"FOREIGN KEY REFERENCES ${pKeyRelationName.value}($primaryKeyName)"
+    str"FOREIGN KEY REFERENCES ${pKeyRelationName.value}(${primaryKeyName.value})"
 }
 
 sealed trait PrimaryKeyTrigger {
@@ -57,7 +57,7 @@ case class PKeyRelationConstraint(names: List[String], constraintName: Option[St
 }
 case class FKeyRelationConstraint(names: List[String],
                                   pKeyRelationName: RelationName,
-                                  pKeyColumnName: String,
+                                  pKeyColumnName: AttributeName,
                                   onDelete: PrimaryKeyTrigger,
                                   onUpdate: PrimaryKeyTrigger,
                                   constraintName: Option[String] = None)

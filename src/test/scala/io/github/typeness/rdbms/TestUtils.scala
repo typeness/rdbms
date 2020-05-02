@@ -5,7 +5,7 @@ import cats.syntax.foldable._
 import cats.instances.list._
 import cats.instances.either._
 
-object TestUtils {
+object TestUtils extends App {
   def createSchemaFromFile(source: String): Either[SQLError, Schema] =
     createSchemaFromSQL(scala.io.Source.fromResource(source).mkString)
 

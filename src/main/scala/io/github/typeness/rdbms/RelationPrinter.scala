@@ -6,7 +6,7 @@ object RelationPrinter {
       ""
     case head :: _ =>
       val sizes = getColumnsSize(head.getNames, rows)
-      val names = head.getNames.map(name => rightPad(name, sizes(name), ' '))
+      val names = head.getNames.map(name => rightPad(name.value, sizes(name), ' '))
       val header = names.map(str => str.map(_ => '-')).mkString(" ")
       val body = rows.map(showRow(_, sizes)).mkString("\n")
       str"${names.mkString(" ")}\n$header\n$body"
@@ -15,13 +15,13 @@ object RelationPrinter {
   private def rightPad(text: String, size: Int, pad: Char): String =
     text + pad.toString * (size - text.length)
 
-  private def getColumnsSize(names: List[String], rows: List[Row]): Map[String, Int] =
+  private def getColumnsSize(names: List[AttributeName], rows: List[Row]): Map[AttributeName, Int] =
     names
       .map(name =>
-        name -> (name.length :: rows.flatMap(_.projectOption(name)).map(_.literal.show.length)).max)
+        name -> (name.value.length :: rows.flatMap(_.projectOption(name)).map(_.literal.show.length)).max)
       .toMap
 
-  private def showRow(row: Row, sizes: Map[String, Int]): String = {
+  private def showRow(row: Row, sizes: Map[AttributeName, Int]): String = {
     row.attributes
       .map(attrib => rightPad(attrib.literal.show, sizes(attrib.name), ' '))
       .mkString(" ")

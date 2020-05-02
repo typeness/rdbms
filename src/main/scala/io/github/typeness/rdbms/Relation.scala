@@ -2,7 +2,7 @@ package io.github.typeness.rdbms
 
 import cats.syntax.either._
 
-case class Identity(name: String, current: Int, step: Int)
+case class Identity(name: AttributeName, current: Int, step: Int)
 
 object Schema {
   def apply(relations: Relation*): Schema =
@@ -29,13 +29,13 @@ object Relation {
 }
 
 case class Row(attributes: List[BodyAttribute]) {
-  def projectOption(name: String): Option[BodyAttribute] =
+  def projectOption(name: AttributeName): Option[BodyAttribute] =
     attributes.find(_.name == name)
-  def projectEither(name: String): Either[MissingColumnName, BodyAttribute] =
+  def projectEither(name: AttributeName): Either[MissingColumnName, BodyAttribute] =
     Either.fromOption(projectOption(name), MissingColumnName(name))
-  def projectList(names: List[String]): Row =
-    Row(attributes.filter(attrib => names.contains(attrib.name)))
-  lazy val getNames: List[String] = attributes.map(_.name)
+  def projectList(names: List[AttributeName]): Row =
+    Row(attributes.filter(attrib => names.has(attrib.name)))
+  lazy val getNames: List[AttributeName] = attributes.map(_.name)
   lazy val getValues: List[Literal] = attributes.map(_.literal)
   def map(f: BodyAttribute => BodyAttribute): Row = Row(attributes.map(f))
   def filter(f: BodyAttribute => Boolean): Row = Row(attributes.filter(f))
@@ -49,7 +49,7 @@ object Row {
 }
 
 case class Relation(name: RelationName,
-                    primaryKeys: List[String],
+                    primaryKeys: List[AttributeName],
                     identity: Option[Identity],
                     heading: Relation.Header,
                     body: List[Row],
@@ -60,7 +60,7 @@ case class Relation(name: RelationName,
       case _: PrimaryKey => true
       case _             => false
     })
-  lazy val getForeignKeys: List[(String, ForeignKey)] =
+  lazy val getForeignKeys: List[(AttributeName, ForeignKey)] =
     heading.collect {
       case attribute: Attribute
           if attribute.constraints.collect { case key: ForeignKey => key }.nonEmpty =>

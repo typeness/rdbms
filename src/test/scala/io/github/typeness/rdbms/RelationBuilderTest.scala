@@ -14,14 +14,14 @@ class RelationBuilderTest extends AnyFunSuite {
     val query = Create(
       rel"Urlopy",
       List(
-        HeadingAttribute("NrPrac", IntegerType, List(PrimaryKey())),
-        HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
-        HeadingAttribute("DoKiedy", DateType, Nil)
+        HeadingAttribute(col"NrPrac", IntegerType, List(PrimaryKey())),
+        HeadingAttribute(col"OdKiedy", DateType, List(PrimaryKey())),
+        HeadingAttribute(col"DoKiedy", DateType, Nil)
       ),
       Nil,
       None
     )
-    assert(RelationBuilder.run(query, Schema()) == Left(MultiplePrimaryKeys("NrPrac", "OdKiedy")))
+    assert(RelationBuilder.run(query, Schema()) == Left(MultiplePrimaryKeys(col"NrPrac", col"OdKiedy")))
   }
   test("Non-unique names in table definition") {
     /*
@@ -33,13 +33,13 @@ class RelationBuilderTest extends AnyFunSuite {
     val query = Create(
       rel"Test",
       List(
-        HeadingAttribute("name", IntegerType, List(PrimaryKey())),
-        HeadingAttribute("name", DateType, Nil)
+        HeadingAttribute(col"name", IntegerType, List(PrimaryKey())),
+        HeadingAttribute(col"name", DateType, Nil)
       ),
       Nil,
       None
     )
-    assert(RelationBuilder.run(query, Schema()) == Left(MultipleColumnNames("name")))
+    assert(RelationBuilder.run(query, Schema()) == Left(MultipleColumnNames(col"name")))
   }
   test("Primary key referencing non-existing column name") {
     /*
@@ -51,12 +51,12 @@ class RelationBuilderTest extends AnyFunSuite {
     val query = Create(
       rel"Test",
       List(
-        HeadingAttribute("name", NVarCharType(50), Nil)
+        HeadingAttribute(col"name", NVarCharType(50), Nil)
       ),
       List(PKeyRelationConstraint(List("id"))),
       None
     )
-    assert(RelationBuilder.run(query, Schema()) == Left(ColumnDoesNotExists("id")))
+    assert(RelationBuilder.run(query, Schema()) == Left(ColumnDoesNotExists(col"id")))
   }
 
   test("DROP TABLE Pracownicy1") {
@@ -65,8 +65,8 @@ class RelationBuilderTest extends AnyFunSuite {
       Nil,
       None,
       List(
-        HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
-        HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
+        HeadingAttribute(col"Nr", IntegerType, List(PrimaryKey())),
+        HeadingAttribute(col"Nazwisko", NVarCharType(50), List(NotNULL())),
       ),
       Nil,
       Nil
@@ -76,8 +76,8 @@ class RelationBuilderTest extends AnyFunSuite {
       Nil,
       None,
       List(
-        HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
-        HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
+        HeadingAttribute(col"Nr", IntegerType, List(PrimaryKey())),
+        HeadingAttribute(col"Imie", NVarCharType(50), List(NotNULL())),
       ),
       Nil,
       Nil
@@ -90,6 +90,6 @@ class RelationBuilderTest extends AnyFunSuite {
     val Right(newSchema) = for {
       newSchema <- RelationBuilder.run(query, schema)
     } yield newSchema
-    assert(!newSchema.relations.contains(relation1.name) && newSchema.relations.contains(relation2.name))
+    assert(!newSchema.relations.has(relation1.name) && newSchema.relations.has(relation2.name))
   }
 }

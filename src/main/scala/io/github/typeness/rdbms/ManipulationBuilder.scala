@@ -13,8 +13,7 @@ object ManipulationBuilder extends BuilderUtils {
     manipulation match {
       case insert: Insert =>
         for {
-          relation <- schema.getRelation(insert.to)
-          newSchema <- insertRow(insert, relation, schema)
+          newSchema <- insertRow(insert, schema)
         } yield newSchema
       case delete: Delete =>
         for {
@@ -29,7 +28,6 @@ object ManipulationBuilder extends BuilderUtils {
     }
 
   private def insertRow(query: Insert,
-                        relation: Relation,
                         schema: Schema): Either[SQLError, Schema] =
     query match {
       case NamedInsert(to, rows) =>
@@ -329,11 +327,10 @@ object ManipulationBuilder extends BuilderUtils {
         }
     }
 
-  type FKeyName = String
 
   private case class PKeyFKeyRelations(pKeyRelation: Relation,
                                        fKeyRelation: Relation,
-                                       keyPairs: List[(HeadingAttribute, ForeignKey, FKeyName)])
+                                       keyPairs: List[(HeadingAttribute, ForeignKey, AttributeName)])
 
   private object PKeyFKeyRelations {
     def apply(pKeyRelation: Relation, fKeyRelation: Relation): PKeyFKeyRelations = {
@@ -342,7 +339,7 @@ object ManipulationBuilder extends BuilderUtils {
       val pKeysNames = primaryKeys.map(_.name)
       val keyPairs = fKeyRelation.heading.flatMap { attribute =>
         attribute.constraints.collect {
-          case fKey @ ForeignKey(pkName, `pKeyRelationName`, _, _, _) if pKeysNames.contains(pkName) =>
+          case fKey @ ForeignKey(pkName, `pKeyRelationName`, _, _, _) if pKeysNames.has(pkName) =>
             (primaryKeys.find(_.name == pkName).get, fKey, attribute.name)
         }
       }
@@ -352,12 +349,12 @@ object ManipulationBuilder extends BuilderUtils {
 
   private sealed trait ModifyTrigger {
     def getFunction(foreignKey: ForeignKey)
-      : (Relation, FKeyName, ForeignKey, BodyAttribute, BodyAttribute, Schema) => Either[SQLError,
+      : (Relation, AttributeName, ForeignKey, BodyAttribute, BodyAttribute, Schema) => Either[SQLError,
                                                                                          List[Row]]
   }
   private case object DeleteTrigger extends ModifyTrigger {
     override def getFunction(foreignKey: ForeignKey): (Relation,
-                                                       FKeyName,
+                                                       AttributeName,
                                                        ForeignKey,
                                                        BodyAttribute,
                                                        BodyAttribute,
@@ -376,7 +373,7 @@ object ManipulationBuilder extends BuilderUtils {
 
   private case object UpdateTrigger extends ModifyTrigger {
     override def getFunction(foreignKey: ForeignKey): (Relation,
-                                                       FKeyName,
+                                                       AttributeName,
                                                        ForeignKey,
                                                        BodyAttribute,
                                                        BodyAttribute,
@@ -402,7 +399,7 @@ object ManipulationBuilder extends BuilderUtils {
                   pKey: HeadingAttribute,
                   relation: List[Row],
                   fKey: ForeignKey,
-                  fKeyName: FKeyName): Either[SQLError, List[Row]] = {
+                  fKeyName: AttributeName): Either[SQLError, List[Row]] = {
       val eitherPrimaryKeyValues =
         matchingRows.traverse {
           case (oldRow, newRow) =>
@@ -451,7 +448,7 @@ object ManipulationBuilder extends BuilderUtils {
     onModifyPrimaryKey(modifiedRows, pKeyRelation, schema, DeleteTrigger)
 
   private def onModifyDeleteCascade(fKeyRelation: Relation,
-                                    foreignKeyName: FKeyName,
+                                    foreignKeyName: AttributeName,
                                     foreignKey: ForeignKey,
                                     oldKey: BodyAttribute,
                                     newKey: BodyAttribute,
@@ -464,7 +461,7 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def onModifyChangeFKey(fKeyRelation: Relation,
-                                 foreignKeyName: FKeyName,
+                                 foreignKeyName: AttributeName,
                                  foreignKey: ForeignKey,
                                  oldKey: BodyAttribute,
                                  newKey: Literal,
@@ -479,7 +476,7 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def onModifyUpdateCascade(fKeyRelation: Relation,
-                                    foreignKeyName: FKeyName,
+                                    foreignKeyName: AttributeName,
                                     foreignKey: ForeignKey,
                                     oldKey: BodyAttribute,
                                     newKey: BodyAttribute,
@@ -487,7 +484,7 @@ object ManipulationBuilder extends BuilderUtils {
     onModifyChangeFKey(fKeyRelation, foreignKeyName, foreignKey, oldKey, newKey.literal, schema)
 
   private def onModifySetNULL(fKeyRelation: Relation,
-                              foreignKeyName: FKeyName,
+                              foreignKeyName: AttributeName,
                               foreignKey: ForeignKey,
                               oldKey: BodyAttribute,
                               newKey: BodyAttribute,
@@ -495,7 +492,7 @@ object ManipulationBuilder extends BuilderUtils {
     onModifyChangeFKey(fKeyRelation, foreignKeyName, foreignKey, oldKey, NULLLiteral, schema)
 
   private def onModifySetDefault(fKeyRelation: Relation,
-                                 foreignKeyName: FKeyName,
+                                 foreignKeyName: AttributeName,
                                  foreignKey: ForeignKey,
                                  oldKey: BodyAttribute,
                                  newKey: BodyAttribute,
@@ -509,7 +506,7 @@ object ManipulationBuilder extends BuilderUtils {
   }
 
   private def onModifyNoAction(fKeyRelation: Relation,
-                               foreignKeyName: FKeyName,
+                               foreignKeyName: AttributeName,
                                foreignKey: ForeignKey,
                                oldKey: BodyAttribute,
                                newKey: BodyAttribute,

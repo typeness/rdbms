@@ -12,7 +12,7 @@ class QueryBuilderTest extends AnyFunSuite {
       SELECT * FROM Pracownicy WHERE Nr=1
      */
     val query =
-      Select(Nil, Some(rel"Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(1))), Nil, None, Nil)
+      Select(Nil, Some(rel"Pracownicy"), Nil, Some(Equals(Var(col"Nr"), IntegerLiteral(1))), Nil, None, Nil)
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(List(pracownicyRow1)))
   }
@@ -23,7 +23,7 @@ class QueryBuilderTest extends AnyFunSuite {
       SELECT * FROM Pracownicy WHERE Nr=9999
      */
     val query =
-      Select(Nil, Some(rel"Pracownicy"), Nil, Some(Equals(Var("Nr"), IntegerLiteral(9999))), Nil, None, Nil)
+      Select(Nil, Some(rel"Pracownicy"), Nil, Some(Equals(Var(col"Nr"), IntegerLiteral(9999))), Nil, None, Nil)
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(Nil))
   }
@@ -34,32 +34,32 @@ class QueryBuilderTest extends AnyFunSuite {
       SELECT Nr, Nazwisko, Imie FROM Pracownicy
      */
     val query =
-      Select(List(Var("Nr"), Var("Nazwisko"), Var("Imie")), Some(rel"Pracownicy"), Nil, None, Nil, None, Nil)
+      Select(List(Var(col"Nr"), Var(col"Nazwisko"), Var(col"Imie")), Some(rel"Pracownicy"), Nil, None, Nil, None, Nil)
     val expected = List(
       Row(
-        BodyAttribute("Nr", IntegerLiteral(1)),
-        BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-        BodyAttribute("Imie", StringLiteral("Jan"))
+        BodyAttribute(col"Nr", IntegerLiteral(1)),
+        BodyAttribute(col"Nazwisko", StringLiteral("Kowalski")),
+        BodyAttribute(col"Imie", StringLiteral("Jan"))
       ),
       Row(
-        BodyAttribute("Nr", IntegerLiteral(2)),
-        BodyAttribute("Nazwisko", StringLiteral("Nowak")),
-        BodyAttribute("Imie", StringLiteral("Anna"))
+        BodyAttribute(col"Nr", IntegerLiteral(2)),
+        BodyAttribute(col"Nazwisko", StringLiteral("Nowak")),
+        BodyAttribute(col"Imie", StringLiteral("Anna"))
       ),
       Row(
-        BodyAttribute("Nr", IntegerLiteral(3)),
-        BodyAttribute("Nazwisko", StringLiteral("Wrona")),
-        BodyAttribute("Imie", StringLiteral("Adam"))
+        BodyAttribute(col"Nr", IntegerLiteral(3)),
+        BodyAttribute(col"Nazwisko", StringLiteral("Wrona")),
+        BodyAttribute(col"Imie", StringLiteral("Adam"))
       ),
       Row(
-        BodyAttribute("Nr", IntegerLiteral(4)),
-        BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-        BodyAttribute("Imie", StringLiteral("Jacek"))
+        BodyAttribute(col"Nr", IntegerLiteral(4)),
+        BodyAttribute(col"Nazwisko", StringLiteral("Kowalski")),
+        BodyAttribute(col"Imie", StringLiteral("Jacek"))
       ),
       Row(
-        BodyAttribute("Nr", IntegerLiteral(5)),
-        BodyAttribute("Nazwisko", StringLiteral("Grzyb")),
-        BodyAttribute("Imie", StringLiteral("Tomasz"))
+        BodyAttribute(col"Nr", IntegerLiteral(5)),
+        BodyAttribute(col"Nazwisko", StringLiteral("Grzyb")),
+        BodyAttribute(col"Imie", StringLiteral("Tomasz"))
       )
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
@@ -77,8 +77,8 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil,
       Some(
         Or(
-          Equals(Var("Nazwisko"), StringLiteral("Kowalski")),
-          Equals(Var("Nazwisko"), StringLiteral("Nowak"))
+          Equals(Var(col"Nazwisko"), StringLiteral("Kowalski")),
+          Equals(Var(col"Nazwisko"), StringLiteral("Nowak"))
         )),
       Nil,
       None,
@@ -99,8 +99,8 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil,
       Some(
         And(
-          Equals(Var("Nazwisko"), StringLiteral("Kowalski")),
-          Equals(Var("Imie"), StringLiteral("Jacek"))
+          Equals(Var(col"Nazwisko"), StringLiteral("Kowalski")),
+          Equals(Var(col"Imie"), StringLiteral("Jacek"))
         )),
       Nil,
       None,
@@ -112,27 +112,27 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy WHERE Nr = 1 UNION SELECT Nr FROM Pracownicy WHERE Nr = 2") {
     val query1 = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
-      Some(Equals(Var("Nr"), IntegerLiteral(1))),
+      Some(Equals(Var(col"Nr"), IntegerLiteral(1))),
       Nil,
       None,
       Nil
     )
     val query2 = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
-      Some(Equals(Var("Nr"), IntegerLiteral(2))),
+      Some(Equals(Var(col"Nr"), IntegerLiteral(2))),
       Nil,
       None,
       Nil
     )
     val union = Union(query1, query2)
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(1))),
-      Row(BodyAttribute("Nr", IntegerLiteral(2)))
+      Row(BodyAttribute(col"Nr", IntegerLiteral(1))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2)))
     )
     val result = QueryBuilder.run(union, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -140,7 +140,7 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT DISTINCT Nazwisko FROM Pracownicy") {
     val query = Select(
-      List(Var("Nazwisko")),
+      List(Var(col"Nazwisko")),
       Some(rel"Pracownicy"),
       Nil,
       None,
@@ -150,10 +150,10 @@ class QueryBuilderTest extends AnyFunSuite {
       distinct = true
     )
     val expected = List(
-      Row(BodyAttribute("Nazwisko", StringLiteral("Kowalski"))),
-      Row(BodyAttribute("Nazwisko", StringLiteral("Nowak"))),
-      Row(BodyAttribute("Nazwisko", StringLiteral("Wrona"))),
-      Row(BodyAttribute("Nazwisko", StringLiteral("Grzyb"))),
+      Row(BodyAttribute(col"Nazwisko", StringLiteral("Kowalski"))),
+      Row(BodyAttribute(col"Nazwisko", StringLiteral("Nowak"))),
+      Row(BodyAttribute(col"Nazwisko", StringLiteral("Wrona"))),
+      Row(BodyAttribute(col"Nazwisko", StringLiteral("Grzyb"))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -161,19 +161,19 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy WHERE Nr > 1") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
-      Some(Greater(Var("Nr"), IntegerLiteral(1))),
+      Some(Greater(Var(col"Nr"), IntegerLiteral(1))),
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(3))),
-      Row(BodyAttribute("Nr", IntegerLiteral(4))),
-      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(3))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(4))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(5))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -181,17 +181,17 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy WHERE Nr <= 2") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
-      Some(LessOrEquals(Var("Nr"), IntegerLiteral(2))),
+      Some(LessOrEquals(Var(col"Nr"), IntegerLiteral(2))),
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(1))),
-      Row(BodyAttribute("Nr", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(1))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -199,17 +199,17 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy WHERE Nr BETWEEN 2 AND 3") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
-      Some(Between("Nr", IntegerLiteral(2), IntegerLiteral(3))),
+      Some(Between(col"Nr", IntegerLiteral(2), IntegerLiteral(3))),
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(3))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(3))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -217,16 +217,16 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy WHERE LiczbaDzieci IS NULL") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
-      Some(IsNULL("LiczbaDzieci")),
+      Some(IsNULL(col"LiczbaDzieci")),
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(5))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -234,40 +234,40 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy ORDER BY Nr DESC") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
       None,
-      List(Descending("Nr"))
+      List(Descending(col"Nr"))
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(5))),
-      Row(BodyAttribute("Nr", IntegerLiteral(4))),
-      Row(BodyAttribute("Nr", IntegerLiteral(3))),
-      Row(BodyAttribute("Nr", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(1))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(5))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(4))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(3))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(1))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
   }
   test("SELECT Nr FROM Pracownicy ORDER BY Nr ASC") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
       None,
-      List(Ascending("Nr"))
+      List(Ascending(col"Nr"))
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(1))),
-      Row(BodyAttribute("Nr", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(3))),
-      Row(BodyAttribute("Nr", IntegerLiteral(4))),
-      Row(BodyAttribute("Nr", IntegerLiteral(5))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(1))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(3))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(4))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(5))),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -275,20 +275,20 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr, LiczbaDzieci FROM Pracownicy ORDER BY Nr ASC, LiczbaDzieci ASC") {
     val query = Select(
-      List(Var("Nr"), Var("LiczbaDzieci")),
+      List(Var(col"Nr"), Var(col"LiczbaDzieci")),
       Some(rel"Pracownicy"),
       Nil,
       None,
       Nil,
       None,
-      List(Ascending("Nr"), Ascending("LiczbaDzieci"))
+      List(Ascending(col"Nr"), Ascending(col"LiczbaDzieci"))
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(1)), BodyAttribute("LiczbaDzieci", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(2)), BodyAttribute("LiczbaDzieci", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(3)), BodyAttribute("LiczbaDzieci", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(4)), BodyAttribute("LiczbaDzieci", IntegerLiteral(1))),
-      Row(BodyAttribute("Nr", IntegerLiteral(5)), BodyAttribute("LiczbaDzieci", NULLLiteral)),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(1)), BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2)), BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(3)), BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(4)), BodyAttribute(col"LiczbaDzieci", IntegerLiteral(1))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(5)), BodyAttribute(col"LiczbaDzieci", NULLLiteral)),
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(result == Right(expected))
@@ -296,7 +296,7 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT a FROM RelationA INTERSECT SELECT a FROM RelationA WHERE a=3") {
     val query1 = Select(
-      List(Var("a")),
+      List(Var(col"a")),
       Some(rel"RelationA"),
       Nil,
       None,
@@ -305,17 +305,17 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil
     )
     val query2 = Select(
-      List(Var("a")),
+      List(Var(col"a")),
       Some(rel"RelationA"),
       Nil,
-      Some(Equals(Var("a"), IntegerLiteral(3))),
+      Some(Equals(Var(col"a"), IntegerLiteral(3))),
       Nil,
       None,
       Nil
     )
     val intersect = Intersect(query1, query2)
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(3)))
+      Row(BodyAttribute(col"a", IntegerLiteral(3)))
     )
     val result = QueryBuilder.run(intersect, schemaABC)
     assert(result == Right(expected))
@@ -332,7 +332,7 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Max(a)", IntegerLiteral(3)))
+      Row(BodyAttribute(col"Max(a)", IntegerLiteral(3)))
     )
     val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
@@ -349,7 +349,7 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Min(a)", IntegerLiteral(1)))
+      Row(BodyAttribute(col"Min(a)", IntegerLiteral(1)))
     )
     val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
@@ -366,7 +366,7 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Count(a)", IntegerLiteral(3)))
+      Row(BodyAttribute(col"Count(a)", IntegerLiteral(3)))
     )
     val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
@@ -383,7 +383,7 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Sum(a)", IntegerLiteral(1 + 2 + 3)))
+      Row(BodyAttribute(col"Sum(a)", IntegerLiteral(1 + 2 + 3)))
     )
     val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
@@ -400,7 +400,7 @@ class QueryBuilderTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("Avg(a)", RealLiteral(2.0)))
+      Row(BodyAttribute(col"Avg(a)", RealLiteral(2.0)))
     )
     val result = QueryBuilder.run(query, schemaABC)
     assert(result == Right(expected))
@@ -408,20 +408,20 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nr FROM Pracownicy GROUP BY Nr ORDER BY Nr") {
     val query = Select(
-      List(Var("Nr")),
+      List(Var(col"Nr")),
       Some(rel"Pracownicy"),
       Nil,
       None,
-      List("Nr"),
+      List(col"Nr"),
       None,
-      List(Ascending("Nr"))
+      List(Ascending(col"Nr"))
     )
     val expected = List(
-      Row(BodyAttribute("Nr", IntegerLiteral(1))),
-      Row(BodyAttribute("Nr", IntegerLiteral(2))),
-      Row(BodyAttribute("Nr", IntegerLiteral(3))),
-      Row(BodyAttribute("Nr", IntegerLiteral(4))),
-      Row(BodyAttribute("Nr", IntegerLiteral(5)))
+      Row(BodyAttribute(col"Nr", IntegerLiteral(1))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(2))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(3))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(4))),
+      Row(BodyAttribute(col"Nr", IntegerLiteral(5)))
     )
     val resullt = QueryBuilder.run(query, schemaPracownicyUrlopy)
     assert(resullt == Right(expected))
@@ -429,27 +429,27 @@ class QueryBuilderTest extends AnyFunSuite {
 
   test("SELECT Nazwisko, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko ORDER BY Count(Nr) DESC") {
     val query = Select(
-      List(Var("Nazwisko"), Count("Nr")),
+      List(Var(col"Nazwisko"), Count("Nr")),
       Some(rel"Pracownicy"),
       Nil,
       None,
-      List("Nazwisko"),
+      List(col"Nazwisko"),
       None,
-      List(Descending("Count(Nr)"))
+      List(Descending(col"Count(Nr)"))
     )
     val expected = List(
       Row(
-        List(BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-             BodyAttribute("Count(Nr)", IntegerLiteral(2)))),
+        List(BodyAttribute(col"Nazwisko", StringLiteral("Kowalski")),
+             BodyAttribute(col"Count(Nr)", IntegerLiteral(2)))),
       Row(
-        List(BodyAttribute("Nazwisko", StringLiteral("Grzyb")),
-             BodyAttribute("Count(Nr)", IntegerLiteral(1)))),
+        List(BodyAttribute(col"Nazwisko", StringLiteral("Grzyb")),
+             BodyAttribute(col"Count(Nr)", IntegerLiteral(1)))),
       Row(
-        List(BodyAttribute("Nazwisko", StringLiteral("Wrona")),
-             BodyAttribute("Count(Nr)", IntegerLiteral(1)))),
+        List(BodyAttribute(col"Nazwisko", StringLiteral("Wrona")),
+             BodyAttribute(col"Count(Nr)", IntegerLiteral(1)))),
       Row(
-        List(BodyAttribute("Nazwisko", StringLiteral("Nowak")),
-             BodyAttribute("Count(Nr)", IntegerLiteral(1))))
+        List(BodyAttribute(col"Nazwisko", StringLiteral("Nowak")),
+             BodyAttribute(col"Count(Nr)", IntegerLiteral(1))))
     )
 
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)
@@ -459,19 +459,19 @@ class QueryBuilderTest extends AnyFunSuite {
   test(
     "SELECT Nazwisko, 1, COUNT(Nr) FROM Pracownicy GROUP BY Nazwisko HAVING Count(Nr) >= 2 ORDER BY Count(Nr) DESC") {
     val query = Select(
-      List(Var("Nazwisko"), IntegerLiteral(1), Count("Nr")),
+      List(Var(col"Nazwisko"), IntegerLiteral(1), Count("Nr")),
       Some(rel"Pracownicy"),
       Nil,
       None,
-      List("Nazwisko"),
-      Some(GreaterOrEquals(Var("Count(Nr)"), IntegerLiteral(2))),
-      List(Descending("Count(Nr)"))
+      List(col"Nazwisko"),
+      Some(GreaterOrEquals(Var(col"Count(Nr)"), IntegerLiteral(2))),
+      List(Descending(col"Count(Nr)"))
     )
     val expected = List(
       Row(
-        List(BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-             BodyAttribute("1", IntegerLiteral(1)),
-             BodyAttribute("Count(Nr)", IntegerLiteral(2)))
+        List(BodyAttribute(col"Nazwisko", StringLiteral("Kowalski")),
+             BodyAttribute(col"1", IntegerLiteral(1)),
+             BodyAttribute(col"Count(Nr)", IntegerLiteral(2)))
       )
     )
     val result = QueryBuilder.run(query, schemaPracownicyUrlopy)

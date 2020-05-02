@@ -24,9 +24,9 @@ object ArithmeticInterpreter {
       result <- (leftResult, rightResult) match {
         case (RealLiteral(l), RealLiteral(r)) => Right(RealLiteral(calc(l, r)))
         case (IntegerLiteral(l), IntegerLiteral(r)) =>
-          Right(IntegerLiteral(calc(l.toDouble, r).toInt))
-        case (IntegerLiteral(l), RealLiteral(r)) => Right(RealLiteral(calc(l, r)))
-        case (RealLiteral(l), IntegerLiteral(r)) => Right(RealLiteral(calc(l, r)))
+          Right(IntegerLiteral(calc(l.toDouble, r.toDouble).toInt))
+        case (IntegerLiteral(l), RealLiteral(r)) => Right(RealLiteral(calc(l.toDouble, r)))
+        case (RealLiteral(l), IntegerLiteral(r)) => Right(RealLiteral(calc(l.toDouble, r.toDouble)))
       }
     } yield result
 

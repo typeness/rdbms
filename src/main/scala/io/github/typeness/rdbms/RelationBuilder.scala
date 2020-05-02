@@ -33,7 +33,7 @@ object RelationBuilder extends BuilderUtils {
   private def dropConstraint(dropConstraint: AlterDropConstraint,
                              relation: Relation): Either[SQLError, Relation] = {
     val newHeader = relation.heading.map { attrib =>
-      val newConstraints = attrib.constraints.filterNot(_.name.contains(dropConstraint.constraint))
+      val newConstraints = attrib.constraints.filterNot(_.name.has(dropConstraint.constraint))
       attrib.copy(constraints = newConstraints)
     }
     Right(relation.copy(heading = newHeader))
@@ -53,7 +53,7 @@ object RelationBuilder extends BuilderUtils {
       case (heading0, name) =>
         heading0.map { attrib =>
           val constraints = attrib.constraints
-          if (attrib.name == name)
+          if (attrib.name.value == name)
             attrib.copy(
               constraints = alterAddConstraint.constraint.toColumnConstraint :: constraints)
           else attrib
@@ -91,7 +91,7 @@ object RelationBuilder extends BuilderUtils {
   private def rewriteRelationConstrains(create: Create): Either[SQLError, Create] = {
 
     def updateAttributeWithConstraint(attributes: Relation.Header,
-                                      name: String,
+                                      name: AttributeName,
                                       constraint: ColumnConstraint): List[HeadingAttribute] = {
       attributes.map {
         case attribute @ HeadingAttribute(`name`, _, constraints) =>
@@ -101,7 +101,7 @@ object RelationBuilder extends BuilderUtils {
       }
     }
 
-    def updateHeader(names: List[String],
+    def updateHeader(names: List[AttributeName],
                      attributes: Relation.Header,
                      constraint: ColumnConstraint): List[HeadingAttribute] = {
       names.foldLeft(attributes) {
@@ -110,16 +110,16 @@ object RelationBuilder extends BuilderUtils {
     }
 
     val constraintNames = create.relationConstraints.flatMap(_.names)
-    val attributeNames = create.attributes.map(_.name)
-    val newHeader = constraintNames.filter(!attributeNames.contains(_)) match {
+    val attributeNames = create.attributes.map(_.name.value)
+    val newHeader = constraintNames.filter(!attributeNames.has(_)) match {
       case name :: _ =>
-        Left(ColumnDoesNotExists(name))
+        Left(ColumnDoesNotExists(AttributeName(name)))
       case Nil =>
         Right(create.relationConstraints.foldLeft(create.attributes) {
           case (attributes, pKey @ PKeyRelationConstraint(names, _)) =>
-            updateHeader(names, attributes, pKey.toColumnConstraint)
+            updateHeader(names.map(AttributeName), attributes, pKey.toColumnConstraint)
           case (attributes, fKey @ FKeyRelationConstraint(names, _, _, _, _, _)) =>
-            updateHeader(names, attributes, fKey.toColumnConstraint)
+            updateHeader(names.map(AttributeName), attributes, fKey.toColumnConstraint)
           case (attributes, _) => attributes
         })
     }
@@ -158,7 +158,7 @@ object RelationBuilder extends BuilderUtils {
 
   }
 
-  private def getPrimaryKeys(query: Create): List[String] = {
+  private def getPrimaryKeys(query: Create): List[AttributeName] = {
 
     val attributes = query.attributes
     def isPrimaryKey(property: ColumnConstraint): Boolean = property match {

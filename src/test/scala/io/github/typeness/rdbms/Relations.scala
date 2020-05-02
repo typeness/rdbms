@@ -4,39 +4,39 @@ object Relations {
 
   val relationA = Relation(
     rel"RelationA",
-    List("a"),
+    List(col"a"),
     None,
-    List(HeadingAttribute("a", IntegerType, List(PrimaryKey()))),
+    List(HeadingAttribute(col"a", IntegerType, List(PrimaryKey()))),
     List(
-      Row(BodyAttribute("a", IntegerLiteral(1))),
-      Row(BodyAttribute("a", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(3)))
+      Row(BodyAttribute(col"a", IntegerLiteral(1))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)))
     ),
     Nil
   )
 
   val relationB = Relation(
     rel"RelationB",
-    List("b"),
+    List(col"b"),
     None,
-    List(HeadingAttribute("b", IntegerType, List(PrimaryKey()))),
+    List(HeadingAttribute(col"b", IntegerType, List(PrimaryKey()))),
     List(
-      Row(BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("b", IntegerLiteral(3))),
-      Row(BodyAttribute("b", IntegerLiteral(4)))
+      Row(BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"b", IntegerLiteral(4)))
     ),
     Nil
   )
 
   val relationC = Relation(
     rel"RelationC",
-    List("c"),
+    List(col"c"),
     None,
-    List(HeadingAttribute("c", IntegerType, List(PrimaryKey()))),
+    List(HeadingAttribute(col"c", IntegerType, List(PrimaryKey()))),
     List(
-      Row(BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("c", IntegerLiteral(5)))
+      Row(BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"c", IntegerLiteral(5)))
     ),
     Nil
   )
@@ -48,12 +48,12 @@ object Relations {
      (1, 'Kowalski', 'Jan', 1500, '2010-01-01', 2)
    */
   val pracownicyRow1 = Row(
-    BodyAttribute("Nr", IntegerLiteral(1)),
-    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-    BodyAttribute("Imie", StringLiteral("Jan")),
-    BodyAttribute("Stawka", MoneyLiteral(1500)),
-    BodyAttribute("DataZatrudnienia", DateLiteral("2010-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
+    BodyAttribute(col"Nr", IntegerLiteral(1)),
+    BodyAttribute(col"Nazwisko", StringLiteral("Kowalski")),
+    BodyAttribute(col"Imie", StringLiteral("Jan")),
+    BodyAttribute(col"Stawka", MoneyLiteral(1500)),
+    BodyAttribute(col"DataZatrudnienia", DateLiteral("2010-01-01")),
+    BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2)),
   )
 
   /*
@@ -61,12 +61,12 @@ object Relations {
      (2, 'Nowak','Anna', 1600, '2012-01-01',2)
    */
   val pracownicyRow2 = Row(
-    BodyAttribute("Nr", IntegerLiteral(2)),
-    BodyAttribute("Nazwisko", StringLiteral("Nowak")),
-    BodyAttribute("Imie", StringLiteral("Anna")),
-    BodyAttribute("Stawka", MoneyLiteral(1600)),
-    BodyAttribute("DataZatrudnienia", DateLiteral("2012-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
+    BodyAttribute(col"Nr", IntegerLiteral(2)),
+    BodyAttribute(col"Nazwisko", StringLiteral("Nowak")),
+    BodyAttribute(col"Imie", StringLiteral("Anna")),
+    BodyAttribute(col"Stawka", MoneyLiteral(1600)),
+    BodyAttribute(col"DataZatrudnienia", DateLiteral("2012-01-01")),
+    BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2)),
   )
 
   /*
@@ -74,12 +74,12 @@ object Relations {
      (3, 'Wrona','Adam', 1100, '2015-01-01',2)
    */
   val pracownicyRow3 = Row(
-    BodyAttribute("Nr", IntegerLiteral(3)),
-    BodyAttribute("Nazwisko", StringLiteral("Wrona")),
-    BodyAttribute("Imie", StringLiteral("Adam")),
-    BodyAttribute("Stawka", MoneyLiteral(1100)),
-    BodyAttribute("DataZatrudnienia", DateLiteral("2015-01-01")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(2)),
+    BodyAttribute(col"Nr", IntegerLiteral(3)),
+    BodyAttribute(col"Nazwisko", StringLiteral("Wrona")),
+    BodyAttribute(col"Imie", StringLiteral("Adam")),
+    BodyAttribute(col"Stawka", MoneyLiteral(1100)),
+    BodyAttribute(col"DataZatrudnienia", DateLiteral("2015-01-01")),
+    BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2)),
   )
 
   /*
@@ -87,21 +87,21 @@ object Relations {
      (4, 'Kowalski','Jacek', 0, '2015-03-07', 1)
    */
   val pracownicyRow4 = Row(
-    BodyAttribute("Nr", IntegerLiteral(4)),
-    BodyAttribute("Nazwisko", StringLiteral("Kowalski")),
-    BodyAttribute("Imie", StringLiteral("Jacek")),
-    BodyAttribute("Stawka", MoneyLiteral(0)),
-    BodyAttribute("DataZatrudnienia", DateLiteral("2015-03-07")),
-    BodyAttribute("LiczbaDzieci", IntegerLiteral(1)),
+    BodyAttribute(col"Nr", IntegerLiteral(4)),
+    BodyAttribute(col"Nazwisko", StringLiteral("Kowalski")),
+    BodyAttribute(col"Imie", StringLiteral("Jacek")),
+    BodyAttribute(col"Stawka", MoneyLiteral(0)),
+    BodyAttribute(col"DataZatrudnienia", DateLiteral("2015-03-07")),
+    BodyAttribute(col"LiczbaDzieci", IntegerLiteral(1)),
   )
 
   val pracownicyRow5 = Row(
-    BodyAttribute("Nr", IntegerLiteral(5)),
-    BodyAttribute("Nazwisko", StringLiteral("Grzyb")),
-    BodyAttribute("Imie", StringLiteral("Tomasz")),
-    BodyAttribute("Stawka", MoneyLiteral(4567)),
-    BodyAttribute("DataZatrudnienia", DateLiteral("2013-06-10")),
-    BodyAttribute("LiczbaDzieci", NULLLiteral),
+    BodyAttribute(col"Nr", IntegerLiteral(5)),
+    BodyAttribute(col"Nazwisko", StringLiteral("Grzyb")),
+    BodyAttribute(col"Imie", StringLiteral("Tomasz")),
+    BodyAttribute(col"Stawka", MoneyLiteral(4567)),
+    BodyAttribute(col"DataZatrudnienia", DateLiteral("2013-06-10")),
+    BodyAttribute(col"LiczbaDzieci", NULLLiteral),
   )
 
   /*
@@ -119,12 +119,12 @@ object Relations {
     Nil,
     None,
     List(
-      HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
-      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
-      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
-      HeadingAttribute("Stawka", MoneyType, Nil),
-      HeadingAttribute("DataZatrudnienia", DateType, Nil),
-      HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
+      HeadingAttribute(col"Nr", IntegerType, List(PrimaryKey())),
+      HeadingAttribute(col"Nazwisko", NVarCharType(50), List(NotNULL())),
+      HeadingAttribute(col"Imie", NVarCharType(50), List(NotNULL())),
+      HeadingAttribute(col"Stawka", MoneyType, Nil),
+      HeadingAttribute(col"DataZatrudnienia", DateType, Nil),
+      HeadingAttribute(col"LiczbaDzieci", IntegerType, Nil),
     ),
     List(
       pracownicyRow1,
@@ -150,16 +150,16 @@ object Relations {
     Nil,
     None,
     List(
-      HeadingAttribute("NrPrac",
+      HeadingAttribute(col"NrPrac",
                        IntegerType,
-                       List(PrimaryKey(), ForeignKey("Nr", rel"Pracownicy", NoAction, NoAction))),
-      HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
-      HeadingAttribute("DoKiedy", DateType, Nil),
+                       List(PrimaryKey(), ForeignKey(col"Nr", rel"Pracownicy", NoAction, NoAction))),
+      HeadingAttribute(col"OdKiedy", DateType, List(PrimaryKey())),
+      HeadingAttribute(col"DoKiedy", DateType, Nil),
     ),
     List(
-      Row(BodyAttribute("NrPrac", IntegerLiteral(5)),
-          BodyAttribute("OdKiedy", DateLiteral("2010-01-01")),
-          BodyAttribute("DoKiedy", DateLiteral("2010-02-01")))
+      Row(BodyAttribute(col"NrPrac", IntegerLiteral(5)),
+          BodyAttribute(col"OdKiedy", DateLiteral("2010-01-01")),
+          BodyAttribute(col"DoKiedy", DateLiteral("2010-02-01")))
     ),
     Nil
   )
@@ -168,15 +168,15 @@ object Relations {
 
   val pracownicy2 = Relation(
     rel"Pracownicy2",
-    List("Nr"),
-    Some(Identity("Nr", 1, 1)),
+    List(col"Nr"),
+    Some(Identity(col"Nr", 1, 1)),
     List(
-      HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
-      HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
-      HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
-      HeadingAttribute("Stawka", MoneyType, Nil),
-      HeadingAttribute("DataZatrudnienia", DateType, Nil),
-      HeadingAttribute("LiczbaDzieci", IntegerType, Nil),
+      HeadingAttribute(col"Nr", IntegerType, List(PrimaryKey())),
+      HeadingAttribute(col"Nazwisko", NVarCharType(50), List(NotNULL())),
+      HeadingAttribute(col"Imie", NVarCharType(50), List(NotNULL())),
+      HeadingAttribute(col"Stawka", MoneyType, Nil),
+      HeadingAttribute(col"DataZatrudnienia", DateType, Nil),
+      HeadingAttribute(col"LiczbaDzieci", IntegerType, Nil),
     ),
     Nil,
     Nil

@@ -23,58 +23,58 @@ class IntegrationTest extends AnyFunSuite {
         Schema(Map(
           rel"Pracownicy" -> Relation(
             rel"Pracownicy",
-            List("Nr"),
+            List(col"Nr"),
             None,
             List(
-              HeadingAttribute("Nr", IntegerType, List(PrimaryKey())),
-              HeadingAttribute("Nazwisko", NVarCharType(50), List(NotNULL())),
-              HeadingAttribute("Imie", NVarCharType(50), List(NotNULL())),
-              HeadingAttribute("Stawka", IntegerType, List()),
-              HeadingAttribute("DataZatrudnienia", DateType, List()),
-              HeadingAttribute("LiczbaDzieci", IntegerType, List())
+              HeadingAttribute(col"Nr", IntegerType, List(PrimaryKey())),
+              HeadingAttribute(col"Nazwisko", NVarCharType(50), List(NotNULL())),
+              HeadingAttribute(col"Imie", NVarCharType(50), List(NotNULL())),
+              HeadingAttribute(col"Stawka", IntegerType, List()),
+              HeadingAttribute(col"DataZatrudnienia", DateType, List()),
+              HeadingAttribute(col"LiczbaDzieci", IntegerType, List())
             ),
             List(
               Row(List(
-                BodyAttribute("Nr", IntegerLiteral(3)),
-                BodyAttribute("Nazwisko", StringLiteral("Wrona")),
-                BodyAttribute("Imie", StringLiteral("Adam")),
-                BodyAttribute("Stawka", IntegerLiteral(1100)),
-                BodyAttribute("DataZatrudnienia", DateLiteral("'2015-01-01'")),
-                BodyAttribute("LiczbaDzieci", IntegerLiteral(2))
+                BodyAttribute(col"Nr", IntegerLiteral(3)),
+                BodyAttribute(col"Nazwisko", StringLiteral("Wrona")),
+                BodyAttribute(col"Imie", StringLiteral("Adam")),
+                BodyAttribute(col"Stawka", IntegerLiteral(1100)),
+                BodyAttribute(col"DataZatrudnienia", DateLiteral("'2015-01-01'")),
+                BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2))
               )),
               Row(List(
-                BodyAttribute("Nr", IntegerLiteral(2)),
-                BodyAttribute("Nazwisko", StringLiteral("Nowak")),
-                BodyAttribute("Imie", StringLiteral("Anna")),
-                BodyAttribute("Stawka", IntegerLiteral(1600)),
-                BodyAttribute("DataZatrudnienia", DateLiteral("'2012-01-01'")),
-                BodyAttribute("LiczbaDzieci", IntegerLiteral(1))
+                BodyAttribute(col"Nr", IntegerLiteral(2)),
+                BodyAttribute(col"Nazwisko", StringLiteral("Nowak")),
+                BodyAttribute(col"Imie", StringLiteral("Anna")),
+                BodyAttribute(col"Stawka", IntegerLiteral(1600)),
+                BodyAttribute(col"DataZatrudnienia", DateLiteral("'2012-01-01'")),
+                BodyAttribute(col"LiczbaDzieci", IntegerLiteral(1))
               )),
               Row(List(
-                BodyAttribute("Nr", IntegerLiteral(1)),
-                BodyAttribute("Nazwisko", StringLiteral("Kowal")),
-                BodyAttribute("Imie", StringLiteral("Piotr")),
-                BodyAttribute("Stawka", IntegerLiteral(1500)),
-                BodyAttribute("DataZatrudnienia", DateLiteral("'2010-01-01'")),
-                BodyAttribute("LiczbaDzieci", IntegerLiteral(2))
+                BodyAttribute(col"Nr", IntegerLiteral(1)),
+                BodyAttribute(col"Nazwisko", StringLiteral("Kowal")),
+                BodyAttribute(col"Imie", StringLiteral("Piotr")),
+                BodyAttribute(col"Stawka", IntegerLiteral(1500)),
+                BodyAttribute(col"DataZatrudnienia", DateLiteral("'2010-01-01'")),
+                BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2))
               ))
             ),
             Nil
           ),
           rel"Urlopy" -> Relation(
             rel"Urlopy",
-            List("NrPrac", "OdKiedy"),
+            List(col"NrPrac", col"OdKiedy"),
             None,
             List(
-              HeadingAttribute("NrPrac",
+              HeadingAttribute(col"NrPrac",
                                IntegerType,
-                               List(ForeignKey("Nr", rel"Pracownicy", NoAction, NoAction),
+                               List(ForeignKey(col"Nr", rel"Pracownicy", NoAction, NoAction),
                                     PrimaryKey())),
-              HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
-              HeadingAttribute("DoKiedy", DateType, List())
+              HeadingAttribute(col"OdKiedy", DateType, List(PrimaryKey())),
+              HeadingAttribute(col"DoKiedy", DateType, List())
             ),
             List(),
-            List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"), rel"Pracownicy" ,"Nr",NoAction,NoAction,None))
+            List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"), rel"Pracownicy" , col"Nr",NoAction,NoAction,None))
           )
         )))
     )
@@ -88,12 +88,12 @@ class IntegrationTest extends AnyFunSuite {
     assert(
       result == Right(
         RowsResult(List(Row(List(
-          BodyAttribute("Nr", IntegerLiteral(1)),
-          BodyAttribute("Nazwisko", StringLiteral("Kowal")),
-          BodyAttribute("Imie", StringLiteral("Piotr")),
-          BodyAttribute("Stawka", IntegerLiteral(1500)),
-          BodyAttribute("DataZatrudnienia", DateLiteral("'2010-01-01'")),
-          BodyAttribute("LiczbaDzieci", IntegerLiteral(2))
+          BodyAttribute(col"Nr", IntegerLiteral(1)),
+          BodyAttribute(col"Nazwisko", StringLiteral("Kowal")),
+          BodyAttribute(col"Imie", StringLiteral("Piotr")),
+          BodyAttribute(col"Stawka", IntegerLiteral(1500)),
+          BodyAttribute(col"DataZatrudnienia", DateLiteral("'2010-01-01'")),
+          BodyAttribute(col"LiczbaDzieci", IntegerLiteral(2))
         )))))
     )
   }
@@ -105,7 +105,7 @@ class IntegrationTest extends AnyFunSuite {
     } yield newSchema
     assert(
       result == Left(
-        PrimaryKeyDoesNotExist(rel"Urlopy", "NrPrac", rel"Pracownicy" , "Nr", IntegerLiteral(23416))))
+        PrimaryKeyDoesNotExist(rel"Urlopy", col"NrPrac", rel"Pracownicy" , col"Nr", IntegerLiteral(23416))))
   }
 
   test("Success when inserting existing primary key as foreign key") {
@@ -116,9 +116,9 @@ class IntegrationTest extends AnyFunSuite {
     val urlopy = result.getRelation(rel"Urlopy").map(_.body)
     assert(
       urlopy == Right(
-        List(Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
-                      BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'")),
-                      BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'")))))))
+        List(Row(List(BodyAttribute(col"NrPrac", IntegerLiteral(1)),
+                      BodyAttribute(col"OdKiedy", DateLiteral("'2015-01-01'")),
+                      BodyAttribute(col"DoKiedy", DateLiteral("'2015-01-05'")))))))
   }
 
   test("Failure when inserting duplicate primary key") {
@@ -129,8 +129,8 @@ class IntegrationTest extends AnyFunSuite {
     val result = SQLInterpreter.runFromResource("t5.sql", newSchema)
     assert(
       result == Left(
-        PrimaryKeyDuplicate(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
-                                 BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'"))))))
+        PrimaryKeyDuplicate(List(BodyAttribute(col"NrPrac", IntegerLiteral(1)),
+                                 BodyAttribute(col"OdKiedy", DateLiteral("'2015-01-01'"))))))
   }
 
   test("Success when inserting unique primary key") {
@@ -143,24 +143,24 @@ class IntegrationTest extends AnyFunSuite {
     assert(
       urlopy == Right(Relation(
         rel"Urlopy",
-        List("NrPrac", "OdKiedy"),
+        List(col"NrPrac", col"OdKiedy"),
         None,
         List(
-          HeadingAttribute("NrPrac",
+          HeadingAttribute(col"NrPrac",
                            IntegerType,
-                           List(ForeignKey("Nr", rel"Pracownicy", NoAction, NoAction), PrimaryKey())),
-          HeadingAttribute("OdKiedy", DateType, List(PrimaryKey())),
-          HeadingAttribute("DoKiedy", DateType, List())
+                           List(ForeignKey(col"Nr", rel"Pracownicy", NoAction, NoAction), PrimaryKey())),
+          HeadingAttribute(col"OdKiedy", DateType, List(PrimaryKey())),
+          HeadingAttribute(col"DoKiedy", DateType, List())
         ),
         List(
-          Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
-                   BodyAttribute("OdKiedy", DateLiteral("'2015-02-01'")),
-                   BodyAttribute("DoKiedy", DateLiteral("'2015-02-07'")))),
-          Row(List(BodyAttribute("NrPrac", IntegerLiteral(1)),
-                   BodyAttribute("OdKiedy", DateLiteral("'2015-01-01'")),
-                   BodyAttribute("DoKiedy", DateLiteral("'2015-01-05'"))))
+          Row(List(BodyAttribute(col"NrPrac", IntegerLiteral(1)),
+                   BodyAttribute(col"OdKiedy", DateLiteral("'2015-02-01'")),
+                   BodyAttribute(col"DoKiedy", DateLiteral("'2015-02-07'")))),
+          Row(List(BodyAttribute(col"NrPrac", IntegerLiteral(1)),
+                   BodyAttribute(col"OdKiedy", DateLiteral("'2015-01-01'")),
+                   BodyAttribute(col"DoKiedy", DateLiteral("'2015-01-05'"))))
         ),
-        List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"), rel"Pracownicy" ,"Nr",NoAction,NoAction,None))
+        List(PKeyRelationConstraint(List("NrPrac", "OdKiedy"),None), FKeyRelationConstraint(List("NrPrac"), rel"Pracownicy" ,col"Nr",NoAction,NoAction,None))
       )))
   }
 
@@ -170,7 +170,7 @@ class IntegrationTest extends AnyFunSuite {
       newSchema <- SQLInterpreter.runFromResource("t4.sql", schema)
     } yield newSchema
     val result = SQLInterpreter.runFromResource("t7.sql", newSchema)
-    assert(result == Left(ForeignKeyViolation(rel"Urlopy" , "NrPrac")))
+    assert(result == Left(ForeignKeyViolation(rel"Urlopy" , col"NrPrac")))
   }
 
   test("Success when deleting row with primary key not referenced in other relation") {
@@ -181,8 +181,8 @@ class IntegrationTest extends AnyFunSuite {
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t8.sql", newSchema)
     val isDeleted = result
       .getRelation(rel"Pracownicy")
-      .flatMap(_.body.traverse(_.projectEither("Nr").map(_.literal.show)))
-    assert(isDeleted.map(_.contains("2")) == Right(false))
+      .flatMap(_.body.traverse(_.projectEither(col"Nr").map(_.literal.show)))
+    assert(isDeleted.map(_.has("2")) == Right(false))
   }
 
   test("Cascade trigger when deleting row with primary key referenced in other relation") {
@@ -202,8 +202,8 @@ class IntegrationTest extends AnyFunSuite {
     } yield newSchema
     val Right(SchemaResult(result)) = SQLInterpreter.runFromResource("t10.sql", newSchema)
     val urlopyBody =
-      result.getRelation(rel"Urlopy").flatMap(_.body.traverse(_.projectEither("NrPrac")))
-    assert(urlopyBody == Right(List(BodyAttribute("NrPrac", IntegerLiteral(333)))))
+      result.getRelation(rel"Urlopy").flatMap(_.body.traverse(_.projectEither(col"NrPrac")))
+    assert(urlopyBody == Right(List(BodyAttribute(col"NrPrac", IntegerLiteral(333)))))
   }
 
   test("Failure when setting non-existing primary key as foreign key") {
@@ -214,7 +214,7 @@ class IntegrationTest extends AnyFunSuite {
     val result = SQLInterpreter.runFromResource("t11.sql", newSchema)
     assert(
       result == Left(
-        PrimaryKeyDoesNotExist(rel"Urlopy", "NrPrac", rel"Pracownicy", "Nr", IntegerLiteral(2512))))
+        PrimaryKeyDoesNotExist(rel"Urlopy", col"NrPrac", rel"Pracownicy", col"Nr", IntegerLiteral(2512))))
   }
 
   test("Column alias") {
@@ -224,12 +224,12 @@ class IntegrationTest extends AnyFunSuite {
     } yield result
     assert(
       rows == List(
-        Row(List(BodyAttribute("Alias", StringLiteral("Wrona")),
-                 BodyAttribute("Imie", StringLiteral("Adam")))),
-        Row(List(BodyAttribute("Alias", StringLiteral("Nowak")),
-                 BodyAttribute("Imie", StringLiteral("Anna")))),
-        Row(List(BodyAttribute("Alias", StringLiteral("Kowal")),
-                 BodyAttribute("Imie", StringLiteral("Piotr"))))
+        Row(List(BodyAttribute(col"Alias", StringLiteral("Wrona")),
+                 BodyAttribute(col"Imie", StringLiteral("Adam")))),
+        Row(List(BodyAttribute(col"Alias", StringLiteral("Nowak")),
+                 BodyAttribute(col"Imie", StringLiteral("Anna")))),
+        Row(List(BodyAttribute(col"Alias", StringLiteral("Kowal")),
+                 BodyAttribute(col"Imie", StringLiteral("Piotr"))))
       ))
   }
 
@@ -240,10 +240,10 @@ class IntegrationTest extends AnyFunSuite {
     } yield result
     assert(
       rows == List(
-        Row(List(BodyAttribute("Imie", StringLiteral("Anna")),
-                 BodyAttribute("Nazwisko", StringLiteral("Nowak")))),
-        Row(List(BodyAttribute("Imie", StringLiteral("Adam")),
-                 BodyAttribute("Nazwisko", StringLiteral("Wrona"))))
+        Row(List(BodyAttribute(col"Imie", StringLiteral("Anna")),
+                 BodyAttribute(col"Nazwisko", StringLiteral("Nowak")))),
+        Row(List(BodyAttribute(col"Imie", StringLiteral("Adam")),
+                 BodyAttribute(col"Nazwisko", StringLiteral("Wrona"))))
       ))
   }
 
@@ -253,16 +253,16 @@ class IntegrationTest extends AnyFunSuite {
       schema == Schema(
         Map(rel"Dbo" -> Relation(
           rel"Dbo",
-          List("ColumnA"),
+          List(col"ColumnA"),
           None,
           List(
-            HeadingAttribute("ColumnA",
+            HeadingAttribute(col"ColumnA",
                              IntegerType,
-                             List(ForeignKey("B", rel"TAB", NoAction, NoAction, Some("FKey")),
+                             List(ForeignKey(col"B", rel"TAB", NoAction, NoAction, Some("FKey")),
                                   PrimaryKey(Some("Test")),
                                   Unique(Some("ColumnAUnique"))))),
           List(),
-          List(PKeyRelationConstraint(List("ColumnA"),Some("Test")), FKeyRelationConstraint(List("ColumnA"), rel"TAB","B",NoAction,NoAction,Some("FKey")))
+          List(PKeyRelationConstraint(List("ColumnA"),Some("Test")), FKeyRelationConstraint(List("ColumnA"), rel"TAB",col"B",NoAction,NoAction,Some("FKey")))
         )))
     )
   }
@@ -273,18 +273,18 @@ class IntegrationTest extends AnyFunSuite {
       schema == Schema(
         Map(rel"Test" -> Relation(
           rel"Test",
-          List("PKey"),
+          List(col"PKey"),
           None,
           List(
-            HeadingAttribute("D", IntegerType, List(NULL(None))),
-            HeadingAttribute("PKey", IntegerType, List(PrimaryKey(None))),
-            HeadingAttribute("B", DateType, List()),
-            HeadingAttribute("C",
+            HeadingAttribute(col"D", IntegerType, List(NULL(None))),
+            HeadingAttribute(col"PKey", IntegerType, List(PrimaryKey(None))),
+            HeadingAttribute(col"B", DateType, List()),
+            HeadingAttribute(col"C",
                              IntegerType,
-                             List(ForeignKey("X", rel"TestB", NoAction, Cascade, Some("FKey"))))
+                             List(ForeignKey(col"X", rel"TestB", NoAction, Cascade, Some("FKey"))))
           ),
           List(),
-          List(FKeyRelationConstraint(List("C"), rel"TestB","X",Cascade,NoAction,Some("FKey")))
+          List(FKeyRelationConstraint(List("C"), rel"TestB",col"X",Cascade,NoAction,Some("FKey")))
         )))
     )
   }
@@ -312,9 +312,9 @@ class IntegrationTest extends AnyFunSuite {
     } yield result
     assert(
       rows == List(
-        Row(List(BodyAttribute("CustomerID", StringLiteral("WOLZA")),
-                 BodyAttribute("CompanyName", StringLiteral("Wolski  Zajazd")),
-                 BodyAttribute("Region", NULLLiteral)))))
+        Row(List(BodyAttribute(col"CustomerID", StringLiteral("WOLZA")),
+                 BodyAttribute(col"CompanyName", StringLiteral("Wolski  Zajazd")),
+                 BodyAttribute(col"Region", NULLLiteral)))))
   }
 
   test("SELECT * FROM Products WHERE UnitPrice >= 20.0 AND UnitPrice < 30.0") {
@@ -356,8 +356,8 @@ class IntegrationTest extends AnyFunSuite {
     } yield result
     assert(
       rows.head
-        .projectOption("Country")
-        .contains(BodyAttribute("Country", StringLiteral("Brazil"))))
+        .projectOption(col"Country")
+        .has(BodyAttribute(col"Country", StringLiteral("Brazil"))))
   }
 
   test("SELECT AVG(UnitPrice) FROM Products") {
@@ -366,7 +366,7 @@ class IntegrationTest extends AnyFunSuite {
       result <- SQLInterpreter.runFromResource("t23.sql", schema)
     } yield result
     assert(
-      rows == List(Row(List(BodyAttribute("Avg(UnitPrice)", RealLiteral(28.866363636363637))))))
+      rows == List(Row(List(BodyAttribute(col"Avg(UnitPrice)", RealLiteral(28.866363636363637))))))
   }
 
   test("SELECT CategoryID, AVG(UnitPrice) FROM Products GROUP BY CategoryID") {
@@ -377,28 +377,28 @@ class IntegrationTest extends AnyFunSuite {
     assert(
       rows.toSet ==
         Set(
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(8)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(20.6825)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(1)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(37.979166666666664)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(4)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(28.73)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(3)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(25.16)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(5)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(20.25)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(6)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(54.00666666666667)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(2)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(23.0625)))),
-          Row(List(BodyAttribute("CategoryID", IntegerLiteral(7)),
-                   BodyAttribute("Avg(UnitPrice)", RealLiteral(32.37))))
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(8)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(20.6825)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(1)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(37.979166666666664)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(4)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(28.73)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(3)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(25.16)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(5)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(20.25)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(6)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(54.00666666666667)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(2)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(23.0625)))),
+          Row(List(BodyAttribute(col"CategoryID", IntegerLiteral(7)),
+                   BodyAttribute(col"Avg(UnitPrice)", RealLiteral(32.37))))
         ))
   }
 
   test("SELECT 1 + 2 * 3 - 4") {
     val Right(RowsResult(rows)) = SQLInterpreter.runFromResource("t25.sql")
-    assert(rows == List(Row(List(BodyAttribute("1+2*3-4", IntegerLiteral(3))))))
+    assert(rows == List(Row(List(BodyAttribute(col"1+2*3-4", IntegerLiteral(3))))))
   }
 
   test("SELECT EmployeeID * 2 FROM Employees WHERE EmployeeID = 5") {
@@ -406,7 +406,7 @@ class IntegrationTest extends AnyFunSuite {
       schema <- northwind
       result <- SQLInterpreter.runFromResource("t26.sql", schema)
     } yield result
-    assert(rows == List(Row(List(BodyAttribute("EmployeeID*2", IntegerLiteral(10))))))
+    assert(rows == List(Row(List(BodyAttribute(col"EmployeeID*2", IntegerLiteral(10))))))
   }
 
   test(
@@ -420,44 +420,44 @@ class IntegrationTest extends AnyFunSuite {
       rows.toSet ==
         Set(
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(7)),
-            BodyAttribute("CategoryName", StringLiteral("Produce")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(32.37))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(7)),
+            BodyAttribute(col"CategoryName", StringLiteral("Produce")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(32.37))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(1)),
-            BodyAttribute("CategoryName", StringLiteral("Beverages")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(37.979166666666664))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(1)),
+            BodyAttribute(col"CategoryName", StringLiteral("Beverages")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(37.979166666666664))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(5)),
-            BodyAttribute("CategoryName", StringLiteral("Grains/Cereals")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(20.25))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(5)),
+            BodyAttribute(col"CategoryName", StringLiteral("Grains/Cereals")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(20.25))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(8)),
-            BodyAttribute("CategoryName", StringLiteral("Seafood")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(20.6825))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(8)),
+            BodyAttribute(col"CategoryName", StringLiteral("Seafood")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(20.6825))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(6)),
-            BodyAttribute("CategoryName", StringLiteral("Meat/Poultry")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(54.00666666666667))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(6)),
+            BodyAttribute(col"CategoryName", StringLiteral("Meat/Poultry")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(54.00666666666667))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(4)),
-            BodyAttribute("CategoryName", StringLiteral("Dairy Products")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(28.73))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(4)),
+            BodyAttribute(col"CategoryName", StringLiteral("Dairy Products")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(28.73))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(3)),
-            BodyAttribute("CategoryName", StringLiteral("Confections")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(25.16))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(3)),
+            BodyAttribute(col"CategoryName", StringLiteral("Confections")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(25.16))
           )),
           Row(List(
-            BodyAttribute("P.CategoryID", IntegerLiteral(2)),
-            BodyAttribute("CategoryName", StringLiteral("Condiments")),
-            BodyAttribute("Avg(UnitPrice)", RealLiteral(23.0625))
+            BodyAttribute(col"P.CategoryID", IntegerLiteral(2)),
+            BodyAttribute(col"CategoryName", StringLiteral("Condiments")),
+            BodyAttribute(col"Avg(UnitPrice)", RealLiteral(23.0625))
           ))
         ))
   }
@@ -468,7 +468,7 @@ class IntegrationTest extends AnyFunSuite {
       result <- SQLInterpreter.runFromResource("t28.sql", schema)
     } yield result
     assert(
-      rows == List(Row(List(BodyAttribute("Count(*)", IntegerLiteral(91)))))
+      rows == List(Row(List(BodyAttribute(col"Count(*)", IntegerLiteral(91)))))
     )
   }
 
@@ -544,10 +544,10 @@ class IntegrationTest extends AnyFunSuite {
     assert(
       rows ==
         List(
-          Row(List(BodyAttribute("Country", StringLiteral("Poland")),
-                   BodyAttribute("Count(*)", IntegerLiteral(1)))),
-          Row(List(BodyAttribute("Country", StringLiteral("Germany")),
-                   BodyAttribute("Count(*)", IntegerLiteral(11))))
+          Row(List(BodyAttribute(col"Country", StringLiteral("Poland")),
+                   BodyAttribute(col"Count(*)", IntegerLiteral(1)))),
+          Row(List(BodyAttribute(col"Country", StringLiteral("Germany")),
+                   BodyAttribute(col"Count(*)", IntegerLiteral(11))))
         ))
   }
 
@@ -560,29 +560,29 @@ class IntegrationTest extends AnyFunSuite {
       rows.toSet ==
         Set(
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(8)),
-                 BodyAttribute("AveragePrice", RealLiteral(20.6825)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(8)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(20.6825)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(1)),
-                 BodyAttribute("AveragePrice", RealLiteral(37.979166666666664)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(1)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(37.979166666666664)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(4)),
-                 BodyAttribute("AveragePrice", RealLiteral(28.73)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(4)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(28.73)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(3)),
-                 BodyAttribute("AveragePrice", RealLiteral(25.16)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(3)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(25.16)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(5)),
-                 BodyAttribute("AveragePrice", RealLiteral(20.25)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(5)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(20.25)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(6)),
-                 BodyAttribute("AveragePrice", RealLiteral(54.00666666666667)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(6)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(54.00666666666667)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(2)),
-                 BodyAttribute("AveragePrice", RealLiteral(23.0625)))),
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(2)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(23.0625)))),
           Row(
-            List(BodyAttribute("CategoryID", IntegerLiteral(7)),
-                 BodyAttribute("AveragePrice", RealLiteral(32.37))))
+            List(BodyAttribute(col"CategoryID", IntegerLiteral(7)),
+                 BodyAttribute(col"AveragePrice", RealLiteral(32.37))))
         )
     )
   }

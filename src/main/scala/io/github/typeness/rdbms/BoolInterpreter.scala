@@ -1,5 +1,6 @@
 package io.github.typeness.rdbms
 
+
 import cats.instances.list._
 import cats.instances.either._
 import cats.syntax.traverse._
@@ -74,7 +75,7 @@ object BoolInterpreter {
       for {
         lhs <- getLiteral(left, row)
         rhs <- getLiteral(right, row)
-        conditionResult = Literal.compare(lhs, rhs).map(condition).contains(true)
+        conditionResult = Literal.compare(lhs, rhs).map(condition).has(true)
       } yield if (conditionResult) Some(row) else None
     }
     filtered.sequence.map(_.flatten)
@@ -84,11 +85,11 @@ object BoolInterpreter {
   def getLiteral(expression: Projection, row: Row): Either[SQLError, Literal] =
     expression match {
       case acc: Accessor =>
-        getLiteral(Var(acc.show), row)
+        getLiteral(Var(acc.toAttributeName), row)
       case Alias(proj, _)  =>
         getLiteral(proj, row)
       case agg: Aggregate =>
-        getLiteral(Var(agg.show), row)
+        getLiteral(Var(agg.toAttributeName), row)
       case Var(name) =>
         row.projectEither(name).map(_.literal)
       case literal: Literal =>

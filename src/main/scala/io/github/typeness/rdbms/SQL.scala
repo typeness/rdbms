@@ -26,7 +26,7 @@ sealed trait AlterTable extends Definition {
   def relation: RelationName
 }
 case class AlterAddColumn(relation: RelationName, headingAttribute: HeadingAttribute) extends AlterTable
-case class AlterDropColumn(relation: RelationName, column: String) extends AlterTable
+case class AlterDropColumn(relation: RelationName, column: AttributeName) extends AlterTable
 case class AlterAddConstraint(relation: RelationName, constraint: RelationConstraint) extends AlterTable
 case class AlterDropConstraint(relation: RelationName, constraint: String) extends AlterTable
 
@@ -44,7 +44,7 @@ case class Select(
     from: Option[RelationName],
     joins: List[Join],
     where: Option[Bool],
-    groupBy: List[String],
+    groupBy: List[AttributeName],
     having: Option[Bool],
     order: List[Order],
     distinct: Boolean = false,
@@ -64,10 +64,10 @@ case class Intersect(left: Query, right: Query) extends Query
 case class Except(left: Query, right: Query) extends Query
 
 sealed trait Order {
-  def name: String
+  def name: AttributeName
 }
-case class Ascending(name: String) extends Order
-case class Descending(name: String) extends Order
+case class Ascending(name: AttributeName) extends Order
+case class Descending(name: AttributeName) extends Order
 
 sealed trait Bool {
   def show: String
@@ -87,13 +87,13 @@ case class LessOrEquals(left: Projection, right: Projection) extends Bool {
 case class Less(left: Projection, right: Projection) extends Bool {
   override def show: String = str"${left.show}<${right.show}"
 }
-case class IsNULL(name: String) extends Bool {
+case class IsNULL(name: AttributeName) extends Bool {
   override def show: String = "IS NULL"
 }
-case class IsNotNULL(name: String) extends Bool {
+case class IsNotNULL(name: AttributeName) extends Bool {
   override def show: String = "IS NOT NULL"
 }
-case class Between(name: String, lhs: Projection, rhs: Projection) extends Bool {
+case class Between(name: AttributeName, lhs: Projection, rhs: Projection) extends Bool {
   override def show: String = str"BETWEEN ${lhs.show} AND ${rhs.show}"
 }
 case class And(lhs: Bool, rhs: Bool) extends Bool {
@@ -102,7 +102,7 @@ case class And(lhs: Bool, rhs: Bool) extends Bool {
 case class Or(lhs: Bool, rhs: Bool) extends Bool {
   override def show: String = str"${lhs.show} OR ${rhs.show}"
 }
-case class Like(name: String, text: String) extends Bool {
+case class Like(name: AttributeName, text: String) extends Bool {
   override def show: String = str"LIKE $text"
 }
 case class Not(value: Bool) extends Bool {

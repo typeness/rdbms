@@ -8,7 +8,7 @@ class JoinsTest extends AnyFunSuite {
 
   test("CROSS JOIN on 2 relations") {
     val join = Select(
-      List(Var("a"), Var("b")),
+      List(Var(col"a"), Var(col"b")),
       Some(rel"RelationA"),
       List(CrossJoin(rel"RelationB")),
       None,
@@ -17,15 +17,15 @@ class JoinsTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(4)))
+      Row(BodyAttribute(col"a", IntegerLiteral(1)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)), BodyAttribute(col"b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)), BodyAttribute(col"b", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(4)))
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -33,7 +33,7 @@ class JoinsTest extends AnyFunSuite {
 
   test("CROSS JOIN on 3 relations") {
     val join = Select(
-      List(Var("a"), Var("b"), Var("c")),
+      List(Var(col"a"), Var(col"b"), Var(col"c")),
       Some(rel"RelationA"),
       List(CrossJoin(rel"RelationB"), CrossJoin(rel"RelationC")),
       None,
@@ -42,87 +42,87 @@ class JoinsTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(5))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", IntegerLiteral(5))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -130,17 +130,17 @@ class JoinsTest extends AnyFunSuite {
 
   test("INNER JOIN on 2 relations") {
     val join = Select(
-      List(Var("a"), Var("b")),
+      List(Var(col"a"), Var(col"b")),
       Some(rel"RelationA"),
-      List(InnerJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
+      List(InnerJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b")))),
       None,
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(3))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -148,11 +148,11 @@ class JoinsTest extends AnyFunSuite {
 
   test("INNER JOIN on 3 relations") {
     val join = Select(
-      List(Var("a"), Var("b"), Var("c")),
+      List(Var(col"a"), Var(col"b"), Var(col"c")),
       Some(rel"RelationA"),
       List(
-        InnerJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
-        InnerJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
+        InnerJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b"))),
+        InnerJoin(rel"RelationC", Equals(Var(col"a"), Var(col"c"))),
       ),
       None,
       Nil,
@@ -160,9 +160,9 @@ class JoinsTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -170,18 +170,18 @@ class JoinsTest extends AnyFunSuite {
 
   test("LEFT OUTER JOIN on 2 relations") {
     val join = Select(
-      List(Var("a"), Var("b")),
+      List(Var(col"a"), Var(col"b")),
       Some(rel"RelationA"),
-      List(LeftOuterJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
+      List(LeftOuterJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b")))),
       None,
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)), BodyAttribute(col"b", NULLLiteral)),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(3))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -189,11 +189,11 @@ class JoinsTest extends AnyFunSuite {
 
   test("LEFT OUTER JOIN on 3 relations") {
     val join = Select(
-      List(Var("a"), Var("b"), Var("c")),
+      List(Var(col"a"), Var(col"b"), Var(col"c")),
       Some(rel"RelationA"),
       List(
-        LeftOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
-        LeftOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
+        LeftOuterJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b"))),
+        LeftOuterJoin(rel"RelationC", Equals(Var(col"a"), Var(col"c"))),
       ),
       None,
       Nil,
@@ -201,15 +201,15 @@ class JoinsTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", NULLLiteral),
-          BodyAttribute("c", NULLLiteral)),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", NULLLiteral)),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", NULLLiteral),
+          BodyAttribute(col"c", NULLLiteral)),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", NULLLiteral)),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -217,18 +217,18 @@ class JoinsTest extends AnyFunSuite {
 
   test("RIGHT OUTER JOIN on 2 relations") {
     val join = Select(
-      List(Var("a"), Var("b")),
+      List(Var(col"a"), Var(col"b")),
       Some(rel"RelationA"),
-      List(RightOuterJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
+      List(RightOuterJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b")))),
       None,
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
-      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", NULLLiteral), BodyAttribute(col"b", IntegerLiteral(4))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -236,11 +236,11 @@ class JoinsTest extends AnyFunSuite {
 
   test("RIGHT OUTER JOIN on 3 relations") {
     val join = Select(
-      List(Var("a"), Var("b"), Var("c")),
+      List(Var(col"a"), Var(col"b"), Var(col"c")),
       Some(rel"RelationA"),
       List(
-        RightOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
-        RightOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
+        RightOuterJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b"))),
+        RightOuterJoin(rel"RelationC", Equals(Var(col"a"), Var(col"c"))),
       ),
       None,
       Nil,
@@ -248,15 +248,15 @@ class JoinsTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", NULLLiteral),
-          BodyAttribute("b", NULLLiteral),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", NULLLiteral),
-          BodyAttribute("b", NULLLiteral),
-          BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", NULLLiteral),
+          BodyAttribute(col"b", NULLLiteral),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", NULLLiteral),
+          BodyAttribute(col"b", NULLLiteral),
+          BodyAttribute(col"c", IntegerLiteral(5))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -264,19 +264,19 @@ class JoinsTest extends AnyFunSuite {
 
   test("FULL OUTER JOIN on 2 relations") {
     val join = Select(
-      List(Var("a"), Var("b")),
+      List(Var(col"a"), Var(col"b")),
       Some(rel"RelationA"),
-      List(FullOuterJoin(rel"RelationB", Equals(Var("a"), Var("b")))),
+      List(FullOuterJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b")))),
       None,
       Nil,
       None,
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(1)), BodyAttribute("b", NULLLiteral)),
-      Row(BodyAttribute("a", IntegerLiteral(2)), BodyAttribute("b", IntegerLiteral(2))),
-      Row(BodyAttribute("a", IntegerLiteral(3)), BodyAttribute("b", IntegerLiteral(3))),
-      Row(BodyAttribute("a", NULLLiteral), BodyAttribute("b", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)), BodyAttribute(col"b", NULLLiteral)),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)), BodyAttribute(col"b", IntegerLiteral(2))),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)), BodyAttribute(col"b", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", NULLLiteral), BodyAttribute(col"b", IntegerLiteral(4))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
@@ -284,11 +284,11 @@ class JoinsTest extends AnyFunSuite {
 
   test("FULL OUTER JOIN on 3 relations") {
     val join = Select(
-      List(Var("a"), Var("b"), Var("c")),
+      List(Var(col"a"), Var(col"b"), Var(col"c")),
       Some(rel"RelationA"),
       List(
-        FullOuterJoin(rel"RelationB", Equals(Var("a"), Var("b"))),
-        FullOuterJoin(rel"RelationC", Equals(Var("a"), Var("c"))),
+        FullOuterJoin(rel"RelationB", Equals(Var(col"a"), Var(col"b"))),
+        FullOuterJoin(rel"RelationC", Equals(Var(col"a"), Var(col"c"))),
       ),
       None,
       Nil,
@@ -296,24 +296,24 @@ class JoinsTest extends AnyFunSuite {
       Nil
     )
     val expected = List(
-      Row(BodyAttribute("a", IntegerLiteral(1)),
-          BodyAttribute("b", NULLLiteral),
-          BodyAttribute("c", NULLLiteral)),
-      Row(BodyAttribute("a", IntegerLiteral(2)),
-          BodyAttribute("b", IntegerLiteral(2)),
-          BodyAttribute("c", NULLLiteral)),
-      Row(BodyAttribute("a", NULLLiteral),
-          BodyAttribute("b", IntegerLiteral(4)),
-          BodyAttribute("c", NULLLiteral)),
-      Row(BodyAttribute("a", IntegerLiteral(3)),
-          BodyAttribute("b", IntegerLiteral(3)),
-          BodyAttribute("c", IntegerLiteral(3))),
-      Row(BodyAttribute("a", NULLLiteral),
-          BodyAttribute("b", NULLLiteral),
-          BodyAttribute("c", IntegerLiteral(4))),
-      Row(BodyAttribute("a", NULLLiteral),
-          BodyAttribute("b", NULLLiteral),
-          BodyAttribute("c", IntegerLiteral(5))),
+      Row(BodyAttribute(col"a", IntegerLiteral(1)),
+          BodyAttribute(col"b", NULLLiteral),
+          BodyAttribute(col"c", NULLLiteral)),
+      Row(BodyAttribute(col"a", IntegerLiteral(2)),
+          BodyAttribute(col"b", IntegerLiteral(2)),
+          BodyAttribute(col"c", NULLLiteral)),
+      Row(BodyAttribute(col"a", NULLLiteral),
+          BodyAttribute(col"b", IntegerLiteral(4)),
+          BodyAttribute(col"c", NULLLiteral)),
+      Row(BodyAttribute(col"a", IntegerLiteral(3)),
+          BodyAttribute(col"b", IntegerLiteral(3)),
+          BodyAttribute(col"c", IntegerLiteral(3))),
+      Row(BodyAttribute(col"a", NULLLiteral),
+          BodyAttribute(col"b", NULLLiteral),
+          BodyAttribute(col"c", IntegerLiteral(4))),
+      Row(BodyAttribute(col"a", NULLLiteral),
+          BodyAttribute(col"b", NULLLiteral),
+          BodyAttribute(col"c", IntegerLiteral(5))),
     )
     val result = QueryBuilder.run(join, schemaABC)
     assert(result == Right(expected))
