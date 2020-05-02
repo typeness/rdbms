@@ -93,7 +93,6 @@ object Literal {
     implicitly[Ordering[String]].compare(lhs.value, rhs.value)
   def comparison(lhs: DateLiteral, rhs: DateLiteral): Int =
     implicitly[Ordering[String]].compare(lhs.value, rhs.value)
-  def comparison(lhs: NULLLiteral.type, rhs: NULLLiteral.type): Int = -1
   def comparison(lhs: RealLiteral, rhs: RealLiteral): Int =
     Ordering.Double.TotalOrdering.compare(lhs.value, rhs.value)
 }
@@ -131,7 +130,7 @@ case class Avg(argument: String) extends Aggregate {
       count <- Count(argument).eval(literals)
     } yield
       sum match {
-        case IntegerLiteral(value) => RealLiteral(value / count.value)
+        case IntegerLiteral(value) => RealLiteral(value.toDouble / count.value)
         case RealLiteral(value)    => RealLiteral(value / count.value)
       }
   }
