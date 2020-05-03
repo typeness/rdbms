@@ -8,7 +8,6 @@ class SchemaSerializerToSQLTest extends AnyFunSuite {
     for {
       schema <- createSchemaFromFile("northwind.sql")
       serialized = SchemaSerializerToSQL.serialize(schema).mkString("")
-      _ = println(serialized)
       schema2 <- createSchemaFromSQL(serialized)
     } yield assert(schema2 == schema)
   }
