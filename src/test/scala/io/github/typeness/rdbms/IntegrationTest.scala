@@ -1,6 +1,4 @@
 package io.github.typeness.rdbms
-import cats.instances.either._
-import cats.instances.list._
 import cats.syntax.traverse._
 import io.github.typeness.rdbms.TestUtils._
 import org.scalatest.funsuite.AnyFunSuite

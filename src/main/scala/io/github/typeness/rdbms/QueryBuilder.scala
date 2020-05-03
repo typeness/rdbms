@@ -1,7 +1,5 @@
 package io.github.typeness.rdbms
 
-import cats.instances.list._
-import cats.instances.either._
 import cats.syntax.traverse._
 import cats.syntax.either._
 import cats.syntax.foldable._

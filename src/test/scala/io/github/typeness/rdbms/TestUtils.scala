@@ -2,8 +2,6 @@ package io.github.typeness.rdbms
 
 import fastparse.Parsed
 import cats.syntax.foldable._
-import cats.instances.list._
-import cats.instances.either._
 
 object TestUtils extends App {
   def createSchemaFromFile(source: String): Either[SQLError, Schema] =

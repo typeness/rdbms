@@ -1,8 +1,6 @@
 package io.github.typeness.rdbms
 
 
-import cats.instances.list._
-import cats.instances.either._
 import cats.syntax.traverse._
 
 object BoolInterpreter {

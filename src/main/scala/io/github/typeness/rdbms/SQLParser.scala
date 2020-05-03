@@ -3,7 +3,6 @@ package io.github.typeness.rdbms
 import fastparse._
 import NoWhitespace._
 import cats.syntax.foldable._
-import cats.instances.list._
 
 object SQLParser {
 

@@ -18,5 +18,5 @@ scalacOptions ++= Seq(
 
 
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.1"
-libraryDependencies += "org.typelevel" %% "cats-core" % "2.1.1"
+libraryDependencies += "org.typelevel" %% "cats-core" % "2.2.0-M1"
 libraryDependencies += "com.lihaoyi" %% "fastparse" % "2.3.0"
