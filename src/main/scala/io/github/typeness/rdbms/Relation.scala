@@ -62,7 +62,7 @@ case class Relation(name: RelationName,
     })
   lazy val getForeignKeys: List[(AttributeName, ForeignKey)] =
     heading.collect {
-      case attribute: Attribute
+      case attribute: HeadingAttribute
           if attribute.constraints.collect { case key: ForeignKey => key }.nonEmpty =>
         (attribute.name, attribute.constraints.collect { case key: ForeignKey => key }.head)
     }
