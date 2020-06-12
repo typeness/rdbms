@@ -1,8 +1,19 @@
 package io.github.typeness.rdbms
 
+import upickle.default._
+
 sealed trait Projection {
   def show: String
   def toAttributeName: AttributeName
+}
+
+object Projection {
+  implicit val projectionReadWriter: ReadWriter[Projection] = ReadWriter.merge(
+    macroRW[Var],
+    macroRW[Accessor],
+    macroRW[Alias],
+    Literal.literalReadWriter
+  )
 }
 
 case class Var(name: AttributeName) extends Projection {
@@ -26,6 +37,13 @@ sealed trait Literal extends Projection {
 }
 
 sealed trait NumericLiteral extends Literal
+
+object NumericLiteral {
+  implicit val numericLiteral: ReadWriter[NumericLiteral] = ReadWriter.merge(
+    macroRW[IntegerLiteral],
+    macroRW[RealLiteral],
+  )
+}
 
 case class IntegerLiteral(value: Int) extends NumericLiteral {
   override def typeOf: AnyType = IntegerType
@@ -64,6 +82,14 @@ case object NULLLiteral extends Literal {
 }
 
 object Literal {
+
+  implicit val literalReadWriter: ReadWriter[Literal] = ReadWriter.merge(
+    NumericLiteral.numericLiteral,
+    macroRW[StringLiteral],
+    macroRW[DateLiteral],
+    macroRW[MoneyLiteral],
+    macroRW[NULLLiteral.type],
+  )
 
   def compare[A >: Literal](lhs: Literal, rhs: Literal): Either[SQLError, Int] = {
     if (lhs.typeOf != rhs.typeOf) Left(TypeMismatch(lhs.typeOf, rhs.typeOf, lhs))

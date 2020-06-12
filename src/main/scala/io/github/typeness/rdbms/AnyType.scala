@@ -1,7 +1,26 @@
 package io.github.typeness.rdbms
 
+import upickle.default._
+
 sealed trait AnyType {
   def show: String
+}
+
+object AnyType {
+  implicit val anyTypeReadWriter: ReadWriter[AnyType] = ReadWriter.merge(
+    macroRW[IntegerType.type],
+    macroRW[RealType.type],
+    macroRW[DateType.type],
+    macroRW[NVarCharType],
+    macroRW[CharType],
+    macroRW[NullType.type],
+    macroRW[MoneyType.type],
+    macroRW[BitType.type],
+    macroRW[DecimalType],
+    macroRW[TinyIntType.type],
+    macroRW[ImageType.type],
+    macroRW[NTextType.type],
+  )
 }
 
 case object IntegerType extends AnyType {

@@ -1,9 +1,26 @@
 package io.github.typeness.rdbms
 
+import upickle.default._
+
 sealed trait ColumnConstraint extends Product with Serializable {
   def name: Option[String]
   def show: String
 }
+
+object ColumnConstraint {
+  implicit val columnConstraintReadWriter: ReadWriter[ColumnConstraint] = ReadWriter.merge(
+    macroRW[AttributeIdentity],
+    macroRW[Unique],
+    macroRW[NotNULL],
+    macroRW[NotNULL],
+    macroRW[NULL],
+    macroRW[PrimaryKey],
+    macroRW[Default],
+    macroRW[Check],
+    macroRW[ForeignKey]
+  )
+}
+
 case class AttributeIdentity(name: Option[String], current: Int, step: Int)
     extends ColumnConstraint {
   def toIdentity(attributeName: AttributeName ): Identity = Identity(attributeName, current, step)
@@ -41,6 +58,16 @@ case class ForeignKey(primaryKeyName: AttributeName,
 
 sealed trait PrimaryKeyTrigger {
 }
+
+object PrimaryKeyTrigger {
+  implicit val primaryKeyTriggerReadWriter: ReadWriter[PrimaryKeyTrigger] = ReadWriter.merge(
+    macroRW[NoAction.type],
+    macroRW[Cascade.type],
+    macroRW[SetNULL.type],
+    macroRW[SetDefault.type]
+  )
+}
+
 case object NoAction extends PrimaryKeyTrigger
 case object Cascade extends PrimaryKeyTrigger
 case object SetNULL extends PrimaryKeyTrigger
@@ -51,6 +78,16 @@ sealed trait RelationConstraint {
   def constraintName: Option[String]
   def toColumnConstraint: ColumnConstraint
 }
+
+object RelationConstraint {
+  implicit val relationConstraintReadWriter: ReadWriter[RelationConstraint] = ReadWriter.merge(
+    macroRW[PKeyRelationConstraint],
+    macroRW[FKeyRelationConstraint],
+    macroRW[DefaultRelationConstraint],
+    macroRW[CheckRelationConstraint]
+  )
+}
+
 case class PKeyRelationConstraint(names: List[String], constraintName: Option[String] = None)
     extends RelationConstraint {
   override def toColumnConstraint: ColumnConstraint = PrimaryKey(constraintName)

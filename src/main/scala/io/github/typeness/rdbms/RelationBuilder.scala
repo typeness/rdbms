@@ -115,9 +115,9 @@ object RelationBuilder extends BuilderUtils {
       case Nil =>
         Right(create.relationConstraints.foldLeft(create.attributes) {
           case (attributes, pKey @ PKeyRelationConstraint(names, _)) =>
-            updateHeader(names.map(AttributeName), attributes, pKey.toColumnConstraint)
+            updateHeader(names.map(AttributeName(_)), attributes, pKey.toColumnConstraint)
           case (attributes, fKey @ FKeyRelationConstraint(names, _, _, _, _, _)) =>
-            updateHeader(names.map(AttributeName), attributes, fKey.toColumnConstraint)
+            updateHeader(names.map(AttributeName(_)), attributes, fKey.toColumnConstraint)
           case (attributes, _) => attributes
         })
     }

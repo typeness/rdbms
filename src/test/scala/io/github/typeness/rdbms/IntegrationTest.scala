@@ -5,9 +5,9 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class IntegrationTest extends AnyFunSuite {
 
-  private lazy val pracownicyUrlopy = createSchemaFromFile("pracownicyUrlopySchema.sql")
-  private lazy val pracownicyUrlopy2 = createSchemaFromFile("pracownicyUrlopySchema2.sql")
-  private lazy val northwind = createSchemaFromFile("northwind.sql")
+  private lazy val pracownicyUrlopy = readFromSQLFile("pracownicyUrlopySchema.sql")
+  private lazy val pracownicyUrlopy2 = readFromSQLFile("pracownicyUrlopySchema2.sql")
+  private lazy val northwind = readFromSQLFile("northwind.sql")
 
   test("Create empty schema") {
     val Right(SchemaResult(schema)) = SQLInterpreter.runFromResource("empty.sql")
@@ -246,7 +246,7 @@ class IntegrationTest extends AnyFunSuite {
   }
 
   test("Named constraints") {
-    val Right(schema) = createSchemaFromFile("t13.sql")
+    val Right(schema) = readFromSQLFile("t13.sql")
     assert(
       schema == Schema(
         Map(rel"Dbo" -> Relation(
@@ -266,7 +266,7 @@ class IntegrationTest extends AnyFunSuite {
   }
 
   test("ALTER TABLE") {
-    val Right(schema) = createSchemaFromFile("t14.sql")
+    val Right(schema) = readFromSQLFile("t14.sql")
     assert(
       schema == Schema(
         Map(rel"Test" -> Relation(

@@ -1,12 +1,19 @@
 package io.github.typeness.rdbms
 
 import cats.syntax.either._
+import upickle.default._
 
 case class Identity(name: AttributeName, current: Int, step: Int)
+
+object Identity {
+  implicit val identityReadWriter: ReadWriter[Identity] = macroRW
+}
 
 object Schema {
   def apply(relations: Relation*): Schema =
     Schema(relations.map(relation => (relation.name, relation)).toMap)
+
+  implicit val schemaReadWriter: ReadWriter[Schema] = macroRW
 }
 
 case class Schema(relations: Map[RelationName, Relation]) {
@@ -26,6 +33,7 @@ case class Schema(relations: Map[RelationName, Relation]) {
 object Relation {
   type Header = List[HeadingAttribute]
   val empty: Relation = Relation(RelationName(""), Nil, None, Nil, List(Row()), Nil)
+  implicit val relationReadWriter: ReadWriter[Relation] = macroRW
 }
 
 case class Row(attributes: List[BodyAttribute]) {
@@ -44,8 +52,14 @@ case class Row(attributes: List[BodyAttribute]) {
 
 case class RelationName(value: String) extends AnyVal
 
+object RelationName {
+  implicit val relationNameReadWriter: ReadWriter[RelationName] = macroRW
+}
+
 object Row {
   def apply(attributes: BodyAttribute*): Row = this(attributes.toList)
+
+  implicit val rowReadWriter: ReadWriter[Row] = macroRW
 }
 
 case class Relation(name: RelationName,

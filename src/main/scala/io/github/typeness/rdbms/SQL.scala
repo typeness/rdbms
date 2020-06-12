@@ -2,6 +2,8 @@ package io.github.typeness.rdbms
 
 import Relation._
 
+import upickle.default._
+
 sealed trait SQL
 
 sealed trait Manipulation extends SQL
@@ -72,6 +74,24 @@ case class Descending(name: AttributeName) extends Order
 sealed trait Bool {
   def show: String
 }
+
+object Bool {
+  implicit val boolReadWriter: ReadWriter[Bool] = ReadWriter.merge(
+    macroRW[Equals],
+    macroRW[GreaterOrEquals],
+    macroRW[Greater],
+    macroRW[LessOrEquals],
+    macroRW[Less],
+    macroRW[IsNULL],
+    macroRW[IsNotNULL],
+    macroRW[Between],
+    macroRW[And],
+    macroRW[Or],
+    macroRW[Like],
+    macroRW[Not]
+  )
+}
+
 case class Equals(left: Projection, right: Projection) extends Bool {
   override def show: String = str"${left.show}==${right.show}"
 }

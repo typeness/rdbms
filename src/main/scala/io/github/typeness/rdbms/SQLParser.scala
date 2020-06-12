@@ -64,14 +64,14 @@ object SQLParser {
     ).map {
       case (distinct, proj, name, alias, join, cond, group, having, order) =>
         Select(proj,
-               name.map(RelationName),
+               name.map(RelationName(_)),
                join,
                cond,
-               group.map(_.map(AttributeName)).getOrElse(Nil),
+               group.map(_.map(AttributeName(_))).getOrElse(Nil),
                having,
                order.getOrElse(Nil),
                distinct.isDefined,
-               alias.map(RelationName))
+               alias.map(RelationName(_)))
     }
 
   private def create[_: P]: P[Create] =
@@ -141,7 +141,7 @@ object SQLParser {
       .map(_.toList)
 
   private def crossJoin[_: P]: P[CrossJoin] =
-    P(IgnoreCase("CROSS JOIN") ~/ space ~ varAccessor.map(_.show)).map(RelationName.andThen(CrossJoin))
+    P(IgnoreCase("CROSS JOIN") ~/ space ~ varAccessor.map(_.show)).map(x => CrossJoin(RelationName(x)))
 
   private def innerJoin[_: P]: P[InnerJoin] =
     P(
@@ -229,7 +229,7 @@ object SQLParser {
   private def space[_: P]: P[Unit] = P(CharsWhileIn(" \r\n\t", 0))
 
   private def varAccessor[_: P]: P[Projection] =
-    P(accessor | id.map(AttributeName andThen  Var))
+    P(accessor | id.map(x => Var(AttributeName(x))))
 
   private def expression[_: P]: P[Projection] =
     P(varAccessor | literal)
@@ -288,10 +288,10 @@ object SQLParser {
     }
 
   private def isNull[_: P]: P[IsNULL] =
-    P(id ~ space ~ IgnoreCase("IS NULL")).map(AttributeName andThen IsNULL)
+    P(id ~ space ~ IgnoreCase("IS NULL")).map(x => IsNULL(AttributeName(x)))
 
   private def isNotNull[_: P]: P[IsNotNULL] =
-    P(id ~ space ~ IgnoreCase("IS NOT NULL")).map(AttributeName andThen IsNotNULL)
+    P(id ~ space ~ IgnoreCase("IS NOT NULL")).map(x => IsNotNULL(AttributeName(x)))
 
   private def like[_: P]: P[Like] =
     P(id ~ space ~ IgnoreCase("LIKE") ~ space ~ string).map {

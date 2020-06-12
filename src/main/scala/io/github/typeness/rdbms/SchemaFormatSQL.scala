@@ -1,6 +1,9 @@
 package io.github.typeness.rdbms
 
-object SchemaSerializerToSQL extends SchemaSerializer[String] {
+import fastparse.Parsed
+import cats.syntax.foldable._
+
+object SchemaFormatSQL extends SchemaFormat[String] {
   def serialize(relation: Relation): String = {
     val creation = createTable(inSquareBrackets(relation.name.value), relation.heading, relation.relationConstraints)
     val insertion = insertInto(inSquareBrackets(relation.name.value), relation.body, relation.identity)
@@ -61,4 +64,17 @@ object SchemaSerializerToSQL extends SchemaSerializer[String] {
 
   private def inSquareBrackets(name: String): String =
     str"[$name]"
+
+  def serialize(schema: Schema): String = schema.relations.values.map(serialize).toList.mkString("")
+
+  def deserialize(t: String): Either[SQLError, Schema] = {
+    val Parsed.Success(trees, _) = SQLParser.parseMany(t)
+    trees.foldLeftM(Schema()) {
+      case (schema, tree) =>
+        SQLInterpreter.run(tree, schema).map {
+          case SchemaResult(newSchema) => newSchema
+          case RowsResult(_) => schema
+        }
+    }
+  }
 }
